@@ -28,7 +28,7 @@ fi
 
 chat_environment=(
     "DISPLAY=$chat_display"
-    "XCURSOR_THEME=capitaine-cursors"
+    "XCURSOR_THEME=breeze_cursors"
     "XCURSOR_SIZE=$chat_cursor_size"
     "GTK_IM_MODULE=fcitx"
     "QT_IM_MODULE=fcitx"

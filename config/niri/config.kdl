@@ -89,6 +89,8 @@ cursor {
 // Work around cursor-plane artifacts on the AMD internal display.
 debug {
     disable-cursor-plane
+    // Accept activation from apps that forward stale input serials.
+    honor-xdg-activation-with-invalid-serial
 }
 
 // You can configure outputs by their name, which you can find
@@ -354,6 +356,14 @@ animations {
 // Window rules let you adjust behavior for individual windows.
 // Find more information on the wiki:
 // https://niri-wm.github.io/niri/Configuration:-Window-Rules
+
+// Follow application activation requests when opening links or external apps.
+// This also handles existing windows with activation tokens without a serial.
+window-rule {
+    exclude app-id="^xwaylandvideobridge$"
+    exclude app-id="^wps$" title="^wps$"
+    on-xdg-activate "focus"
+}
 
 // Work around WezTerm's initial configure bug
 // by setting an empty default-column-width.

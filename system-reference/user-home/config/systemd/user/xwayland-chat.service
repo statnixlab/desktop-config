@@ -7,7 +7,7 @@ After=graphical-session.target
 Type=notify
 NotifyAccess=main
 Environment=XWS_CURSOR_SCALE=2
-Environment=XCURSOR_THEME=capitaine-cursors
+Environment=XCURSOR_THEME=breeze_cursors
 Environment=XCURSOR_SIZE=48
 ExecStart=%h/.local/libexec/xwayland-satellite-hidpi :2 -nolisten tcp
 ExecStartPost=/usr/bin/xrdb -display :2 -merge %h/.config/xwayland-chat.Xresources

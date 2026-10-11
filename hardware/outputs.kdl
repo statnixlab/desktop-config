@@ -26,6 +26,23 @@ output "eDP-1" {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+off;
 mode "3072x1920@120.002";
 scale 2;
 transform "normal";

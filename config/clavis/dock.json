@@ -38,6 +38,10 @@
     {
       "kind": "app",
       "desktopId": "chatgpt"
+    },
+    {
+      "kind": "app",
+      "desktopId": "org.clavis.Settings"
     }
   ]
 }

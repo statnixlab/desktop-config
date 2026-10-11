@@ -42,7 +42,7 @@ cd desktop-config
 | --- | --- |
 | 原生 Dock | 固定应用、顺序、大小、放大、自动隐藏、窗口预览和最小化设置 |
 | 应用菜单 | 基于 cccp00-cup 的 macOS Launchpad，适配 Niri 覆盖层、Clavis 壁纸、图标预加载和统一出场动画；支持 Dock 与单击 Win 呼出，沿用 `config/clavis/launchpad.json` 分组 |
-| 顶部组件 | 最大化时自动隐藏、边缘唤出、通知短暂显示、常驻歌词及菜单打开时的顶栏稳定处理 |
+| 顶部组件 | 最大化时顶栏与常驻歌词保持隐藏、通知短暂显示，以及菜单打开时的顶栏稳定处理 |
 | 文件管理器 | 默认使用 Nautilus，保留浅绿色界面、紫灰色 Clavis-Reference 图标，以及防止 KDE GTK 同步覆盖的设置；安装脚本不再安装 Dolphin |
 | 图标与字体 | Clavis 使用 MacTahoe-light；保留 Noto Sans CJK、Google Sans Flex 等字体选择和字体配置 |
 | 终端 | Kitty、Alacritty 和 Konsole 的配色、透明度、字体、按键与主题同步 |
@@ -147,7 +147,8 @@ git push
 
 Niri Launchpad 的构建、交互回归测试、应用/分组模型测试和进程通信测试均通过；
 已在当前 Niri 会话验证覆盖层显示、Dock 调用、关闭后的焦点恢复及原有分组保留。
-Clavis 接入通过改动范围的 QML 检查，存在 3 条 QProcess 枚举类型的工具提示。
+2026-10-11 快照对应的 Clavis 构建和 25 项 CTest 通过；改动范围的 QML 检查完成，
+存在 88 条提示性警告，尚未全部消除。
 迁移仓库的 20 项测试及 ShellCheck 通过。
 已从远程获取固定的 Niri 源码并验证补丁可完整应用，安装器下载的 SHA-256 也已核对。
 在临时目录验证了不同用户名、含空格 Home 路径、原文件备份、原生 Dock 分组、主题
