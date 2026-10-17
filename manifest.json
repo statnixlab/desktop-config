@@ -799,7 +799,7 @@
     "system-reference/user-home/share/applications/wps-office-wpp.desktop": "3962c3f5b87e544b3b8ab0b681b179615398b3875e095ea5cb691f97d17b9b43",
     "system-reference/user-home/share/applications/wps-office-wps.desktop": "09f8f7dc9595d35ad0a7e7fe4e2d65cdbf1010d1efaf59bc1bfdabee1e25c40e",
     "system-reference/xwayland-satellite/README.md": "5176f1fb823b061fde3643ab72819727b79da6f582b9e0505aeb7d32f3339f78",
-    "system-reference/xwayland-satellite/hidpi-minimize.patch": "57d4eae7073b61db17bd9fc5554de652272f62a6b52c88dc74c208de1fa1a388",
+    "system-reference/xwayland-satellite/hidpi-minimize.patch": "6408982c633f9538363a36985a7f27721dd174f330c5c7d18d9347cb77fd3434",
     "system-reference/xwayland-satellite/source.json": "925c57e91a18e77db052b1ef119f9bae1d3e1b08d8acf65e3acd0d7b82009cb6"
   }
 }
