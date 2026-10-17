@@ -38,7 +38,8 @@
         "org.kde.gwenview",
         "org.cachyos.scx-manager",
         "mpv",
-        "org.kde.filelight"
+        "org.kde.filelight",
+        "r"
       ],
       "id": "group-1790233725220-q2btp3",
       "kind": "folder",
@@ -196,6 +197,14 @@
     },
     {
       "id": "code-1.98.2",
+      "kind": "app"
+    },
+    {
+      "id": "stably-orca",
+      "kind": "app"
+    },
+    {
+      "id": "org.telegram.desktop",
       "kind": "app"
     }
   ],

@@ -2,7 +2,7 @@
   "clavis": {
     "repository": "https://github.com/little2b/quickshell.git",
     "branch": "personal/cachyos-niri",
-    "commit": "14da157c6eca40c338002f6b2f012f55fae8e620",
+    "commit": "a5d7ac8d8dd4cf172cb6d072b0668a14b3c00be8",
     "upstream_repository": "https://github.com/StatIndet/quickshell.git",
     "upstream_commit": "ac388acf9a4537cf1c69232aceb326af9478b71f"
   },
@@ -30,7 +30,7 @@
     "niri_commit": "ed0fe6141a7cb82f23e947ec1e49bb6399ec9877"
   },
   "desktop_snapshot": {
-    "captured_at": "2026-10-11T19:39:25+08:00",
+    "captured_at": "2026-10-17T11:28:55+08:00",
     "dock": "clavis-native"
   },
   "niri": {

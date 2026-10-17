@@ -1,0 +1,11 @@
+#!/bin/sh
+# Wayland translation-header compatibility, verified with Manggo 1.1.1.
+# An application update disables this shim until compatibility is rechecked.
+app=/usr/lib/manggo/bin/Manggo
+expected=03a129b4246dd9df5f68165cdfc1f79cb41faa3a5ed0f0cf282876d0262fd18e
+actual=$(/usr/bin/sha256sum "$app")
+actual=${actual%% *}
+if [ "$actual" = "$expected" ]; then
+    export LD_PRELOAD="@HOME@/.local/lib/manggo-drag-fix/libmanggo-wayland-drag.so${LD_PRELOAD:+:$LD_PRELOAD}"
+fi
+exec "$app" "$@"

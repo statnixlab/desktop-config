@@ -24,15 +24,19 @@ REFERENCE_CONFIG_FILES = [
     'systemd/user/app-org.fcitx.Fcitx5@autostart.service.d/30-chat-display.conf',
     'systemd/user/fcitx5-niri.service.d/30-chat-display.conf',
     'systemd/user/niri.service.d/kwallet.conf',
+    'autostart/Manggo.desktop',
+    'xsettingsd/xsettingsd.conf',
 ]
 REFERENCE_BIN_FILES = [
     'chat-hidpi-launch', 'chat-hidpi-input', 'wps-niri-launch', 'wps-xwayland-input',
     'wechat-notification-bridge.py', 'wps', 'wpspdf', 'et', 'wpp',
+    'Manggo',
 ]
 REFERENCE_DESKTOP_FILES = [
     'chatgpt.desktop', 'wechat.desktop', 'qq.desktop',
     'wps-office-et.desktop', 'wps-office-pdf.desktop', 'wps-office-prometheus.desktop',
     'wps-office-wpp.desktop', 'wps-office-wps.desktop',
+    'com.pylogmon.Manggo.desktop',
 ]
 
 
@@ -169,7 +173,9 @@ def capture(home, root=ROOT):
     if home == Path.home().resolve():
         preferences = {'gsettings': [], 'mime': {}}
         for schema, keys in {
-            'org.gnome.desktop.interface': ['icon-theme', 'accent-color', 'color-scheme'],
+            'org.gnome.desktop.interface': ['icon-theme', 'accent-color', 'color-scheme',
+                                            'font-name', 'document-font-name', 'monospace-font-name',
+                                            'font-antialiasing', 'font-hinting', 'text-scaling-factor'],
             'org.gnome.nautilus.preferences': ['default-folder-viewer'],
             'org.gnome.nautilus.icon-view': ['default-zoom-level'],
         }.items():
@@ -179,7 +185,7 @@ def capture(home, root=ROOT):
         for mime in ['inode/directory', 'video/matroska']:
             preferences['mime'][mime] = subprocess.check_output(['xdg-mime', 'query', 'default', mime], text=True).strip()
         put('config/nyx-desktop-style/desktop-preferences.json', json.dumps(preferences, ensure_ascii=False, indent=2) + '\n')
-    for name in ['konsolerc', 'plasma-localerc', 'kded5rc']:
+    for name in ['konsolerc', 'plasma-localerc', 'kded5rc', 'kdeglobals']:
         copy(home / '.config' / name, 'config/' + name)
     for folder in ['alacritty', 'kitty', 'fontconfig', 'fuzzel', 'gtk-3.0', 'gtk-4.0', 'nyx-desktop-style', 'fcitx5']:
         source_dir = home / '.config' / folder

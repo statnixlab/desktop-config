@@ -88,10 +88,10 @@
     "cursorHideAfterInactiveMs": 0,
     "iconTheme": "MacTahoe-light",
     "fonts": {
-      "ui": "Noto Sans CJK SC",
-      "mono": "Noto Sans CJK SC",
-      "numeric": "Noto Sans CJK SC",
-      "expressive": "Google Sans Flex"
+      "ui": "Inter",
+      "mono": "Maple Mono CN",
+      "numeric": "Inter",
+      "expressive": "Inter"
     }
   },
   "effects": {

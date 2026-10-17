@@ -1,0 +1,32 @@
+[
+  {
+    "family": "Inter",
+    "version": "4.1",
+    "download": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
+    "sha256": "9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e"
+  },
+  {
+    "family": "PingFang UI SC",
+    "version": "21.4d1e1",
+    "download": "https://github.com/ACT-02/PingFangUI-VF/releases/download/21.4d1e1/PingFangUI.tahoe.26.4.1.wght.wdth.ttc",
+    "sha256": "d1705d6a5e8e4c5981ec39ffd12effb7854c8bd4c20b5dba7e2db922f558e7c7"
+  },
+  {
+    "family": "Maple Mono CN",
+    "version": "7.9",
+    "download": "https://github.com/subframe7536/maple-font/releases/download/v7.9/MapleMono-CN-unhinted.zip",
+    "sha256": "d41cb72721e99cfe4fbd1a7b0f182a013457de46aa612018f924dd024699d3b9"
+  },
+  {
+    "family": "Apple Color Emoji",
+    "version": "macos-26-20260722-484daf4e",
+    "download": "https://github.com/samuelngs/apple-emoji-ttf/releases/download/macos-26-20260722-484daf4e/AppleColorEmoji-Linux.ttf",
+    "sha512": "df72683963d686ebf33a38cb03b17d22d3460e1c8137d3f3d272a145544306d9d93baaaba80a20fbdff96c0d0037e0b875ea86bef471871dc35ac1c47f2b0807"
+  },
+  {
+    "family": "Symbols Nerd Font Mono",
+    "version": "3.5.1",
+    "download": "https://raw.githubusercontent.com/ryanoasis/nerd-fonts/v3.5.1/patched-fonts/NerdFontsSymbolsOnly/SymbolsNerdFontMono-Regular.ttf",
+    "sha256": "fe471e538392f51910faab985fa8e192a39dd3426125edd15b71b3680df0e749"
+  }
+]

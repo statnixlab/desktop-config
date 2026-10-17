@@ -40,13 +40,13 @@ cd desktop-config
 
 | 部分 | 内容 |
 | --- | --- |
-| 原生 Dock | 固定应用、顺序、大小、放大、自动隐藏、窗口预览和最小化设置 |
+| 原生 Dock | 固定应用、顺序、大小、放大、自动隐藏、窗口预览、最小化；通知数字角标和高 DPI 图标采样 |
 | 应用菜单 | 基于 cccp00-cup 的 macOS Launchpad，适配 Niri 覆盖层、Clavis 壁纸、图标预加载和统一出场动画；支持 Dock 与单击 Win 呼出，沿用 `config/clavis/launchpad.json` 分组 |
-| 顶部组件 | 最大化时顶栏与常驻歌词保持隐藏、通知短暂显示，以及菜单打开时的顶栏稳定处理 |
+| 顶部组件 | 最大化窗口上方出现浮窗时保持顶栏隐藏；托盘抽屉允许总览滚动与三指切换，并随导航收起 |
 | 文件管理器 | 默认使用 Nautilus，保留浅绿色界面、紫灰色 Clavis-Reference 图标，以及防止 KDE GTK 同步覆盖的设置；安装脚本不再安装 Dolphin |
-| 图标与字体 | Clavis 使用 MacTahoe-light；保留 Noto Sans CJK、Google Sans Flex 等字体选择和字体配置 |
+| 图标与字体 | MacTahoe-light；Inter＋苹方 UI，Maple Mono CN 等宽字体，Apple Emoji 与 Symbols Nerd Font Mono 回退 |
 | 终端 | Kitty、Alacritty 和 Konsole 的配色、透明度、字体、按键与主题同步 |
-| Niri | 快捷键、窗口规则、鼠标、光标、模糊和最小化动画配置 |
+| Niri | 快捷键、窗口规则、鼠标、光标、模糊和最小化动画；浮窗关闭焦点框，设置窗口使用匹配的 23 像素圆角 |
 | 输入法 | Fcitx5、雾凇拼音、跟随壁纸的候选框主题；保留仓库已有 Rime 快照 |
 | 壁纸与组件 | 当前壁纸、头像、天气位置、桌面卡片和侧栏设置 |
 | QQ / Manggo | 截图与翻译的辅助脚本、Niri 快捷键和 portal 注册 |
@@ -126,6 +126,25 @@ JBL PS3500；图标刷新服务保留了旧独立 Dock 的调用，仅作历史�
 `26.924.22138` 版本与归档哈希。其他版本使用前需要重新判断，仓库不包含应用归档、
 登录数据或补丁运行时的备份。
 
+## 2026-10-17 快照补充
+
+Clavis 加入了 Dock 通知计数（最多显示 `99+`，打开应用后清零），计数基于桌面通知，
+不是聊天应用内部的真实未读数。关闭弹窗不会清零，更新同一条通知不会重复累计。
+主屏监控还会在最后一个活动输出断开时尝试恢复内置屏幕，且不覆盖保存的显示偏好。
+
+字体文件另行获取，下载地址、版本和校验值在
+[`system-reference/fonts/sources.json`](system-reference/fonts/sources.json)。将对应的 TTF/TTC
+安装到 `~/.local/share/fonts/` 后执行 `fc-cache -f`；Inter ZIP 使用 `extras/ttf/Inter-*.ttf`，
+Maple ZIP 使用其中的 TTF。保留各字体来源的许可证。未安装这些字体时会使用现有回退字体。
+VS Code 的字体设置单独保存在该目录，只合并字体选项，不覆盖其他编辑器配置。
+
+Manggo 1.1.1 的 Wayland 顶部拖动兼容源码在
+[`system-reference/manggo/`](system-reference/manggo/)，对应的用户启动器、自启和桌面入口在
+`system-reference/user-home/`。启动器只对已验证的应用文件哈希加载补丁，应用升级后需重新核验。
+微信／QQ 的 XWayland 高 DPI 与最小化转发完整补丁、基准提交在
+[`system-reference/xwayland-satellite/`](system-reference/xwayland-satellite/)。
+这些是本机兼容参考，不由默认安装流程启用，也不包含商业应用或字体二进制。
+
 ## 刷新快照
 
 先提交并推送 Clavis 源码，再运行：
@@ -147,8 +166,8 @@ git push
 
 Niri Launchpad 的构建、交互回归测试、应用/分组模型测试和进程通信测试均通过；
 已在当前 Niri 会话验证覆盖层显示、Dock 调用、关闭后的焦点恢复及原有分组保留。
-2026-10-11 快照对应的 Clavis 构建和 25 项 CTest 通过；改动范围的 QML 检查完成，
-存在 88 条提示性警告，尚未全部消除。
+2026-10-17 快照对应的 Clavis 构建和 26 项 CTest 通过；改动范围的 QML 检查完成，
+存在 68 条提示性警告，尚未全部消除。
 迁移仓库的 20 项测试及 ShellCheck 通过。
 已从远程获取固定的 Niri 源码并验证补丁可完整应用，安装器下载的 SHA-256 也已核对。
 在临时目录验证了不同用户名、含空格 Home 路径、原文件备份、原生 Dock 分组、主题

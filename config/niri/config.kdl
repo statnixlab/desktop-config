@@ -763,10 +763,8 @@ environment {
 }
 
 // Keep the X11 screencast bridge helper visible when started manually.
-workspace "后台桥接"
 window-rule {
     match app-id="^xwaylandvideobridge$"
-    open-on-workspace "后台桥接"
     open-focused false
     open-floating true
     opacity 1.0
@@ -795,3 +793,15 @@ include "qq-screenshot.kdl";
 include "clavis/minimize-animation.kdl";
 
 include "clavis/launchpad.kdl";
+
+// Floating applications keep their own decoration without an outer focus ring.
+window-rule {
+    match is-floating=true
+    focus-ring { off; }
+}
+
+// Match the Clavis settings surface (Appearance.rounding.large = 23).
+window-rule {
+    match title="^clavis-control-center$"
+    geometry-corner-radius 23
+}

@@ -16,6 +16,36 @@
       "value": "'prefer-light'"
     },
     {
+      "schema": "org.gnome.desktop.interface",
+      "key": "font-name",
+      "value": "'Inter 10'"
+    },
+    {
+      "schema": "org.gnome.desktop.interface",
+      "key": "document-font-name",
+      "value": "'Inter 10'"
+    },
+    {
+      "schema": "org.gnome.desktop.interface",
+      "key": "monospace-font-name",
+      "value": "'Maple Mono CN 10'"
+    },
+    {
+      "schema": "org.gnome.desktop.interface",
+      "key": "font-antialiasing",
+      "value": "'grayscale'"
+    },
+    {
+      "schema": "org.gnome.desktop.interface",
+      "key": "font-hinting",
+      "value": "'slight'"
+    },
+    {
+      "schema": "org.gnome.desktop.interface",
+      "key": "text-scaling-factor",
+      "value": "1.0"
+    },
+    {
       "schema": "org.gnome.nautilus.preferences",
       "key": "default-folder-viewer",
       "value": "'icon-view'"

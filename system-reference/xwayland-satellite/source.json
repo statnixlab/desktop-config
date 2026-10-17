@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/Supreeeme/xwayland-satellite.git",
+  "base_commit": "8d135d3b2854b30fd01ea6cd6c27e523dd50a839",
+  "features": [
+    "systemd"
+  ],
+  "patch": "hidpi-minimize.patch",
+  "installed_sha256": "505c36bd3df0d90a2e19f031a8293d9e1a0a5093b77f619a619e4864183a47c1"
+}

@@ -1,0 +1,31 @@
+[Desktop Entry]
+Type=Application
+Name=Manggo
+Comment=Desktop translation app
+Exec="@HOME@/.local/bin/Manggo"
+Icon=com.pylogmon.Manggo
+Terminal=false
+Categories=Utility;
+MimeType=application/x-manggo-plugin;
+StartupNotify=true
+Actions=input-translation;selection-translation;screenshot-translation;screenshot-recognition;capture-area;
+
+[Desktop Action input-translation]
+Name=Input Translation
+Exec="@HOME@/.local/bin/Manggo"
+
+[Desktop Action selection-translation]
+Name=Selection Translation
+Exec="@HOME@/.local/bin/Manggo"
+
+[Desktop Action screenshot-translation]
+Name=Screenshot Translation
+Exec="@HOME@/.local/bin/Manggo"
+
+[Desktop Action screenshot-recognition]
+Name=Screenshot Recognition
+Exec="@HOME@/.local/bin/Manggo"
+
+[Desktop Action capture-area]
+Name=Capture Area
+Exec="@HOME@/.local/bin/Manggo"

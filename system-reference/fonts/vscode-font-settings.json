@@ -1,0 +1,6 @@
+{
+  "editor.fontFamily": "'Maple Mono CN', 'Symbols Nerd Font Mono', monospace",
+  "terminal.integrated.fontFamily": "Maple Mono CN",
+  "debug.console.fontFamily": "Maple Mono CN",
+  "markdown.preview.fontFamily": "Inter, 'PingFang UI SC', 'Noto Sans CJK SC', sans-serif"
+}
