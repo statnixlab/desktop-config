@@ -128,7 +128,7 @@ def capture(home, root=ROOT):
     copy(home / '.config/clavis/primary-display.json', 'hardware/primary-display.json')
     copy(home / '.config/niri/clavis/outputs.kdl', 'hardware/outputs.kdl')
     for relative in ['config.kdl', 'clavis/mouse.kdl', 'clavis/cursor.kdl', 'clavis/layer-rules.kdl',
-                     'clavis/effects.kdl', 'clavis/minimize-animation.kdl', 'clavis/launchpad.kdl',
+                     'clavis/effects.kdl', 'clavis/application-effects.kdl', 'clavis/minimize-animation.kdl', 'clavis/launchpad.kdl',
                      'manggo-shortcuts.kdl', 'qq-screenshot.kdl']:
         copy(home / '.config/niri' / relative, 'config/niri/' + relative)
     # Kitty is installed by the package manager, not the source user's symlink.

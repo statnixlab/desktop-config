@@ -48,7 +48,11 @@ class CaptureTests(unittest.TestCase):
                 for path in [root / snapshot_path, home / source_path]:
                     path.parent.mkdir(parents=True, exist_ok=True)
                     path.write_text('old Dolphin customization\n')
+            effects = home / '.config/niri/clavis/application-effects.kdl'
+            effects.parent.mkdir(parents=True)
+            effects.write_text('blur { passes 3; }\nwindow-rule { opacity 0.94; }\n')
             capture.capture(home, root)
+            self.assertEqual((root / 'config/niri/clavis/application-effects.kdl').read_bytes(), effects.read_bytes())
             self.assertEqual(json.loads((root / 'config/clavis/dock.json').read_text()), dock)
             self.assertEqual(json.loads((root / 'config/clavis/launchpad.json').read_text()), groups)
             self.assertFalse((root / 'config/quickshell/nyx-dock').exists())

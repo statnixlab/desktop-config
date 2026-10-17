@@ -1,0 +1,15 @@
+// Managed by Clavis.
+blur {
+    passes 3;
+};
+window-rule {
+    opacity 0.94;
+    background-effect {
+        blur true;
+        xray false;
+    };
+};
+window-rule {
+    match is-focused=false;
+    opacity 0.8;
+};
