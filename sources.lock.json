@@ -1,8 +1,8 @@
 {
   "clavis": {
-    "repository": "https://github.com/little2b/quickshell.git",
+    "repository": "https://github.com/statnixlab/quickshell.git",
     "branch": "personal/cachyos-niri",
-    "commit": "a2e01eeb14a81c7222475363df42c3a46e4db0d3",
+    "commit": "8e281c65a459157664d7b971cf7855b127cf29e4",
     "upstream_repository": "https://github.com/StatIndet/quickshell.git",
     "upstream_commit": "ac388acf9a4537cf1c69232aceb326af9478b71f"
   },

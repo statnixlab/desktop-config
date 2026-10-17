@@ -1,7 +1,7 @@
 # 个人 CachyOS / Arch · Niri / Clavis 桌面
 
 这个公开仓库保存当前桌面的可迁移配置、主题资源和安装脚本。桌面源码位于
-[little2b/quickshell](https://github.com/little2b/quickshell/tree/personal/cachyos-niri)，
+[statnixlab/quickshell](https://github.com/statnixlab/quickshell/tree/personal/cachyos-niri)，
 本仓库通过 `sources.lock.json` 固定 Clavis、定制 Niri、key-cli 和 MacTahoe 图标的版本。
 
 ## 在另一台电脑上安装
@@ -10,7 +10,7 @@
 
 ```bash
 sudo pacman -Syu --needed git python curl
-git clone https://github.com/little2b/desktop-config.git
+git clone https://github.com/statnixlab/desktop-config.git
 cd desktop-config
 ./scripts/setup-arch.sh
 ```
@@ -46,7 +46,8 @@ cd desktop-config
 | 文件管理器 | 默认使用 Nautilus，保留浅绿色界面、紫灰色 Clavis-Reference 图标，以及防止 KDE GTK 同步覆盖的设置；安装脚本不再安装 Dolphin |
 | 图标与字体 | MacTahoe-light；Inter＋苹方 UI，Maple Mono CN 等宽字体，Apple Emoji 与 Symbols Nerd Font Mono 回退 |
 | 终端 | Kitty、Alacritty 和 Konsole 的配色、透明度、字体、按键与主题同步 |
-| Niri | 快捷键、窗口规则、鼠标、光标、模糊和最小化动画；浮窗关闭焦点框，设置窗口使用匹配的 23 像素圆角 |
+| Niri | 快捷键、窗口规则、鼠标、光标、模糊和最小化动画；所有窗口关闭焦点框，设置窗口使用匹配的 23 像素圆角 |
+| 应用效果 | 设置 → 通用 → 透明与模糊：分别调整聚焦／未聚焦窗口不透明度、应用背景模糊开关，以及应用和面板共用的 1–5 级模糊强度；自动保存并生效 |
 | 输入法 | Fcitx5、雾凇拼音、跟随壁纸的候选框主题；保留仓库已有 Rime 快照 |
 | 壁纸与组件 | 当前壁纸、头像、天气位置、桌面卡片和侧栏设置 |
 | QQ / Manggo | 截图与翻译的辅助脚本、Niri 快捷键和 portal 注册 |

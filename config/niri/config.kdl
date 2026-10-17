@@ -135,10 +135,9 @@ window-rule {
     draw-border-with-background false
 }
 
-// Keep Kitty readable while focused and more translucent while inactive.
+// Preserve Kitty's existing background effects.
 window-rule {
     match app-id="^kitty$"
-    opacity 1.0
     background-effect {
         blur true
         xray false
@@ -147,12 +146,14 @@ window-rule {
 
 window-rule {
     match app-id="^kitty$" is-focused=false
-    opacity 0.82
     background-effect {
         blur false
         xray false
     }
 }
+
+// Application opacity and blur are managed in Clavis Settings.
+include "clavis/application-effects.kdl"
 
 // Settings that influence how windows are positioned and sized.
 // Find more information on the wiki:
@@ -204,8 +205,8 @@ layout {
 
     // You can change how the focus ring looks.
     focus-ring {
-        // Uncomment this line to disable the focus ring.
-        // off
+        // Disable the focus outline; window opacity indicates focus.
+        off
 
         // How many logical pixels the ring extends out from the windows.
         width 2

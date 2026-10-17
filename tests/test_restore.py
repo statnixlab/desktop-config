@@ -71,7 +71,7 @@ class RestoreTests(unittest.TestCase):
 
     def test_restore_keeps_all_required_niri_fragments_and_gtk_customization(self):
         files = restore.plan(self.target)
-        for name in ['outputs', 'mouse', 'cursor', 'layer-rules', 'effects', 'minimize-animation']:
+        for name in ['outputs', 'mouse', 'cursor', 'layer-rules', 'effects', 'application-effects', 'minimize-animation']:
             self.assertIn(Path(f'.config/niri/clavis/{name}.kdl'), files)
         self.assertIn(b'reference-nautilus.css', files[Path('.config/gtk-4.0/gtk.css')][0])
         settings = configparser.ConfigParser()
