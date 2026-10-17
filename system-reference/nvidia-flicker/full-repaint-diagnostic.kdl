@@ -1,0 +1,8 @@
+// Optional workaround for the affected RTX 4070 SUPER / P2710V computer.
+// Copy beside the existing ~/.config/niri/config.kdl only when deliberately testing.
+include "config.kdl"
+debug {
+    prefer-16bit-output
+    restrict-primary-scanout-to-matching-format
+    force-full-repaint
+}

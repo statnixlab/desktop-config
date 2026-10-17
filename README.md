@@ -147,6 +147,17 @@ Manggo 1.1.1 的 Wayland 顶部拖动兼容源码在
 [`system-reference/xwayland-satellite/`](system-reference/xwayland-satellite/)。
 这些是本机兼容参考，不由默认安装流程启用，也不包含商业应用或字体二进制。
 
+## 仅本机启用的显示兼容方案
+
+2026-10-18，在这台 **RTX 4070 SUPER / P2710V、4K 160Hz** 电脑上，使用 FP16
+输出与完整重绘组合规避了 Niri 右下区域闪烁。**另一台使用相同系统和桌面环境的电脑
+显示正常**；这不是给所有机器启用的通用默认设置。
+
+硬件、版本、实测边界、代价和按需启停方法见
+[`system-reference/nvidia-flicker/`](system-reference/nvidia-flicker/)。相关补丁包含在
+定制 Niri 中，但新开关默认关闭；普通恢复和 `--same-hardware` 都不会安装或启用
+该目录中的配置入口、服务片段。
+
 ## 刷新快照
 
 先提交并推送 Clavis 源码，再运行：

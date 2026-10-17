@@ -37,11 +37,13 @@
     "repository": "https://github.com/StatIndet/niri-edge.git",
     "commit": "ed0fe6141a7cb82f23e947ec1e49bb6399ec9877",
     "patch": "patches/niri-desktop.patch",
-    "patch_sha256": "e67486464258b208baf49cdcb1276608152e666a3aca936fdf652f3c84ab8811",
+    "patch_sha256": "176ac6e83101a9cd8b0fa4d343d911b0696ac7af7effa8886564213b17a99d8f",
     "features": [
       "Dock minimize and Genie animation",
       "HiDPI Genie geometry",
-      "PipeWire SHM sharing compatibility"
+      "PipeWire SHM sharing compatibility",
+      "Optional FP16 composition buffers for high-refresh NVIDIA artifact workaround",
+      "Optional full-output repaint diagnostic"
     ]
   },
   "icon_theme": {
