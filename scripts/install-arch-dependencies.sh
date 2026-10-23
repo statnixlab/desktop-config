@@ -13,6 +13,11 @@ if command -v pkexec >/dev/null 2>&1 && [[ -n ${WAYLAND_DISPLAY:-}${DISPLAY:-} ]
 else
     echo 'Enter your password in this terminal when sudo prompts.'
 fi
+# Preserve an already configured Rust toolchain managed by rustup.
+rust_package=rust
+if pacman -Q rustup >/dev/null 2>&1 && cargo --version >/dev/null 2>&1; then
+    rust_package=rustup
+fi
 # Arch librime includes librime-lua.so; it is not a separate librime-lua package.
 sudo pacman -Syu --needed git python curl github-cli rclone fcitx5 fcitx5-rime fcitx5-configtool \
     fcitx5-gtk fcitx5-qt librime xorg-xrdb xwayland-satellite \
@@ -20,7 +25,7 @@ sudo pacman -Syu --needed git python curl github-cli rclone fcitx5 fcitx5-rime f
     polkit polkit-kde-agent keyd flatpak breeze breeze-gtk plasma-integration nautilus papirus-icon-theme smplayer konsole alacritty fuzzel \
     noto-fonts noto-fonts-cjk noto-fonts-emoji fontconfig kconfig python-gobject \
     wl-clipboard swaylock playerctl brightnessctl fd libqalculate kitty fish fuse3 \
-    base-devel cmake ninja pkgconf clang rust wayland wayland-protocols \
+    base-devel cmake ninja pkgconf clang "$rust_package" wayland wayland-protocols \
     libinput libxkbcommon libdisplay-info seatd libpipewire pango cairo mesa \
     qt6-base qt6-declarative qt6-wayland qt6-shadertools qt6-tools qtkeychain-qt6 kwallet libsecret libcanberra layer-shell-qt glib2 \
     librsvg gtk-update-icon-cache

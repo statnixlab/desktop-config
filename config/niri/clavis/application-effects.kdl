@@ -2,9 +2,9 @@
 window-rule {
     exclude app-id="^org[.]quickshell$";
     exclude title="^(clavis-control-center(-[a-z-]+)?|clavis-file-picker)$";
-    opacity 0.92;
+    opacity 1.0;
     background-effect {
-        blur true;
+        blur false;
         xray false;
         blur-passes 3;
     };
@@ -13,5 +13,5 @@ window-rule {
     match is-focused=false;
     exclude app-id="^org[.]quickshell$";
     exclude title="^(clavis-control-center(-[a-z-]+)?|clavis-file-picker)$";
-    opacity 0.8;
+    opacity 1.0;
 };

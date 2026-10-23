@@ -15,6 +15,8 @@
 | 设置入口 | Clavis 设置使用明确名称，并过滤不适合 Niri 的重复入口 |
 | 顶栏 | 最大化时顶栏与常驻歌词保持隐藏；打开应用菜单时保持活动应用区域稳定 |
 | 灵动岛歌词 | `qs -c clavis ipc call keystone lyrics`，保留常驻模式和顶栏隐藏联动 |
+| 灵动岛快速访问 | 点击灵动岛 → 快速访问；实时读取 Nautilus 左侧书签，支持独立添加常用文件夹 |
+| 文件夹选择 | 左侧“磁盘”列出已挂载的 Windows 分区及移动磁盘，“文件系统”可浏览其他路径 |
 | 文件管理器 | Nautilus 自定义浅色样式、紫灰色图标；KDE GTK 自动同步关闭 |
 | 终端和输入法 | Kitty / Alacritty / Konsole 与 Fcitx5 的样式和壁纸配色同步 |
 | 主题 | MacTahoe-light 图标，Noto Sans CJK 与 Google Sans Flex 字体选择 |

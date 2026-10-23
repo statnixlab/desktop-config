@@ -172,6 +172,17 @@ Manggo 1.1.1 的 Wayland 顶部拖动兼容源码在
 微信提示音依赖本机的 `~/.local/share/sounds/clavis/wechat-classic.wav`，该应用音频
 不随公开源码发布；需要此功能时在目标机器自行准备，并安装 `libcanberra`。
 
+## 灵动岛快速访问
+
+点击灵动岛后进入“快速访问”。在 Nautilus 中打开文件夹并按 `Ctrl+D` 添加书签，
+灵动岛会自动同步 `~/.config/gtk-3.0/bookmarks`，保留自定义名称和顺序；书签改名、
+移除也会同步。带书签标记的项目在 Nautilus 中管理，灵动岛只读这份书签文件。
+
+“添加文件夹”保留独立快捷入口，保存到 `~/.config/clavis/quick-access.json`；
+移除入口不会删除目录。选择窗口的“磁盘”区域列出已挂载到 `/mnt/`、`/media/`、
+`/run/media/` 的分区，包括 Windows 文件夹，也可以通过“文件系统”或 `Ctrl+L`
+输入路径。恢复书签不会自动挂载分区或连接网盘，目标路径需要先可用。
+
 ## 刷新快照
 
 先提交并推送 Clavis 源码，再运行：
