@@ -1,0 +1,5 @@
+// Preserve the current personal configuration and full-repaint fix.
+include "@HOME@/.config/niri/full-repaint-diagnostic.kdl"
+layout {
+    client-maximize-to-column
+}

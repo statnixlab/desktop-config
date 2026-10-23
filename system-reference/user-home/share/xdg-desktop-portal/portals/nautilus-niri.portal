@@ -1,0 +1,4 @@
+[portal]
+DBusName=org.freedesktop.impl.portal.desktop.nautilus_niri
+Interfaces=org.freedesktop.impl.portal.FileChooser;
+UseIn=niri;

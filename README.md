@@ -47,7 +47,7 @@ cd desktop-config
 | 图标与字体 | MacTahoe-light；Inter＋苹方 UI，Maple Mono CN 等宽字体，Apple Emoji 与 Symbols Nerd Font Mono 回退 |
 | 终端 | Kitty、Alacritty 和 Konsole 的配色、透明度、字体、按键与主题同步 |
 | Niri | 快捷键、窗口规则、鼠标、光标、模糊和最小化动画；所有窗口关闭焦点框，设置窗口使用匹配的 23 像素圆角 |
-| 应用效果 | 设置 → 通用 → 透明与模糊：分别调整聚焦／未聚焦窗口不透明度、应用背景模糊开关，以及应用和面板共用的 1–5 级模糊强度；自动保存并生效 |
+| 应用效果 | 设置 → 通用 → 透明与模糊：分别调整聚焦／未聚焦窗口不透明度、应用背景模糊开关，以及应用和面板各自独立的 1–5 级模糊强度；自动保存并生效 |
 | 输入法 | Fcitx5、雾凇拼音、跟随壁纸的候选框主题；保留仓库已有 Rime 快照 |
 | 壁纸与组件 | 当前壁纸、头像、天气位置、桌面卡片和侧栏设置 |
 | QQ / Manggo | 截图与翻译的辅助脚本、Niri 快捷键和 portal 注册 |
@@ -158,6 +158,19 @@ Manggo 1.1.1 的 Wayland 顶部拖动兼容源码在
 [`system-reference/nvidia-flicker/`](system-reference/nvidia-flicker/)。相关补丁包含在
 定制 Niri 中，但新开关默认关闭；普通恢复和 `--same-hardware` 都不会安装或启用
 该目录中的配置入口、服务片段。
+
+## 2026-10-23 配置快照
+
+本次记录顶栏厚度与胶囊尺寸、Win+Tab 窗口缩略图总览、独立的应用/面板模糊、
+通知弹窗限制，以及当前主题、输入法、鼠标和启动台布局。Clavis 源码版本由
+`sources.lock.json` 固定；定制 Niri 补丁同时包含标题栏列宽切换和刷新率相关策略。
+
+采集程序将 GPU 固定路径与闪烁规避开关保存在 `system-reference/user-home/`，
+通用配置不会启用它们。该目录也保留本机的 Niri 入口链、Nautilus 文件选择器兼容
+后端及其服务，恢复前需按当前硬件和软件版本核对；通用文件选择器使用 GNOME/GTK。
+当前密码存储接口使用 KWallet，仓库不保存密钥环、密码或远程连接凭据。
+微信提示音依赖本机的 `~/.local/share/sounds/clavis/wechat-classic.wav`，该应用音频
+不随公开源码发布；需要此功能时在目标机器自行准备，并安装 `libcanberra`。
 
 ## 刷新快照
 

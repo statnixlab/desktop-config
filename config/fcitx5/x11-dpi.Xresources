@@ -1,2 +1,1 @@
-! Match the desktop's 200% scaling for Fcitx's X11 candidate panel.
-Xft.dpi: 192
+! Set Xft.dpi here after choosing scaling for this computer.

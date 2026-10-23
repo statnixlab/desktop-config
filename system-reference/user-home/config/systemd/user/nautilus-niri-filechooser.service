@@ -1,0 +1,10 @@
+[Unit]
+Description=Nautilus file chooser compatibility for Niri
+After=graphical-session.target
+Requisite=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=dbus
+BusName=org.freedesktop.impl.portal.desktop.nautilus_niri
+ExecStart=/usr/bin/python3 "@HOME@/.local/libexec/nautilus-niri-filechooser.py"

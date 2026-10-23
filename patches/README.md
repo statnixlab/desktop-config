@@ -2,7 +2,7 @@
 
 `niri-desktop.patch` preserves the local HiDPI Genie coordinate correction,
 its geometry tests, and PipeWire SHM mapping/frame pacing adjustments. It also
-adds two optional output workarounds. Apply it only to the commit in
+adds optional output workarounds, per-surface blur strength, and titlebar column sizing. Apply it only to the commit in
 `sources.lock.json`; the installer verifies the patch SHA-256 first.
 
 The patched source is [StatIndet/niri-edge](https://github.com/StatIndet/niri-edge),
@@ -18,7 +18,7 @@ desktop environment works normally. Its hardware is not assumed to be identical.
 This is a workaround for the affected machine, not evidence that every CachyOS,
 Clavis, Niri or NVIDIA installation needs these settings.
 
-Both new debug options default to `false`. They are not enabled in `config/`,
+Output workaround flags default to `false`; the refresh threshold is unset by default. They are not enabled in `config/`,
 `hardware/`, the standard restore, or the `--same-hardware` restore.
 The optional entrypoint and service example live in
 [`system-reference/nvidia-flicker/`](../system-reference/nvidia-flicker/), which
@@ -48,3 +48,18 @@ allocation; scanout restriction can add composition work in fullscreen use.
 The net performance and power cost has not been measured under a controlled
 workload. See the machine-specific reference for setup, rollback and validation
 limits.
+
+## Additions captured on 2026-10-23
+
+- `background-effect.blur-passes` controls application blur independently of the
+  global panel blur, with the `per_surface_blur` IPC capability.
+- `layout.client-maximize-to-column` makes client maximize requests use the
+  column-width behavior; the titlebar integration tests are included.
+- `debug.high-refresh-workaround-above` limits explicitly enabled output
+  workarounds to modes strictly above the configured refresh rate.
+- `debug.full-repaint-reuse-buffers` offers full-output damage without resetting
+  swapchain buffer ages. It remains opt-in, as do the other output workarounds.
+
+The complete current source delta, including the new titlebar test file, is
+preserved against the unchanged pinned base commit. Local entrypoint examples
+are saved under `system-reference/user-home/`; they are not automatically enabled.

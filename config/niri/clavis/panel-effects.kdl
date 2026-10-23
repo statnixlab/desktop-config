@@ -1,0 +1,4 @@
+// Managed by Clavis.
+blur {
+    passes 3;
+};

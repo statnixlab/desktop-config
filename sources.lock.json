@@ -2,7 +2,7 @@
   "clavis": {
     "repository": "https://github.com/statnixlab/quickshell.git",
     "branch": "personal/cachyos-niri",
-    "commit": "8e281c65a459157664d7b971cf7855b127cf29e4",
+    "commit": "547fafab4045fa5cfff6b7fa2e6715620faafe7c",
     "upstream_repository": "https://github.com/StatIndet/quickshell.git",
     "upstream_commit": "ac388acf9a4537cf1c69232aceb326af9478b71f"
   },
@@ -30,20 +30,24 @@
     "niri_commit": "ed0fe6141a7cb82f23e947ec1e49bb6399ec9877"
   },
   "desktop_snapshot": {
-    "captured_at": "2026-10-17T11:28:55+08:00",
+    "captured_at": "2026-10-23T11:43:26+08:00",
     "dock": "clavis-native"
   },
   "niri": {
     "repository": "https://github.com/StatIndet/niri-edge.git",
     "commit": "ed0fe6141a7cb82f23e947ec1e49bb6399ec9877",
     "patch": "patches/niri-desktop.patch",
-    "patch_sha256": "176ac6e83101a9cd8b0fa4d343d911b0696ac7af7effa8886564213b17a99d8f",
+    "patch_sha256": "f42f2b44a8ea55ad8eab1b021646800c70fd3839e01bb68970bcba750ccaef45",
     "features": [
       "Dock minimize and Genie animation",
       "HiDPI Genie geometry",
       "PipeWire SHM sharing compatibility",
       "Optional FP16 composition buffers for high-refresh NVIDIA artifact workaround",
-      "Optional full-output repaint diagnostic"
+      "Optional full-output repaint diagnostic",
+      "Independent application and panel blur",
+      "Titlebar maximize to column",
+      "Refresh-aware output workaround",
+      "Optional full repaint with buffer reuse"
     ]
   },
   "icon_theme": {

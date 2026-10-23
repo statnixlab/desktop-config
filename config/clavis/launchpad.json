@@ -39,7 +39,8 @@
         "org.cachyos.scx-manager",
         "mpv",
         "org.kde.filelight",
-        "r"
+        "r",
+        "org.kde.dolphin"
       ],
       "id": "group-1790233725220-q2btp3",
       "kind": "folder",
@@ -205,6 +206,10 @@
     },
     {
       "id": "org.telegram.desktop",
+      "kind": "app"
+    },
+    {
+      "id": "nvidia-settings",
       "kind": "app"
     }
   ],

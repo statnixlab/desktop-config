@@ -1,0 +1,8 @@
+// This machine only: use the established anti-flicker workaround above 144 Hz.
+// Preserve the titlebar behavior and all existing desktop configuration.
+include "@HOME@/.config/niri/titlebar-column.kdl"
+debug {
+    high-refresh-workaround-above 144
+}
+
+include "clavis/panel-effects.kdl";

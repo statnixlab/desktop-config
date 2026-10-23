@@ -2,4 +2,4 @@
 0=Control+space
 
 [Behavior]
-ActiveByDefault=False
+ActiveByDefault=True

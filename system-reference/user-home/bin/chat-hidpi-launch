@@ -11,7 +11,7 @@ esac
 # With other monitor scales, use the ordinary display at normal cursor size.
 chat_display="${DISPLAY:-:0}"
 chat_cursor_size=24
-if /usr/bin/niri msg --json outputs | /usr/bin/jq -e '
+if [[ -n "${NIRI_SOCKET:-}" && -S "$NIRI_SOCKET" ]] && /usr/bin/niri msg --json outputs | /usr/bin/jq -e '
     [.[] | select(.logical != null) | .logical.scale] as $scales
     | ($scales | length) > 0 and ($scales | all(. == 2))' >/dev/null; then
     if ! /usr/bin/systemctl --user start xwayland-chat.service; then

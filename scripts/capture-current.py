@@ -26,6 +26,13 @@ REFERENCE_CONFIG_FILES = [
     'systemd/user/niri.service.d/kwallet.conf',
     'autostart/Manggo.desktop',
     'xsettingsd/xsettingsd.conf',
+    'systemd/user/nautilus-niri-filechooser.service',
+    'xdg-desktop-portal/niri-portals.conf',
+    'niri/full-repaint-diagnostic.kdl', 'niri/titlebar-column.kdl',
+    'niri/refresh-aware-flicker.kdl',
+    'systemd/user/niri.service.d/90-full-repaint-diagnostic.conf',
+    'systemd/user/niri.service.d/95-titlebar-column.conf',
+    'systemd/user/niri.service.d/96-refresh-aware-flicker.conf',
 ]
 REFERENCE_BIN_FILES = [
     'chat-hidpi-launch', 'chat-hidpi-input', 'wps-niri-launch', 'wps-xwayland-input',
@@ -95,7 +102,7 @@ def capture(home, root=ROOT):
         if path.suffix == '.desktop':
             content = re.sub(r'^Exec=(@HOME@/\.local/bin/[^\s"]+)(.*)$', r'Exec="\1"\2', content, flags=re.M)
             content = re.sub(r'^TryExec=@HOME@/\.local/bin/([^\s]+)$', r'TryExec=/usr/bin/\1', content, flags=re.M)
-        if path.suffix in ('.colors', '.colorscheme', '.profile', '.service') or relative.startswith('share/fcitx5/themes/'):
+        if path.name == 'xsettingsd.conf' or path.suffix in ('.colors', '.colorscheme', '.profile', '.service') or relative.startswith('share/fcitx5/themes/'):
             content = content.rstrip('\n') + '\n'
         put(relative, content)
         (root / relative).chmod(path.stat().st_mode & 0o777)
@@ -128,13 +135,20 @@ def capture(home, root=ROOT):
     copy(home / '.config/clavis/primary-display.json', 'hardware/primary-display.json')
     copy(home / '.config/niri/clavis/outputs.kdl', 'hardware/outputs.kdl')
     for relative in ['config.kdl', 'clavis/mouse.kdl', 'clavis/cursor.kdl', 'clavis/layer-rules.kdl',
-                     'clavis/effects.kdl', 'clavis/application-effects.kdl', 'clavis/minimize-animation.kdl', 'clavis/launchpad.kdl',
+                     'clavis/effects.kdl', 'clavis/application-effects.kdl', 'clavis/panel-effects.kdl', 'clavis/minimize-animation.kdl', 'clavis/launchpad.kdl',
                      'manggo-shortcuts.kdl', 'qq-screenshot.kdl']:
         copy(home / '.config/niri' / relative, 'config/niri/' + relative)
     # Kitty is installed by the package manager, not the source user's symlink.
     niri_config = root / 'config/niri/config.kdl'
     if niri_config.is_file():
-        niri_config.write_text(niri_config.read_text().replace('"@HOME@/.local/bin/kitty"', '"kitty"'))
+        content = niri_config.read_text().replace('"@HOME@/.local/bin/kitty"', '"kitty"')
+        if (home / '.config/niri/clavis/panel-effects.kdl').is_file() and 'include "clavis/panel-effects.kdl"' not in content:
+            content += '\ninclude "clavis/panel-effects.kdl";\n'
+        # GPU selection and flicker workarounds belong to optional machine references.
+        content = '\n'.join(line for line in content.splitlines() if not re.match(
+            r'\s*(?:render-drm-device|disable-cursor-plane|prefer-16bit-output|restrict-primary-scanout-to-matching-format|force-full-repaint|full-repaint-reuse-buffers|high-refresh-workaround-above)\b', line)
+            and not line.strip().startswith(('// Use the NVIDIA GPU', '// NVIDIA high-refresh workaround:'))) + '\n'
+        niri_config.write_text(content)
     for name in ['manggo-shortcuts.py', 'qq-native-screenshot.py']:
         copy(home / '.local/libexec' / name, 'libexec/' + name)
     for relative in ['.config/systemd/user/manggo-shortcuts.service',
@@ -229,6 +243,20 @@ def capture(home, root=ROOT):
              'system-reference/chatgpt/chatgpt-startup-fix.py')
         copy(Path('/etc/pacman.d/hooks/95-chatgpt-startup-fix.hook'),
              'system-reference/chatgpt/95-chatgpt-startup-fix.hook')
+    # Keep the custom file chooser and exact machine entrypoints as opt-in references.
+    for source_path, relative in [
+        ('.local/libexec/nautilus-niri-filechooser.py', 'libexec/nautilus-niri-filechooser.py'),
+        ('.local/share/dbus-1/services/org.freedesktop.impl.portal.desktop.nautilus_niri.service', 'share/dbus-1/services/org.freedesktop.impl.portal.desktop.nautilus_niri.service'),
+        ('.local/share/xdg-desktop-portal/portals/nautilus-niri.portal', 'share/xdg-desktop-portal/portals/nautilus-niri.portal'),
+        ('.config/niri/config.kdl', 'config/niri/config.kdl'),
+    ]:
+        copy(home / source_path, 'system-reference/user-home/' + relative)
+    portable_portals = root / 'config/xdg-desktop-portal/niri-portals.conf'
+    if portable_portals.is_file():
+        content = portable_portals.read_text().replace('org.freedesktop.impl.portal.FileChooser=nautilus-niri;',
+                                                      'org.freedesktop.impl.portal.FileChooser=gnome;gtk;')
+        content = '\n'.join(line for line in content.splitlines() if not line.startswith('# Keep Nautilus dialogs;')) + '\n'
+        portable_portals.write_text(content)
     lock['desktop_snapshot'] = {'captured_at': datetime.now().astimezone().isoformat(timespec='seconds'),
                                 'dock': 'clavis-native'}
     put('sources.lock.json', json.dumps(lock, ensure_ascii=False, indent=2) + '\n')

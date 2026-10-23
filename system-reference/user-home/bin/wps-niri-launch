@@ -7,6 +7,13 @@ case "$wps_component" in
     *) printf '%s\n' 'Usage: wps-niri-launch wps|et|wpp|wpspdf [files...]' >&2; exit 2 ;;
 esac
 
+# Use this dedicated cursor correction only in a uniform 200% Niri session.
+if [[ -z "${NIRI_SOCKET:-}" || ! -S "$NIRI_SOCKET" ]] || ! /usr/bin/niri msg --json outputs | /usr/bin/jq -e '
+    [.[] | select(.logical != null) | .logical.scale] as $scales
+    | ($scales | length) > 0 and ($scales | all(. == 2))' >/dev/null; then
+    exec "/usr/bin/$wps_component" "$@"
+fi
+
 if ! /usr/bin/systemctl --user start xwayland-wps.service; then
     /usr/bin/notify-send --app-name=WPS 'WPS 显示服务启动失败' '请检查 xwayland-wps.service 的运行状态。'
     exit 1
@@ -16,5 +23,5 @@ if ! @HOME@/.local/bin/wps-xwayland-input; then
 fi
 
 exec /usr/bin/env DISPLAY=:3 XCURSOR_THEME=capitaine-cursors XCURSOR_SIZE=48 \
-    QT_QPA_PLATFORM=xcb GTK_IM_MODULE=fcitx QT_IM_MODULE=fcitx XMODIFIERS=@im=fcitx \
+    QT_QPA_PLATFORM=xcb QT_FONT_DPI=192 GTK_IM_MODULE=fcitx QT_IM_MODULE=fcitx XMODIFIERS=@im=fcitx \
     "/usr/bin/$wps_component" "$@"

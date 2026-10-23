@@ -76,7 +76,7 @@ input {
 cursor {
     // 光标主题：填写已安装主题的目录名，例如 "breeze_cursors" 或 "Adwaita"。
     // 主题位于 /usr/share/icons 或 ~/.local/share/icons，且包含 cursors 子目录。
-    xcursor-theme "capitaine-cursors"
+    xcursor-theme "breeze_cursors"
     // 光标大小（像素）：常用 24、32、48。
     xcursor-size 24
 
@@ -86,9 +86,7 @@ cursor {
     // hide-after-inactive-ms 3000
 }
 
-// Work around cursor-plane artifacts on the AMD internal display.
 debug {
-    disable-cursor-plane
     // Accept activation from apps that forward stale input serials.
     honor-xdg-activation-with-invalid-serial
 }
@@ -307,7 +305,8 @@ layout {
     struts {
         // left 64
         // right 64
-        // top 64
+        // Cancel the 3px outer gap above windows; Clavis reserves its own height.
+        top -3
         // bottom 64
     }
 }
@@ -653,8 +652,9 @@ binds {
     // Alternatively, there are commands to move just a single window:
     // Mod+Ctrl+1 { move-window-to-workspace 1; }
 
-    // Switches focus between the current and the previous workspace.
-    // Mod+Tab { focus-workspace-previous; }
+    // Win+Tab fits windows from all workspaces into a thumbnail grid.
+    Mod+Tab repeat=false hotkey-overlay-title="按住 Win 切换窗口" { spawn "qs" "-c" "clavis" "ipc" "call" "window-overview" "next"; }
+    Mod+Shift+Tab repeat=false hotkey-overlay-title="反向切换窗口" { spawn "qs" "-c" "clavis" "ipc" "call" "window-overview" "previous"; }
 
     // The following binds move the focused window in and out of a column.
     // If the window is alone, they will consume it into the nearby column to the side.
@@ -806,3 +806,5 @@ window-rule {
     match title="^clavis-control-center$"
     geometry-corner-radius 23
 }
+
+include "clavis/panel-effects.kdl";

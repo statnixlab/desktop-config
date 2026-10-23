@@ -1,5 +1,5 @@
 {
-  "systemMonitorGpuId": "auto",
+  "systemMonitorGpuId": "pci:0000:01:00.0",
   "systemMonitorDiskDevice": "",
   "systemMonitorNetworkInterface": "",
   "storageCapacityDiskDevice": "follow-io"

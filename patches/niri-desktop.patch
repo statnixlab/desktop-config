@@ -1,16 +1,18 @@
 diff --git a/docs/wiki/Configuration:-Debug-Options.md b/docs/wiki/Configuration:-Debug-Options.md
-index ae546b536dcca61064b138fe45a3561350eabf47..f665b01f52c65c75bd452fc3fac7ffdb9f39c2d8 100644
+index ae546b536dcca61064b138fe45a3561350eabf47..b6a5421c4424d55ca25432e659f1a5e33aafb941 100644
 --- a/docs/wiki/Configuration:-Debug-Options.md
 +++ b/docs/wiki/Configuration:-Debug-Options.md
-@@ -25,6 +25,7 @@ debug {
+@@ -25,6 +25,9 @@ debug {
      disable-pipewire-dmabuf
      dbus-interfaces-in-non-session-instances
      wait-for-frame-completion-before-queueing
 +    force-full-repaint
++    full-repaint-reuse-buffers
++    high-refresh-workaround-above 144
      emulate-zero-presentation-time
      disable-resize-throttling
      disable-transactions
-@@ -35,6 +36,7 @@ debug {
+@@ -35,6 +38,7 @@ debug {
      skip-cursor-only-updates-during-vrr
      deactivate-unfocused-windows
      disable-10bit-output
@@ -18,7 +20,7 @@ index ae546b536dcca61064b138fe45a3561350eabf47..f665b01f52c65c75bd452fc3fac7ffdb
  }
  
  binds {
-@@ -203,6 +205,22 @@ debug {
+@@ -203,6 +207,62 @@ debug {
  }
  ```
  
@@ -38,10 +40,50 @@ index ae546b536dcca61064b138fe45a3561350eabf47..f665b01f52c65c75bd452fc3fac7ffdb
 +}
 +```
 +
++### `full-repaint-reuse-buffers`
++
++Use a full-output damage marker instead of resetting swapchain buffer ages when `force-full-repaint` is enabled.
++The marker does not draw pixels and preserves the existing buffer, DMA-BUF and framebuffer caches.
++It still repaints the full output for each scheduled composed frame. The leading marker prevents primary-plane direct scanout; hardware cursor allocation remains available.
++It does not schedule continuous redraws or affect screenshot and screencast render targets.
++
++This flag is disabled by default and has no effect without `force-full-repaint`.
++Changes take effect on configuration reload; remove this flag to return to the original buffer-age reset path.
++
++```kdl
++debug {
++    force-full-repaint
++    full-repaint-reuse-buffers
++}
++```
++
++### `high-refresh-workaround-above`
++
++Optionally limit `force-full-repaint`, `prefer-16bit-output`, and `restrict-primary-scanout-to-matching-format` to output modes strictly above a refresh rate, specified as an integer in Hz.
++For example, `144` disables those options at 143.998 or 144 Hz and allows them at 160 Hz.
++The options must still be enabled individually; this threshold does not turn them on by itself.
++`disable-10bit-output` remains independent and takes precedence over the 16-bit preference.
++Without a threshold, the existing options keep their unconditional behavior.
++
++The policy follows each output's selected DRM mode, including temporary mode previews and their rollback.
++It is checked on scheduled frames without polling or disconnecting the output.
++When the color policy changes, niri tests the renderer-supported format and modifier candidates and replaces the swapchain in place.
++If all candidates fail, it keeps the previous format and logs a warning; it does not retry every frame.
++The actual refresh rate, selected format, and effective workaround options are logged at initialization and policy changes.
++
++```kdl
++debug {
++    force-full-repaint
++    prefer-16bit-output
++    restrict-primary-scanout-to-matching-format
++    high-refresh-workaround-above 144
++}
++```
++
  ### `emulate-zero-presentation-time`
  
  Emulate zero (unknown) presentation time returned from DRM.
-@@ -351,6 +369,7 @@ By default, niri will try to output a 10-bit color format to the monitor (before
+@@ -351,6 +411,7 @@ By default, niri will try to output a 10-bit color format to the monitor (before
  However, this can currently cause problems on some Intel + NVIDIA mixed-GPU setups: the screen doesn't light up, or displays only white, etc.
  
  Until this is fixed in Smithay, you can disable 10-bit color formats by setting this debug flag.
@@ -49,7 +91,7 @@ index ae546b536dcca61064b138fe45a3561350eabf47..f665b01f52c65c75bd452fc3fac7ffdb
  
  ```kdl
  debug {
-@@ -358,6 +377,31 @@ debug {
+@@ -358,6 +419,31 @@ debug {
  }
  ```
  
@@ -63,8 +105,8 @@ index ae546b536dcca61064b138fe45a3561350eabf47..f665b01f52c65c75bd452fc3fac7ffdb
 +If allocation or the DRM configuration test fails, niri falls back to its usual 10-bit and then 8-bit formats.
 +`disable-10bit-output` takes precedence and keeps composition buffers at 8 bits per channel.
 +
-+The preference is applied when an output is initialized; log in again or turn the output off and on after changing it.
-+The selected format is logged at output initialization.
++The preference is applied when an output is initialized and when its color policy changes on a scheduled frame.
++The selected format is logged at initialization and policy changes.
 +FP16 buffers use twice the memory per buffer compared with 10-bit or 8-bit buffers and can increase memory bandwidth usage.
 +Screenshots and screencasts retain their existing formats.
 +
@@ -81,19 +123,129 @@ index ae546b536dcca61064b138fe45a3561350eabf47..f665b01f52c65c75bd452fc3fac7ffdb
  ### Key Bindings
  
  These are not debug options, but rather key bindings.
+diff --git a/docs/wiki/Fullscreen-and-Maximize.md b/docs/wiki/Fullscreen-and-Maximize.md
+index c8b41f13b52c251d199fbd0475375edba8070187..c1cd8294b598a9828670d904e5de4c27b2f3eca2 100644
+--- a/docs/wiki/Fullscreen-and-Maximize.md
++++ b/docs/wiki/Fullscreen-and-Maximize.md
+@@ -79,3 +79,19 @@ See also windowed fullscreen on the [screencasting features wiki page](./Screenc
+ 
+ [struts]: ./Configuration:-Layout.md#struts
+ [gaps]: ./Configuration:-Layout.md#gaps
++
++## Personal option: titlebar uses column width
++
++The local `layout { client-maximize-to-column; }` option routes maximize requests
++from already mapped application windows to the same column-width toggle as
++`maximize-column`. It targets the requesting window, even if another window has
++focus. It preserves reserved panel space, layout gaps and borders. Repeating the
++titlebar gesture restores the previous column width.
++
++Double-clicking the client titlebar and pressing its maximize button send the
++same Wayland request, so both follow this option. Full-width columns do not
++advertise the protocol Maximized state; subsequent clicks send another maximize
++request and toggle the width back. Floating windows remain unchanged, matching
++`maximize-column`. Initial window maximize requests, explicit
++`maximize-window-to-edges`, and fullscreen behavior are unchanged. The option is
++off by default.
+diff --git a/docs/wiki/Window-Effects.md b/docs/wiki/Window-Effects.md
+index 3893553475b5fc947c51096f545dac4c55bb2868..9739f49566ab24382c5885f4ba5c70d005f470ec 100644
+--- a/docs/wiki/Window-Effects.md
++++ b/docs/wiki/Window-Effects.md
+@@ -85,3 +85,19 @@ They can be implemented as the need arises.
+ - Cursor and drag-and-drop icon.
+ The main challenge here will be screencasts where the cursor is rendered separately.
+ This is problematic because non-xray effects require rendering the whole scene in one go rather than separately.
++
++### Independent application blur strength (desktop fork)
++
++For non-xray effects, `background-effect { blur true; xray false; blur-passes 3; }`
++overrides the global blur pass count for that window or layer surface. Omit
++`blur-passes` to inherit the global setting. The renderer clamps passes to 1–31.
++This works with window/layer rules and their popup rules; changing a rule damages
++the effect so its cached contents are redrawn.
++
++Xray uses shared wallpaper buffers and keeps the global blur strength. Clavis
++uses the global strength for panels (including wallpaper-only blur), and a
++non-xray override for application windows. Its own settings windows are excluded
++from application rules. `blur { off; }` still disables all blur.
++
++IPC `Capabilities.per_surface_blur` indicates support in the running compositor;
++a newly installed executable does not enable this in an already running session.
+diff --git a/niri-config/src/appearance.rs b/niri-config/src/appearance.rs
+index a1c832714986221a874e2e78ea119d62f114fca0..a8253416335b0b38b2cedf0f5dc3a9c8a6a1e584 100644
+--- a/niri-config/src/appearance.rs
++++ b/niri-config/src/appearance.rs
+@@ -1062,6 +1062,8 @@ pub struct BackgroundEffectRule {
+     #[knuffel(child, unwrap(argument))]
+     pub blur: Option<bool>,
+     #[knuffel(child, unwrap(argument))]
++    pub blur_passes: Option<u8>,
++    #[knuffel(child, unwrap(argument))]
+     pub noise: Option<FloatOrInt<0, 1000>>,
+     #[knuffel(child, unwrap(argument))]
+     pub saturation: Option<FloatOrInt<0, 1000>>,
+@@ -1085,13 +1087,16 @@ pub struct BackgroundEffect {
+     /// - `Some(true)`: always blur
+     pub blur: Option<bool>,
+ 
++    /// Override blur strength for non-xray effects. Xray keeps the shared blur.
++    pub blur_passes: Option<u8>,
++
+     pub noise: Option<f64>,
+     pub saturation: Option<f64>,
+ }
+ 
+ impl MergeWith<BackgroundEffectRule> for BackgroundEffect {
+     fn merge_with(&mut self, part: &BackgroundEffectRule) {
+-        merge_clone_opt!((self, part), xray, blur);
++        merge_clone_opt!((self, part), xray, blur, blur_passes);
+ 
+         if let Some(x) = part.noise {
+             self.noise = Some(x.0);
+@@ -1110,6 +1115,28 @@ mod tests {
+     use super::*;
+     use crate::Config;
+ 
++    #[test]
++    fn independent_blur_rules_merge_without_changing_global_strength() {
++        let config = Config::parse_mem(
++            r#"
++            blur { passes 2; }
++            window-rule { background-effect { blur true; xray false; blur-passes 5; }; }
++            layer-rule { background-effect { blur true; }; }
++        "#,
++        )
++        .unwrap();
++        assert_eq!(config.blur.passes, 2);
++        let mut effect = BackgroundEffect::default();
++        effect.merge_with(&config.window_rules[0].background_effect);
++        effect.merge_with(&BackgroundEffectRule {
++            saturation: Some(FloatOrInt(1.2)),
++            ..Default::default()
++        });
++        assert_eq!(effect.blur_passes, Some(5));
++        assert_eq!(effect.xray, Some(false));
++        assert_eq!(config.layer_rules[0].background_effect.blur_passes, None);
++    }
++
+     #[test]
+     fn parse_gradient_interpolation() {
+         assert_eq!(
 diff --git a/niri-config/src/debug.rs b/niri-config/src/debug.rs
-index 32de7f5310611f86b0b6eb16f02894e9335f627a..a2e0e0e085d77f1ae4d0c94dcb4b36a2cf36306f 100644
+index 32de7f5310611f86b0b6eb16f02894e9335f627a..14be467b81386ba1fc84100ef906edcd254cfa43 100644
 --- a/niri-config/src/debug.rs
 +++ b/niri-config/src/debug.rs
-@@ -7,6 +7,7 @@ pub struct Debug {
+@@ -7,6 +7,9 @@ pub struct Debug {
      pub preview_render: Option<PreviewRender>,
      pub dbus_interfaces_in_non_session_instances: bool,
      pub wait_for_frame_completion_before_queueing: bool,
 +    pub force_full_repaint: bool,
++    pub full_repaint_reuse_buffers: bool,
++    pub high_refresh_workaround_above: Option<u32>,
      pub enable_overlay_planes: bool,
      pub disable_cursor_plane: bool,
      pub disable_direct_scanout: bool,
-@@ -26,6 +27,7 @@ pub struct Debug {
+@@ -26,6 +29,7 @@ pub struct Debug {
      pub deactivate_unfocused_windows: bool,
      pub skip_cursor_only_updates_during_vrr: bool,
      pub disable_10bit_output: bool,
@@ -101,16 +253,20 @@ index 32de7f5310611f86b0b6eb16f02894e9335f627a..a2e0e0e085d77f1ae4d0c94dcb4b36a2
  }
  
  #[derive(knuffel::Decode, Debug, Default, PartialEq)]
-@@ -37,6 +39,8 @@ pub struct DebugPart {
+@@ -37,6 +41,12 @@ pub struct DebugPart {
      #[knuffel(child)]
      pub wait_for_frame_completion_before_queueing: Option<Flag>,
      #[knuffel(child)]
 +    pub force_full_repaint: Option<Flag>,
 +    #[knuffel(child)]
++    pub full_repaint_reuse_buffers: Option<Flag>,
++    #[knuffel(child, unwrap(argument))]
++    pub high_refresh_workaround_above: Option<u32>,
++    #[knuffel(child)]
      pub enable_overlay_planes: Option<Flag>,
      #[knuffel(child)]
      pub disable_cursor_plane: Option<Flag>,
-@@ -74,6 +78,8 @@ pub struct DebugPart {
+@@ -74,6 +84,8 @@ pub struct DebugPart {
      pub skip_cursor_only_updates_during_vrr: Option<Flag>,
      #[knuffel(child)]
      pub disable_10bit_output: Option<Flag>,
@@ -119,15 +275,16 @@ index 32de7f5310611f86b0b6eb16f02894e9335f627a..a2e0e0e085d77f1ae4d0c94dcb4b36a2
  }
  
  impl MergeWith<DebugPart> for Debug {
-@@ -82,6 +88,7 @@ impl MergeWith<DebugPart> for Debug {
+@@ -82,6 +94,8 @@ impl MergeWith<DebugPart> for Debug {
              (self, part),
              dbus_interfaces_in_non_session_instances,
              wait_for_frame_completion_before_queueing,
 +            force_full_repaint,
++            full_repaint_reuse_buffers,
              enable_overlay_planes,
              disable_cursor_plane,
              disable_direct_scanout,
-@@ -99,6 +106,7 @@ impl MergeWith<DebugPart> for Debug {
+@@ -99,9 +113,11 @@ impl MergeWith<DebugPart> for Debug {
              deactivate_unfocused_windows,
              skip_cursor_only_updates_during_vrr,
              disable_10bit_output,
@@ -135,11 +292,52 @@ index 32de7f5310611f86b0b6eb16f02894e9335f627a..a2e0e0e085d77f1ae4d0c94dcb4b36a2
          );
  
          merge_clone_opt!((self, part), preview_render, render_drm_device);
++        merge_clone_opt!((self, part), high_refresh_workaround_above);
+ 
+         self.ignored_drm_devices
+             .extend(part.ignored_drm_devices.iter().cloned());
+diff --git a/niri-config/src/layout.rs b/niri-config/src/layout.rs
+index f84528bd33bfd679c4197c33d6c77168d9cadd3b..69e768f518a565cc1b5e46462fed56113ef30824 100644
+--- a/niri-config/src/layout.rs
++++ b/niri-config/src/layout.rs
+@@ -19,6 +19,7 @@ pub struct Layout {
+     pub preset_window_heights: Vec<PresetSize>,
+     pub center_focused_column: CenterFocusedColumn,
+     pub always_center_single_column: bool,
++    pub client_maximize_to_column: bool,
+     pub empty_workspace_above_first: bool,
+     pub default_column_display: ColumnDisplay,
+     pub gaps: f64,
+@@ -42,6 +43,7 @@ impl Default for Layout {
+             default_column_width: Some(PresetSize::Proportion(0.5)),
+             center_focused_column: CenterFocusedColumn::Never,
+             always_center_single_column: false,
++            client_maximize_to_column: false,
+             empty_workspace_above_first: false,
+             default_column_display: ColumnDisplay::Normal,
+             gaps: 16.,
+@@ -66,6 +68,7 @@ impl MergeWith<LayoutPart> for Layout {
+             tab_indicator,
+             insert_hint,
+             always_center_single_column,
++            client_maximize_to_column,
+             empty_workspace_above_first,
+             gaps,
+         );
+@@ -117,6 +120,8 @@ pub struct LayoutPart {
+     #[knuffel(child)]
+     pub always_center_single_column: Option<Flag>,
+     #[knuffel(child)]
++    pub client_maximize_to_column: Option<Flag>,
++    #[knuffel(child)]
+     pub empty_workspace_above_first: Option<Flag>,
+     #[knuffel(child, unwrap(argument, str))]
+     pub default_column_display: Option<ColumnDisplay>,
 diff --git a/niri-config/src/lib.rs b/niri-config/src/lib.rs
-index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..51b4dd59166b311f46ebaadb44a43e4449dc9d13 100644
+index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..02ab2861488d2ed399c445591e9911d834a7fe96 100644
 --- a/niri-config/src/lib.rs
 +++ b/niri-config/src/lib.rs
-@@ -640,6 +640,24 @@ mod tests {
+@@ -640,6 +640,45 @@ mod tests {
          assert_eq!(config.input.keyboard.repeat_rate, 25);
      }
  
@@ -155,24 +353,87 @@ index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..51b4dd59166b311f46ebaadb44a43e44
 +    #[test]
 +    fn parse_force_full_repaint() {
 +        assert!(!do_parse("").debug.force_full_repaint);
++        assert!(!do_parse("").debug.full_repaint_reuse_buffers);
 +
 +        let config = do_parse("debug { force-full-repaint; prefer-16bit-output; }");
 +        assert!(config.debug.force_full_repaint);
 +        assert!(config.debug.prefer_16bit_output);
 +    }
 +
++    #[test]
++    fn parse_full_repaint_reuse_buffers() {
++        let config = do_parse("debug { full-repaint-reuse-buffers; }");
++        assert!(config.debug.full_repaint_reuse_buffers);
++        assert!(!config.debug.force_full_repaint);
++
++        let config = do_parse("debug { force-full-repaint; full-repaint-reuse-buffers; }");
++        assert!(config.debug.force_full_repaint);
++        assert!(config.debug.full_repaint_reuse_buffers);
++    }
++
++    #[test]
++    fn parse_high_refresh_workaround_threshold() {
++        assert_eq!(do_parse("").debug.high_refresh_workaround_above, None);
++        let config = do_parse("debug { high-refresh-workaround-above 144; }");
++        assert_eq!(config.debug.high_refresh_workaround_above, Some(144));
++        assert!(Config::parse_mem("debug { high-refresh-workaround-above -1; }").is_err());
++        assert!(Config::parse_mem("debug { high-refresh-workaround-above 144.5; }").is_err());
++    }
++
      #[track_caller]
      fn do_parse(text: &str) -> Config {
          Config::parse_mem(text)
-@@ -2284,6 +2302,7 @@ mod tests {
+@@ -1483,6 +1522,7 @@ mod tests {
+                 ],
+                 center_focused_column: OnOverflow,
+                 always_center_single_column: false,
++                client_maximize_to_column: false,
+                 empty_workspace_above_first: false,
+                 default_column_display: Tabbed,
+                 gaps: 8.0,
+@@ -1920,6 +1960,7 @@ mod tests {
+                     background_effect: BackgroundEffectRule {
+                         xray: None,
+                         blur: None,
++                        blur_passes: None,
+                         noise: None,
+                         saturation: None,
+                     },
+@@ -1929,6 +1970,7 @@ mod tests {
+                         background_effect: BackgroundEffectRule {
+                             xray: None,
+                             blur: None,
++                            blur_passes: None,
+                             noise: None,
+                             saturation: None,
+                         },
+@@ -1971,6 +2013,7 @@ mod tests {
+                     background_effect: BackgroundEffectRule {
+                         xray: None,
+                         blur: None,
++                        blur_passes: None,
+                         noise: None,
+                         saturation: None,
+                     },
+@@ -1980,6 +2023,7 @@ mod tests {
+                         background_effect: BackgroundEffectRule {
+                             xray: None,
+                             blur: None,
++                            blur_passes: None,
+                             noise: None,
+                             saturation: None,
+                         },
+@@ -2284,6 +2328,9 @@ mod tests {
                  preview_render: None,
                  dbus_interfaces_in_non_session_instances: false,
                  wait_for_frame_completion_before_queueing: false,
 +                force_full_repaint: false,
++                full_repaint_reuse_buffers: false,
++                high_refresh_workaround_above: None,
                  enable_overlay_planes: false,
                  disable_cursor_plane: false,
                  disable_direct_scanout: false,
-@@ -2308,6 +2327,7 @@ mod tests {
+@@ -2308,6 +2355,7 @@ mod tests {
                  deactivate_unfocused_windows: false,
                  skip_cursor_only_updates_during_vrr: false,
                  disable_10bit_output: false,
@@ -180,11 +441,79 @@ index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..51b4dd59166b311f46ebaadb44a43e44
              },
              workspaces: [
                  Workspace {
+diff --git a/niri-ipc/src/lib.rs b/niri-ipc/src/lib.rs
+index 8085095609d9d72090f26d4134a390ab2cf02526..5b6cfa27ec1a0592deb05c8017d04b983e789e84 100644
+--- a/niri-ipc/src/lib.rs
++++ b/niri-ipc/src/lib.rs
+@@ -189,6 +189,9 @@ pub struct Capabilities {
+     /// Supported values for `animations { window-minimize-effect "..."; }`.
+     #[serde(default)]
+     pub window_minimization_effects: Vec<String>,
++    /// Per-surface blur strength with non-xray background effects.
++    #[serde(default)]
++    pub per_surface_blur: bool,
+ }
+ 
+ /// Dock edge in the output's logical coordinate system, after output transform.
+@@ -2263,6 +2266,7 @@ mod tests {
+         let legacy: Capabilities =
+             serde_json::from_value(serde_json::json!({"window_minimization": true})).unwrap();
+         assert!(!legacy.window_minimization_animation);
++        assert!(!legacy.per_surface_blur);
+         for (request, wire) in [
+             (Request::Capabilities, serde_json::json!("Capabilities")),
+             (
+@@ -2285,10 +2289,11 @@ mod tests {
+             window_minimization: true,
+             window_minimization_animation: true,
+             window_minimization_effects: vec!["scale".into(), "genie".into()],
++            per_surface_blur: true,
+         });
+         assert_eq!(
+             serde_json::to_value(response).unwrap(),
+-            serde_json::json!({"Capabilities": {"window_minimization": true, "window_minimization_animation": true, "window_minimization_effects": ["scale", "genie"]}})
++            serde_json::json!({"Capabilities": {"window_minimization": true, "window_minimization_animation": true, "window_minimization_effects": ["scale", "genie"], "per_surface_blur": true}})
+         );
+     }
+ 
 diff --git a/src/backend/tty.rs b/src/backend/tty.rs
-index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..992b35c89019e9ded96c6b2242f4b36a94760fa8 100644
+index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad266a8188 100644
 --- a/src/backend/tty.rs
 +++ b/src/backend/tty.rs
-@@ -78,6 +78,24 @@ const SUPPORTED_COLOR_FORMATS_10BIT: [Fourcc; 3] =
+@@ -18,7 +18,7 @@ use niri_config::output::{MaxBpc, Modeline};
+ use niri_config::{Config, OutputName};
+ use niri_ipc::{HSyncPolarity, VSyncPolarity};
+ use smithay::backend::allocator::dmabuf::Dmabuf;
+-use smithay::backend::allocator::format::FormatSet;
++use smithay::backend::allocator::format::{get_opaque, FormatSet};
+ use smithay::backend::allocator::gbm::{GbmAllocator, GbmBufferFlags, GbmDevice};
+ use smithay::backend::allocator::Fourcc;
+ use smithay::backend::drm::compositor::{DrmCompositor, FrameFlags, PrimaryPlaneElement};
+@@ -51,7 +51,7 @@ use smithay::reexports::input::Libinput;
+ use smithay::reexports::rustix::fs::OFlags;
+ use smithay::reexports::wayland_protocols;
+ use smithay::reexports::wayland_server::protocol::wl_surface::WlSurface;
+-use smithay::utils::{DeviceFd, Transform};
++use smithay::utils::{DeviceFd, Rectangle, Transform};
+ use smithay::wayland::dmabuf::{DmabufFeedback, DmabufFeedbackBuilder, DmabufGlobal};
+ use smithay::wayland::drm_lease::{
+     DrmLease, DrmLeaseBuilder, DrmLeaseRequest, DrmLeaseState, LeaseRejected,
+@@ -65,10 +65,13 @@ use super::{IpcOutputMap, RenderResult};
+ use crate::backend::OutputId;
+ use crate::frame_clock::FrameClock;
+ use crate::niri::{Niri, RedrawState, State};
++use crate::render_helpers::damage::ExtraDamage;
+ use crate::render_helpers::debug::draw_damage;
+ use crate::render_helpers::renderer::AsGlesRenderer;
+ use crate::render_helpers::{resources, shaders, RenderCtx, RenderTarget};
+-use crate::utils::{get_monotonic_time, is_laptop_panel, logical_output, PanelOrientation};
++use crate::utils::{
++    get_monotonic_time, is_laptop_panel, logical_output, output_size, PanelOrientation,
++};
+ 
+ // When copying from rendering Nvidia dGPU to target iGPU,
+ // it only understands X/Abgr and not X/Argb.
+@@ -78,6 +81,129 @@ const SUPPORTED_COLOR_FORMATS_10BIT: [Fourcc; 3] =
  // Smithay should fall back to Xrgb/Xbgr automatically if needed.
  const SUPPORTED_COLOR_FORMATS: [Fourcc; 2] = [Fourcc::Argb8888, Fourcc::Abgr8888];
  
@@ -195,21 +524,209 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..992b35c89019e9ded96c6b2242f4b36a
 +    Fourcc::Abgr8888,
 +];
 +
-+fn output_color_formats(debug: &niri_config::Debug) -> &'static [Fourcc] {
-+    // An explicit request for 8-bit output takes precedence over the FP16 preference.
-+    if debug.disable_10bit_output {
-+        &SUPPORTED_COLOR_FORMATS
-+    } else if debug.prefer_16bit_output {
-+        &SUPPORTED_COLOR_FORMATS_16BIT
-+    } else {
-+        &SUPPORTED_COLOR_FORMATS_10BIT
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++enum OutputColorPolicy {
++    EightBit,
++    TenBit,
++    PreferSixteenBit,
++}
++
++impl OutputColorPolicy {
++    fn formats(self) -> &'static [Fourcc] {
++        match self {
++            Self::EightBit => &SUPPORTED_COLOR_FORMATS,
++            Self::TenBit => &SUPPORTED_COLOR_FORMATS_10BIT,
++            Self::PreferSixteenBit => &SUPPORTED_COLOR_FORMATS_16BIT,
++        }
++    }
++}
++
++fn output_format_modifiers(
++    renderer_formats: &FormatSet,
++    plane_formats: &FormatSet,
++    code: Fourcc,
++    implicit_only: bool,
++) -> Vec<Modifier> {
++    let opaque_code = get_opaque(code).unwrap_or(code);
++    let plane_formats = plane_formats
++        .iter()
++        .filter(|format| format.code == code || format.code == opaque_code)
++        .collect::<Vec<_>>();
++    let renderer_formats = renderer_formats
++        .iter()
++        .filter(|format| {
++            format.code == code && (!implicit_only || format.modifier == Modifier::Invalid)
++        })
++        .collect::<Vec<_>>();
++    if plane_formats.is_empty() || renderer_formats.is_empty() {
++        return Vec::new();
++    }
++
++    // Keep Smithay's find_supported_format negotiation, including its implicit/linear
++    // bridge. set_format still performs the final plane intersection and DRM test;
++    // in particular, do not invent explicit linear support for an implicit-only renderer.
++    if (plane_formats.len() == 1
++        && plane_formats[0].modifier == Modifier::Invalid
++        && renderer_formats
++            .iter()
++            .all(|f| f.modifier != Modifier::Invalid)
++        && renderer_formats
++            .iter()
++            .any(|f| f.modifier == Modifier::Linear))
++        || (renderer_formats.len() == 1
++            && renderer_formats[0].modifier == Modifier::Invalid
++            && plane_formats
++                .iter()
++                .all(|f| f.modifier != Modifier::Invalid)
++            && plane_formats.iter().any(|f| f.modifier == Modifier::Linear))
++    {
++        return vec![Modifier::Invalid];
++    }
++
++    let mut modifiers = Vec::new();
++    for format in plane_formats {
++        if renderer_formats
++            .iter()
++            .any(|f| f.modifier == format.modifier)
++            && !modifiers.contains(&format.modifier)
++        {
++            modifiers.push(format.modifier);
++        }
++    }
++    modifiers
++}
++
++#[derive(Debug, Clone, Copy, PartialEq, Eq)]
++struct OutputRenderPolicy {
++    color: OutputColorPolicy,
++    force_full_repaint: bool,
++    reuse_buffers: bool,
++    restrict_primary_scanout: bool,
++}
++
++impl OutputRenderPolicy {
++    fn for_refresh(debug: &niri_config::Debug, refresh_millihertz: i32) -> Self {
++        let allowed = debug
++            .high_refresh_workaround_above
++            .is_none_or(|hz| i64::from(refresh_millihertz) > i64::from(hz) * 1000);
++        let force_full_repaint = allowed && debug.force_full_repaint;
++        // The explicit 8-bit override is independent of the refresh-rate threshold.
++        let color = if debug.disable_10bit_output {
++            OutputColorPolicy::EightBit
++        } else if allowed && debug.prefer_16bit_output {
++            OutputColorPolicy::PreferSixteenBit
++        } else {
++            OutputColorPolicy::TenBit
++        };
++        Self {
++            color,
++            force_full_repaint,
++            reuse_buffers: force_full_repaint && debug.full_repaint_reuse_buffers,
++            restrict_primary_scanout: allowed && debug.restrict_primary_scanout_to_matching_format,
++        }
++    }
++
++    fn log(self, output: &str, refresh_millihertz: i32, actual_format: Fourcc) {
++        info!(
++            output,
++            refresh_millihertz,
++            format = ?actual_format,
++            requested_color = ?self.color,
++            force_full_repaint = self.force_full_repaint,
++            reuse_buffers = self.reuse_buffers,
++            restrict_primary_scanout = self.restrict_primary_scanout,
++            "output rendering policy"
++        );
 +    }
 +}
 +
  pub struct Tty {
      config: Rc<RefCell<Config>>,
      session: LibSeatSession,
-@@ -1437,13 +1455,9 @@ impl Tty {
+@@ -374,6 +500,10 @@ struct TtyOutputState {
+ struct Surface {
+     name: OutputName,
+     compositor: GbmDrmCompositor,
++    render_formats: FormatSet,
++    /// Last attempted policy, including failed format requests, to avoid per-frame retries.
++    render_policy: OutputRenderPolicy,
++    full_repaint_damage: ExtraDamage,
+     connector: connector::Handle,
+     dmabuf_feedback: Option<SurfaceDmabufFeedback>,
+     gamma_props: Option<GammaProps>,
+@@ -390,6 +520,71 @@ struct Surface {
+     sequence_delta_plot_name: tracy_client::PlotName,
+ }
+ 
++impl Surface {
++    fn update_render_policy(
++        &mut self,
++        allocator: &GbmAllocator<DeviceFd>,
++        policy: OutputRenderPolicy,
++        refresh_millihertz: i32,
++    ) {
++        if self.render_policy == policy {
++            return;
++        }
++
++        if self.render_policy.color != policy.color {
++            let mut selected = false;
++            // Match initialization: try all renderer modifiers first, then only implicit
++            // modifiers if every format failed. Never discard the current swapchain on error.
++            'formats: for implicit_only in [false, true] {
++                for &code in policy.color.formats() {
++                    if code == self.compositor.format() {
++                        selected = true;
++                        break 'formats;
++                    }
++                    let modifiers = output_format_modifiers(
++                        &self.render_formats,
++                        &self.compositor.surface().plane_info().formats,
++                        code,
++                        implicit_only,
++                    );
++                    if modifiers.is_empty() {
++                        continue;
++                    }
++                    match self
++                        .compositor
++                        .set_format(allocator.clone(), code, modifiers)
++                    {
++                        Ok(()) => {
++                            selected = true;
++                            break 'formats;
++                        }
++                        Err(err) => warn!(
++                            output = %self.name.connector,
++                            ?code,
++                            implicit_only,
++                            "could not change output composition format: {err:?}"
++                        ),
++                    }
++                }
++            }
++            if !selected {
++                warn!(
++                    output = %self.name.connector,
++                    format = ?self.compositor.format(),
++                    "keeping previous output format after all policy candidates failed"
++                );
++            }
++        }
++
++        self.render_policy = policy;
++        policy.log(
++            &self.name.connector,
++            refresh_millihertz,
++            self.compositor.format(),
++        );
++    }
++}
++
+ pub struct SurfaceDmabufFeedback {
+     pub render: DmabufFeedback,
+     pub scanout: DmabufFeedback,
+@@ -1437,13 +1632,9 @@ impl Tty {
              })
              .collect::<FormatSet>();
  
@@ -220,40 +737,400 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..992b35c89019e9ded96c6b2242f4b36a
 -        }
 -        .iter()
 -        .copied();
-+        let color_formats = output_color_formats(&self.config.borrow().debug)
-+            .iter()
-+            .copied();
++        let render_policy =
++            OutputRenderPolicy::for_refresh(&self.config.borrow().debug, wl_mode.refresh);
++        let color_formats = render_policy.color.formats().iter().copied();
  
          // Create the compositor.
          let res = DrmCompositor::new(
-@@ -1495,6 +1509,16 @@ impl Tty {
+@@ -1495,6 +1686,8 @@ impl Tty {
              compositor.set_debug_flags(DebugFlags::TINT);
          }
  
-+        if self.config.borrow().debug.prefer_16bit_output
-+            && !self.config.borrow().debug.disable_10bit_output
-+        {
-+            info!(
-+                output = %connector_name,
-+                format = ?compositor.format(),
-+                "selected output composition format with 16-bit preference"
-+            );
-+        }
++        render_policy.log(&connector_name, wl_mode.refresh, compositor.format());
 +
          let mut dmabuf_feedback = None;
          if let Ok(primary_renderer) = self.gpu_manager.single_renderer(&self.primary_render_node) {
              let primary_formats = primary_renderer.dmabuf_formats();
-@@ -1948,6 +1972,10 @@ impl Tty {
+@@ -1540,6 +1733,9 @@ impl Tty {
+             name: output_name,
+             connector: connector.handle(),
+             compositor,
++            render_formats,
++            render_policy,
++            full_repaint_damage: ExtraDamage::new(),
+             dmabuf_feedback,
+             gamma_props,
+             pending_gamma_change: None,
+@@ -1888,6 +2084,10 @@ impl Tty {
+             return rv;
+         }
+ 
++        let refresh = Mode::from(surface.compositor.pending_mode()).refresh;
++        let render_policy = OutputRenderPolicy::for_refresh(&self.config.borrow().debug, refresh);
++        surface.update_render_policy(&device.allocator, render_policy, refresh);
++
+         let mut renderer = match self.gpu_manager.renderer(
+             &self.primary_render_node,
+             &device.render_node.unwrap_or(self.primary_render_node),
+@@ -1908,6 +2108,16 @@ impl Tty {
+         };
+         let mut elements = niri.render_to_vec(ctx, output, true);
+ 
++        let force_full_repaint = render_policy.force_full_repaint;
++        let reuse_buffers = render_policy.reuse_buffers;
++        if force_full_repaint && reuse_buffers {
++            surface.full_repaint_damage.damage_all();
++            let geometry = Rectangle::from_size(output_size(output));
++            // Elements are front-to-back. Keep this no-op marker ahead of opaque surfaces
++            // so it cannot be culled, forcing full damage without discarding cached buffers.
++            elements.insert(0, surface.full_repaint_damage.render(geometry).into());
++        }
++
+         // Visualize the damage, if enabled.
+         if niri.debug_draw_damage {
+             let output_state = niri.output_state.get_mut(output).unwrap();
+@@ -1919,7 +2129,7 @@ impl Tty {
+         let flags = {
+             let debug = &self.config.borrow().debug;
+ 
+-            let primary_scanout_flag = if debug.restrict_primary_scanout_to_matching_format {
++            let primary_scanout_flag = if render_policy.restrict_primary_scanout {
+                 FrameFlags::ALLOW_PRIMARY_PLANE_SCANOUT
+             } else {
+                 FrameFlags::ALLOW_PRIMARY_PLANE_SCANOUT_ANY
+@@ -1948,6 +2158,10 @@ impl Tty {
  
          // Hand them over to the DRM.
          let drm_compositor = &mut surface.compositor;
-+        if self.config.borrow().debug.force_full_repaint {
++        if force_full_repaint && !reuse_buffers {
 +            // Smithay treats an age of zero as full-output damage for the next composed frame.
 +            drm_compositor.reset_buffer_ages();
 +        }
          match drm_compositor.render_frame::<_, _>(&mut renderer, &elements, [0.; 4], flags) {
              Ok(res) => {
                  let needs_sync = res.needs_sync()
+@@ -3538,8 +3752,118 @@ mod tests {
+     use insta::assert_debug_snapshot;
+     use niri_config::output::Modeline;
+     use niri_ipc::{HSyncPolarity, VSyncPolarity};
++    use smithay::backend::allocator::format::FormatSet;
++    use smithay::backend::allocator::{Format, Fourcc, Modifier};
++
++    use crate::backend::tty::{
++        calculate_drm_mode_from_modeline, calculate_mode_cvt, output_format_modifiers,
++        OutputColorPolicy, OutputRenderPolicy,
++    };
++
++    #[test]
++    fn output_modifiers_preserve_smithay_implicit_linear_bridge() {
++        let code = Fourcc::Abgr16161616f;
++        let formats = |code, modifier| FormatSet::from_iter([Format { code, modifier }]);
++        let implicit = formats(code, Modifier::Invalid);
++        let linear = formats(code, Modifier::Linear);
++        assert_eq!(
++            output_format_modifiers(&linear, &implicit, code, false),
++            [Modifier::Invalid]
++        );
++        assert_eq!(
++            output_format_modifiers(&implicit, &linear, code, false),
++            [Modifier::Invalid]
++        );
++        // The second case intentionally remains Invalid: set_format may reject it if
++        // the plane lacks implicit support, just as it does during initialization.
++        let opaque_implicit = formats(Fourcc::Xbgr16161616f, Modifier::Invalid);
++        assert_eq!(
++            output_format_modifiers(&linear, &opaque_implicit, code, false),
++            [Modifier::Invalid]
++        );
++
++        let unrelated = formats(Fourcc::Argb8888, Modifier::Linear);
++        assert!(output_format_modifiers(&unrelated, &implicit, code, false).is_empty());
++        assert!(output_format_modifiers(&linear, &unrelated, code, false).is_empty());
++        let non_linear = formats(code, Modifier::Unrecognized(42));
++        assert!(output_format_modifiers(&non_linear, &implicit, code, false).is_empty());
++        assert!(output_format_modifiers(&implicit, &non_linear, code, false).is_empty());
++        assert_eq!(
++            output_format_modifiers(&non_linear, &non_linear, code, false),
++            [Modifier::Unrecognized(42)]
++        );
++        assert!(output_format_modifiers(&linear, &implicit, code, true).is_empty());
++        assert_eq!(
++            output_format_modifiers(&implicit, &implicit, code, true),
++            [Modifier::Invalid]
++        );
++    }
++
++    #[test]
++    fn high_refresh_policy_tracks_both_mode_switch_directions() {
++        let config = niri_config::Config::parse_mem(
++            "debug { high-refresh-workaround-above 144; force-full-repaint; \
++             prefer-16bit-output; restrict-primary-scanout-to-matching-format; }",
++        )
++        .unwrap();
+ 
+-    use crate::backend::tty::{calculate_drm_mode_from_modeline, calculate_mode_cvt};
++        // Follow actual advertised millihertz, including the monitor's 143.998 Hz mode,
++        // an exact threshold, and repeated switches in both directions.
++        for (refresh, active) in [
++            (143_998, false),
++            (144_000, false),
++            (160_000, true),
++            (144_000, false),
++            (160_000, true),
++            (143_998, false),
++        ] {
++            let policy = OutputRenderPolicy::for_refresh(&config.debug, refresh);
++            assert_eq!(policy.force_full_repaint, active);
++            assert_eq!(policy.restrict_primary_scanout, active);
++            assert_eq!(
++                policy.color,
++                if active {
++                    OutputColorPolicy::PreferSixteenBit
++                } else {
++                    OutputColorPolicy::TenBit
++                },
++            );
++        }
++    }
++
++    #[test]
++    fn high_refresh_policy_preserves_defaults_and_explicit_eight_bit() {
++        let default = niri_config::Debug::default();
++        let policy = OutputRenderPolicy::for_refresh(&default, 160_000);
++        assert_eq!(policy.color, OutputColorPolicy::TenBit);
++        assert!(!policy.force_full_repaint);
++        assert!(!policy.restrict_primary_scanout);
++
++        let mut config = niri_config::Config::parse_mem(
++            "debug { force-full-repaint; full-repaint-reuse-buffers; \
++             prefer-16bit-output; restrict-primary-scanout-to-matching-format; }",
++        )
++        .unwrap();
++        let policy = OutputRenderPolicy::for_refresh(&config.debug, 60_000);
++        assert_eq!(policy.color, OutputColorPolicy::PreferSixteenBit);
++        assert!(policy.force_full_repaint);
++        assert!(policy.reuse_buffers);
++        assert!(policy.restrict_primary_scanout);
++
++        config.debug.high_refresh_workaround_above = Some(144);
++        config.debug.disable_10bit_output = true;
++        for (refresh, active) in [(144_000, false), (160_000, true)] {
++            let policy = OutputRenderPolicy::for_refresh(&config.debug, refresh);
++            assert_eq!(policy.color, OutputColorPolicy::EightBit);
++            assert_eq!(policy.force_full_repaint, active);
++            assert_eq!(policy.reuse_buffers, active);
++            assert_eq!(policy.restrict_primary_scanout, active);
++        }
++
++        // Large valid u32 thresholds must not overflow when converted to millihertz.
++        config.debug.high_refresh_workaround_above = Some(u32::MAX);
++        assert!(!OutputRenderPolicy::for_refresh(&config.debug, 160_000).force_full_repaint);
++    }
+ 
+     #[test]
+     fn test_calculate_drmmode_from_modeline() {
+diff --git a/src/handlers/xdg_shell.rs b/src/handlers/xdg_shell.rs
+index 2bc0d2f1b27076347be3d079f693436ef02fecc8..0a6c0f03c7cc37dcbfad3e97bf87cc5ae2e81d5e 100644
+--- a/src/handlers/xdg_shell.rs
++++ b/src/handlers/xdg_shell.rs
+@@ -499,7 +499,14 @@ impl XdgShellHandler for State {
+             mapped.set_needs_configure();
+ 
+             let window = mapped.window.clone();
+-            self.niri.layout.set_maximized(&window, true);
++            if self.niri.config.borrow().layout.client_maximize_to_column {
++                // CSD double-click and maximize buttons send the same request. A full-width
++                // column deliberately does not advertise Maximized, so the next click sends
++                // set_maximized again and toggles back, just like maximize-column.
++                self.niri.layout.toggle_full_width_for_window(&window);
++            } else {
++                self.niri.layout.set_maximized(&window, true);
++            }
+         } else if let Some(unmapped) = self.niri.unmapped_windows.get_mut(toplevel.wl_surface()) {
+             match &mut unmapped.state {
+                 InitialConfigureState::NotConfigured {
+diff --git a/src/ipc/server.rs b/src/ipc/server.rs
+index e7ceea6c4a4650f10a08ce496741f5f065c042ac..d702c12d6b44fd216a031c8a4d4e9ac2ef7dc259 100644
+--- a/src/ipc/server.rs
++++ b/src/ipc/server.rs
+@@ -288,6 +288,7 @@ async fn process(ctx: &ClientCtx, request: Request) -> Reply {
+             window_minimization: true,
+             window_minimization_animation: true,
+             window_minimization_effects: vec!["scale".into(), "genie".into()],
++            per_surface_blur: true,
+         }),
+         Request::SetWindowAnimationTargets { targets } => {
+             if targets.len() > 1024 {
+diff --git a/src/layout/mod.rs b/src/layout/mod.rs
+index f68061a8eeaf0dff185e578ed6c895a1477c0b3d..ed565eba619786696358ff5677ca4208f12c4ecc 100644
+--- a/src/layout/mod.rs
++++ b/src/layout/mod.rs
+@@ -3153,6 +3153,20 @@ impl<W: LayoutElement> Layout<W> {
+         workspace.toggle_full_width();
+     }
+ 
++    pub fn toggle_full_width_for_window(&mut self, window: &W::Id) {
++        if let Some(InteractiveMoveState::Moving(move_)) = &self.interactive_move {
++            if move_.tile.window().id() == window {
++                return;
++            }
++        }
++        for ws in self.workspaces_mut() {
++            if ws.has_window(window) {
++                ws.toggle_full_width_for_window(window);
++                return;
++            }
++        }
++    }
++
+     pub fn set_column_width(&mut self, change: SizeChange) {
+         let Some(workspace) = self.active_workspace_mut() else {
+             return;
+diff --git a/src/layout/scrolling.rs b/src/layout/scrolling.rs
+index c7d94c548d5cfef0756992083ebc4b0eeb8c70d8..c02bf44c3c0e8bf77d53579621f522164af698ef 100644
+--- a/src/layout/scrolling.rs
++++ b/src/layout/scrolling.rs
+@@ -2649,6 +2649,14 @@ impl<W: LayoutElement> ScrollingSpace<W> {
+         cancel_resize_for_column(&mut self.interactive_resize, col);
+     }
+ 
++    pub fn toggle_full_width_for_window(&mut self, window: &W::Id) {
++        let Some(col) = self.columns.iter_mut().find(|col| col.contains(window)) else {
++            return;
++        };
++        col.toggle_full_width();
++        cancel_resize_for_column(&mut self.interactive_resize, col);
++    }
++
+     pub fn set_window_width(&mut self, window: Option<&W::Id>, change: SizeChange) {
+         if self.columns.is_empty() {
+             return;
+diff --git a/src/layout/workspace.rs b/src/layout/workspace.rs
+index 80cdea43e9cceb3e9597bd6765f51edf8aaec224..1a54e0bb1b8eb93bb35a7e0edaf33acef53ddda8 100644
+--- a/src/layout/workspace.rs
++++ b/src/layout/workspace.rs
+@@ -1275,6 +1275,14 @@ impl<W: LayoutElement> Workspace<W> {
+         self.scrolling.toggle_full_width();
+     }
+ 
++    pub fn toggle_full_width_for_window(&mut self, window: &W::Id) {
++        // Match maximize-column: floating windows are left unchanged.
++        if self.floating.has_window(window) {
++            return;
++        }
++        self.scrolling.toggle_full_width_for_window(window);
++    }
++
+     pub fn set_column_width(&mut self, change: SizeChange) {
+         if self.floating_is_active.get() {
+             self.floating.set_window_width(None, change, true);
+diff --git a/src/niri.rs b/src/niri.rs
+index 450fb2473268ee50b0f69e9099587bcbe9a8ba25..c2183d3fecfae5151195e2e2daa9dd70dcdaa177 100644
+--- a/src/niri.rs
++++ b/src/niri.rs
+@@ -7515,6 +7515,7 @@ niri_render_elements! {
+ 
+ niri_render_elements! {
+     OutputRenderElements<R> => {
++        ExtraDamage = crate::render_helpers::damage::ExtraDamage,
+         Monitor = MonitorRenderElement<R>,
+         RescaledTile = RescaleRenderElement<TileRenderElement<R>>,
+         LayerSurface = LayerSurfaceRenderElement<R>,
+diff --git a/src/render_helpers/background_effect.rs b/src/render_helpers/background_effect.rs
+index d148b6c150cee758a8d059c885aea6c34959894c..d43be60ccbd8cf9eb06f69ebb254c198a3bfd5d8 100644
+--- a/src/render_helpers/background_effect.rs
++++ b/src/render_helpers/background_effect.rs
+@@ -33,6 +33,7 @@ pub struct BackgroundEffect {
+ #[derive(Debug, Clone, Copy, PartialEq, Default)]
+ pub struct Options {
+     pub blur: bool,
++    pub blur_passes: Option<u8>,
+     pub xray: bool,
+     pub noise: Option<f64>,
+     pub saturation: Option<f64>,
+@@ -123,6 +124,7 @@ impl BackgroundEffect {
+ 
+         let mut options = Options {
+             blur,
++            blur_passes: effect.blur_passes,
+             xray: effect.xray == Some(true),
+             noise: effect.noise,
+             saturation: effect.saturation,
+@@ -170,7 +172,13 @@ impl BackgroundEffect {
+         // Use noise/saturation from options, falling back to blur defaults if blurred, and
+         // to no effect if not blurred.
+         let blur = self.options.blur && !self.blur_config.off;
+-        let blur_options = blur.then_some(BlurOptions::from(self.blur_config));
++        let blur_options = blur.then(|| {
++            let mut options = BlurOptions::from(self.blur_config);
++            if let Some(passes) = self.options.blur_passes {
++                options.passes = passes;
++            }
++            options
++        });
+         let noise = if blur { self.blur_config.noise } else { 0. };
+         let noise = self.options.noise.unwrap_or(noise) as f32;
+         let saturation = if blur {
+diff --git a/src/render_helpers/damage.rs b/src/render_helpers/damage.rs
+index b1e113bbed4a1a7824eabb58118613d5b6a98a6e..06abc4cbe8bf2e050a2aef8327e986b0eecb5a04 100644
+--- a/src/render_helpers/damage.rs
++++ b/src/render_helpers/damage.rs
+@@ -68,3 +68,54 @@ impl<R: Renderer> RenderElement<R> for ExtraDamage {
+         Ok(())
+     }
+ }
++
++#[cfg(test)]
++mod tests {
++    use smithay::backend::renderer::damage::OutputDamageTracker;
++    use smithay::backend::renderer::element::Kind;
++    use smithay::backend::renderer::gles::GlesRenderer;
++    use smithay::utils::Transform;
++
++    use super::*;
++    use crate::niri::OutputRenderElements;
++    use crate::render_helpers::solid_color::{SolidColorBuffer, SolidColorRenderElement};
++
++    #[test]
++    fn full_output_marker_repaints_unchanged_opaque_content() {
++        for (mode_size, scale, transform) in [
++            ((3840, 2160), 2., Transform::Normal),
++            ((800, 600), 1.25, Transform::_90),
++        ] {
++            let mode_size: Size<i32, Physical> = mode_size.into();
++            let output_rect = Rectangle::from_size(transform.transform_size(mode_size));
++            let logical_rect = output_rect.to_f64().to_logical(scale);
++            let background = SolidColorBuffer::new(logical_rect.size, [0.1, 0.2, 0.3, 1.]);
++            let background =
++                SolidColorRenderElement::from_buffer(&background, (0., 0.), 1., Kind::Unspecified);
++            let normal = [OutputRenderElements::<GlesRenderer>::SolidColor(
++                background.clone(),
++            )];
++            let mut tracker = OutputDamageTracker::new(mode_size, scale, transform);
++
++            // Establish an unchanged opaque scene with an otherwise reusable buffer.
++            tracker.damage_output(1, &normal).unwrap();
++            assert!(tracker.damage_output(1, &normal).unwrap().0.is_none());
++
++            let mut marker = ExtraDamage::new();
++            for _ in 0..2 {
++                marker.damage_all();
++                let elements = [
++                    OutputRenderElements::<GlesRenderer>::ExtraDamage(marker.render(logical_rect)),
++                    OutputRenderElements::SolidColor(background.clone()),
++                ];
++                let (damage, _) = tracker.damage_output(1, &elements).unwrap();
++                assert_eq!(damage.map(Vec::as_slice), Some([output_rect].as_slice()));
++            }
++
++            // Removing the marker can damage the removal frame, but subsequent unchanged
++            // frames must return to ordinary damage tracking.
++            tracker.damage_output(1, &normal).unwrap();
++            assert!(tracker.damage_output(1, &normal).unwrap().0.is_none());
++        }
++    }
++}
 diff --git a/src/render_helpers/shaders/genie.frag b/src/render_helpers/shaders/genie.frag
 index 2d1913433b197e8fbe52a5bcfd8d1f1fa8cd1287..6e8384866fe1ee3f3e3950f21292241b86243e04 100644
 --- a/src/render_helpers/shaders/genie.frag
@@ -642,4 +1519,117 @@ index 8faab3d9f9be7e314cea40ea5ed0933a9d6a3fd8..12e03948561b1d6451d7502c240b5421
 +        near_icon > 100,
 +        "Genie restore did not start near the Dock icon"
 +    );
++}
+diff --git a/src/tests/mod.rs b/src/tests/mod.rs
+index 209370017b224a5dd3be20969cea290391ca3922..bc01b9517f8053ea69471f483a1cc1ac5faed552 100644
+--- a/src/tests/mod.rs
++++ b/src/tests/mod.rs
+@@ -13,6 +13,7 @@ mod minimize_animation;
+ mod minimize_capture;
+ mod minimize_ipc;
+ mod remove_output;
++mod titlebar_column;
+ mod transactions;
+ mod virtual_pointer;
+ mod window_opening;
+diff --git a/src/tests/titlebar_column.rs b/src/tests/titlebar_column.rs
+new file mode 100644
+index 0000000000000000000000000000000000000000..b6149927835e124f6a4ca01d830f19e3c793c894
+--- /dev/null
++++ b/src/tests/titlebar_column.rs
+@@ -0,0 +1,95 @@
++use niri_config::Config;
++use smithay::reexports::wayland_protocols::xdg::shell::client::xdg_toplevel;
++use wayland_client::protocol::wl_surface::WlSurface;
++
++use super::client::{ClientId, Configure};
++use super::Fixture;
++
++fn open_window(f: &mut Fixture, id: ClientId) -> WlSurface {
++    let window = f.client(id).create_window();
++    let surface = window.surface.clone();
++    window.commit();
++    f.roundtrip(id);
++    let window = f.client(id).window(&surface);
++    window.attach_new_buffer();
++    window.set_size(100, 100);
++    window.ack_last_and_commit();
++    f.double_roundtrip(id);
++    surface
++}
++
++fn last_configure(f: &mut Fixture, id: ClientId, surface: &WlSurface) -> Configure {
++    f.client(id)
++        .window(surface)
++        .configures_received
++        .last()
++        .unwrap()
++        .1
++        .clone()
++}
++
++fn set_up() -> (Fixture, ClientId, WlSurface) {
++    let config = Config::parse_mem(
++        "layout { client-maximize-to-column; gaps 16; struts { top 40; bottom 30; }; }",
++    )
++    .unwrap();
++    let mut f = Fixture::with_config(config);
++    f.add_output(1, (1920, 1080));
++    let id = f.add_client();
++    let surface = open_window(&mut f, id);
++    (f, id, surface)
++}
++
++#[test]
++fn titlebar_column_matches_shortcut_and_restores() {
++    let (mut f, id, surface) = set_up();
++    let original = last_configure(&mut f, id, &surface);
++    f.niri().layout.toggle_full_width();
++    f.double_roundtrip(id);
++    let shortcut = last_configure(&mut f, id, &surface);
++    assert!(shortcut.size.0 > original.size.0);
++    assert!(shortcut.size.0 < 1920 && shortcut.size.1 < 1010);
++    f.niri().layout.toggle_full_width();
++    f.double_roundtrip(id);
++    for _ in 0..2 {
++        f.client(id).window(&surface).set_maximized();
++        f.double_roundtrip(id);
++        let clicked = last_configure(&mut f, id, &surface);
++        assert_eq!(clicked.size, shortcut.size);
++        assert!(!clicked.states.contains(&xdg_toplevel::State::Maximized));
++        f.client(id).window(&surface).ack_last_and_commit();
++        f.double_roundtrip(id);
++        f.client(id).window(&surface).set_maximized();
++        f.double_roundtrip(id);
++        assert_eq!(last_configure(&mut f, id, &surface).size, original.size);
++        f.client(id).window(&surface).ack_last_and_commit();
++        f.double_roundtrip(id);
++    }
++}
++
++#[test]
++fn titlebar_column_targets_requesting_window() {
++    let (mut f, id, first) = set_up();
++    let second = open_window(&mut f, id);
++    let first_before = last_configure(&mut f, id, &first).size;
++    let second_before = last_configure(&mut f, id, &second).size;
++    f.client(id).window(&first).set_maximized();
++    f.double_roundtrip(id);
++    assert!(last_configure(&mut f, id, &first).size.0 > first_before.0);
++    assert_eq!(last_configure(&mut f, id, &second).size, second_before);
++}
++
++#[test]
++fn titlebar_column_leaves_floating_like_shortcut() {
++    let (mut f, id, surface) = set_up();
++    f.niri().layout.toggle_window_floating(None);
++    f.double_roundtrip(id);
++    let original = last_configure(&mut f, id, &surface);
++    f.niri().layout.toggle_full_width();
++    f.double_roundtrip(id);
++    f.client(id).window(&surface).set_maximized();
++    f.double_roundtrip(id);
++    let clicked = last_configure(&mut f, id, &surface);
++    assert_eq!(clicked.size, original.size);
++    assert!(!clicked.states.contains(&xdg_toplevel::State::Maximized));
 +}

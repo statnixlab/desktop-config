@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.freedesktop.impl.portal.desktop.nautilus_niri
+Exec=/usr/bin/python3 "@HOME@/.local/libexec/nautilus-niri-filechooser.py"
+SystemdService=nautilus-niri-filechooser.service
