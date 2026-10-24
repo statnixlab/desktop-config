@@ -1,0 +1,9 @@
+// Trial of Smithay PR #2151; the original configuration remains available.
+include "@HOME@/.config/niri/refresh-aware-flicker.kdl"
+debug {
+    force-full-repaint false
+    full-repaint-reuse-buffers false
+    prefer-16bit-output false
+    restrict-primary-scanout-to-matching-format false
+    keep-previous-frame-buffer
+}

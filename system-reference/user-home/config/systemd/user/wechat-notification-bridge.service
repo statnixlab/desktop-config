@@ -1,5 +1,5 @@
 [Unit]
-Description=WeChat tray to desktop notification bridge
+Description=WeChat unread counter notification fallback
 PartOf=graphical-session.target
 After=graphical-session.target
 

@@ -1,4 +1,4 @@
-# 本机 4K 160Hz 下的 Niri 闪烁规避方案
+# 本机 4K 160Hz 下的 Niri 闪烁修复与历史规避方案
 
 **这是这台电脑上的实测情况。用户的另一台电脑使用相同系统和桌面环境，显示正常。**
 另一台电脑的显卡、显示器、驱动及连接方式未在本次排查中逐项核对，因此不能将问题
@@ -6,6 +6,38 @@
 
 本目录只保存按需参考，默认安装、普通恢复和 `--same-hardware` 恢复都不会启用它。
 输出规避开关默认关闭，刷新率阈值默认未设置。正常的电脑无需应用此方案。
+
+
+## 当前验证有效：Smithay #2151（2026-10-24）
+
+在下述同一台机器上，应用 [Smithay PR #2151](https://github.com/Smithay/smithay/pull/2151)
+后用户确认“已经不闪了”；恢复 Orca GPU 加速后再次确认修复可行。
+重新登录后的进程二进制 SHA-256 与构建一致，实际输出为 **4K 160Hz、缩放 2、AB30**，
+日志为 `keep_previous_frame_buffer=true`、`force_full_repaint=false`、
+`restrict_primary_scanout=false`，FP16 已关闭。当前 NVIDIA 驱动仍为 615.78.08。
+
+补丁将上一帧的主缓冲额外保留一帧，避免驱动尚在读取时被过早复用。
+保留所有原有桌面定制；不改动缩放、光标、输入法或截图方案。
+尚未测量额外功耗和帧率，也未完成长期、游戏及全部应用回归。
+
+本仓库 `sources.lock.json` 固定 Smithay 基准与补丁哈希；`scripts/build-niri.sh`
+会构建包含该补丁的 Niri。对旧的、有其他修改的源码目录，它会拒绝覆盖；可用
+`NIRI_SOURCE_DIR="$HOME/.local/share/niri-retained-frame-source" ./scripts/build-niri.sh`
+另选目录。该命令安装用户目录 Niri，但不重启运行中的桌面。安装前保留旧二进制。
+
+按需启用示例为本目录 `retained-frame.kdl` 和 `99-retained-frame.conf`。
+将 KDL 放到 `~/.config/niri/`，它默认包含 `config.kdl`；若本机使用额外的入口链，
+应先把 include 改为该机器现有入口，保留标题栏等定制，再校验。
+将服务片段放到 `~/.config/systemd/user/niri.service.d/`，执行用户 daemon-reload，
+保存工作并注销重新登录。不要在活动会话里重启 Niri。
+
+本机实际试用入口、完整 include 链和服务覆盖另保存在 `../user-home/`：
+`smithay-2151-test.kdl` 包含原来的 `refresh-aware-flicker.kdl`，
+`99-smithay-2151-test.conf` 使用独立二进制 `niri-smithay-2151`。
+这个独立二进制不上传，也不是普通构建脚本的安装名称；参考文件不能不加核对直接复制。
+本机回退只需撤下该服务覆盖并重新登录，旧二进制与原来的 FP16/完整重绘入口保留。
+
+以下章节记录 2026-10-18 的旧组合及其边界，供历史对照。
 
 ## 出现问题的机器
 

@@ -63,3 +63,25 @@ limits.
 The complete current source delta, including the new titlebar test file, is
 preserved against the unchanged pinned base commit. Local entrypoint examples
 are saved under `system-reference/user-home/`; they are not automatically enabled.
+
+## Verified retained-frame workaround (2026-10-24)
+
+`smithay-retain-frame.patch` is the exact diff from [Smithay PR #2151](https://github.com/Smithay/smithay/pull/2151),
+head `0c649d2d6824b60b7bfe27f1fdb5f2fbf4311ac4`, applied to the pinned Smithay
+`22571baa20d34d71092942dbb520c4e3fbbd6263`. The upstream MIT license applies;
+see `Smithay-LICENSE.txt`. The PR is not merged as of this snapshot.
+
+The Niri integration adds `debug.keep-previous-frame-buffer` (default off),
+sets it on output creation and policy changes, and respects the existing
+refresh-rate threshold. At 4K160 the verified output is AB30, retained buffer
+on, full repaint off, FP16 off, matching-format restriction off. The user
+confirmed no flicker and later confirmed success after restoring Orca GPU acceleration.
+
+The mechanism retains the retiring primary swapchain buffer for one extra
+frame. It uses an additional buffer and can increase damage redraw; no
+controlled performance/power measurements were performed. This replaces the
+older workaround only in the optional machine configuration.
+
+The builder prepares both pinned sources and compares the complete patched
+working tree before reuse. Local edits or unexpected untracked files stop the
+build. The original user's installed compositor is never restarted by it.

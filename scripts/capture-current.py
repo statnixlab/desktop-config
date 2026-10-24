@@ -29,7 +29,12 @@ REFERENCE_CONFIG_FILES = [
     'systemd/user/nautilus-niri-filechooser.service',
     'xdg-desktop-portal/niri-portals.conf',
     'niri/full-repaint-diagnostic.kdl', 'niri/titlebar-column.kdl',
-    'niri/refresh-aware-flicker.kdl',
+    'niri/refresh-aware-flicker.kdl', 'niri/smithay-2151-test.kdl',
+    'systemd/user/niri.service.d/99-smithay-2151-test.conf',
+    'systemd/user/default-app-icons.service', 'systemd/user/default-app-icons.path',
+    'systemd/user/default-app-icons.timer', 'systemd/user/tailscale-systray.service',
+    'systemd/user/ydotool.service.d/10-user-socket.conf',
+    'mimeapps.list', 'niri-mimeapps.list', 'chatgpt-flags.conf', 'user-dirs.dirs',
     'systemd/user/niri.service.d/90-full-repaint-diagnostic.conf',
     'systemd/user/niri.service.d/95-titlebar-column.conf',
     'systemd/user/niri.service.d/96-refresh-aware-flicker.conf',
@@ -37,13 +42,15 @@ REFERENCE_CONFIG_FILES = [
 REFERENCE_BIN_FILES = [
     'chat-hidpi-launch', 'chat-hidpi-input', 'wps-niri-launch', 'wps-xwayland-input',
     'wechat-notification-bridge.py', 'wps', 'wpspdf', 'et', 'wpp',
-    'Manggo',
+    'Manggo', 'orca-ide', 'orca-desktop', 'zotero',
 ]
 REFERENCE_DESKTOP_FILES = [
     'chatgpt.desktop', 'wechat.desktop', 'qq.desktop',
     'wps-office-et.desktop', 'wps-office-pdf.desktop', 'wps-office-prometheus.desktop',
     'wps-office-wpp.desktop', 'wps-office-wps.desktop',
-    'com.pylogmon.Manggo.desktop',
+    'com.pylogmon.Manggo.desktop', 'orca-ide.desktop', 'zotero.desktop',
+    'ai.storyteller.artcraft-launcher.desktop', 'ai.storyteller.pdfcraft.desktop',
+    'ai.storyteller.vectorcraft.desktop', 'ai.storyteller.wordcraft.desktop',
 ]
 
 
@@ -92,7 +99,7 @@ def capture(home, root=ROOT):
             content = content.replace(str(home) + '/.local/share/cloud-mounts/quark', '"$HOME/.local/share/cloud-mounts/quark"')
         content = content.replace(str(home) + '/.local/bin/qs', '/usr/bin/qs')
         content = content.replace(str(home), '@HOME@')
-        if path.suffix == '.kdl':
+        if path.suffix == '.kdl' or path.name == 'user-dirs.dirs':
             content = '\n'.join(line.rstrip() for line in content.splitlines()) + '\n'
         if (relative.startswith('config/gtk-') and path.suffix == '.svg') or relative.startswith('config/fontconfig/'):
             content = '\n'.join(line.rstrip() for line in content.splitlines()) + '\n'
@@ -146,7 +153,7 @@ def capture(home, root=ROOT):
             content += '\ninclude "clavis/panel-effects.kdl";\n'
         # GPU selection and flicker workarounds belong to optional machine references.
         content = '\n'.join(line for line in content.splitlines() if not re.match(
-            r'\s*(?:render-drm-device|disable-cursor-plane|prefer-16bit-output|restrict-primary-scanout-to-matching-format|force-full-repaint|full-repaint-reuse-buffers|high-refresh-workaround-above)\b', line)
+            r'\s*(?:render-drm-device|disable-cursor-plane|prefer-16bit-output|restrict-primary-scanout-to-matching-format|force-full-repaint|full-repaint-reuse-buffers|high-refresh-workaround-above|keep-previous-frame-buffer)\b', line)
             and not line.strip().startswith(('// Use the NVIDIA GPU', '// NVIDIA high-refresh workaround:'))) + '\n'
         niri_config.write_text(content)
     for name in ['manggo-shortcuts.py', 'qq-native-screenshot.py']:
@@ -198,6 +205,10 @@ def capture(home, root=ROOT):
                 preferences['gsettings'].append({'schema': schema, 'key': key, 'value': value})
         for mime in ['inode/directory', 'video/matroska']:
             preferences['mime'][mime] = subprocess.check_output(['xdg-mime', 'query', 'default', mime], text=True).strip()
+        put('system-reference/user-home/config/nyx-desktop-style/desktop-preferences.json', json.dumps(preferences, ensure_ascii=False, indent=2) + '\n')
+        for setting in preferences['gsettings']:
+            if setting['key'] == 'icon-theme' and setting['value'] in ["'Clavis-Default-Apps'", "'Clavis-Default-Apps-Refresh'"]:
+                setting['value'] = "'Clavis-Reference'"
         put('config/nyx-desktop-style/desktop-preferences.json', json.dumps(preferences, ensure_ascii=False, indent=2) + '\n')
     for name in ['konsolerc', 'plasma-localerc', 'kded5rc', 'kdeglobals']:
         copy(home / '.config' / name, 'config/' + name)
@@ -246,6 +257,7 @@ def capture(home, root=ROOT):
     # Keep the custom file chooser and exact machine entrypoints as opt-in references.
     for source_path, relative in [
         ('.local/libexec/nautilus-niri-filechooser.py', 'libexec/nautilus-niri-filechooser.py'),
+        ('.local/libexec/default-app-icons.py', 'libexec/default-app-icons.py'),
         ('.local/share/dbus-1/services/org.freedesktop.impl.portal.desktop.nautilus_niri.service', 'share/dbus-1/services/org.freedesktop.impl.portal.desktop.nautilus_niri.service'),
         ('.local/share/xdg-desktop-portal/portals/nautilus-niri.portal', 'share/xdg-desktop-portal/portals/nautilus-niri.portal'),
         ('.config/niri/config.kdl', 'config/niri/config.kdl'),

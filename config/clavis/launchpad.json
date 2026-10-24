@@ -173,12 +173,14 @@
       "kind": "app"
     },
     {
-      "id": "smplayer",
-      "kind": "app"
-    },
-    {
-      "id": "SPlayer",
-      "kind": "app"
+      "children": [
+        "vlc",
+        "SPlayer",
+        "smplayer"
+      ],
+      "id": "folder:a6be678e",
+      "kind": "folder",
+      "name": "播放器"
     },
     {
       "id": "com.microsoft.VSCode",
@@ -210,6 +212,33 @@
     },
     {
       "id": "nvidia-settings",
+      "kind": "app"
+    },
+    {
+      "children": [
+        "ai.storyteller.pdfcraft",
+        "ai.storyteller.artcraft-launcher",
+        "ai.storyteller.wordcraft",
+        "ai.storyteller.vectorcraft"
+      ],
+      "id": "folder:ebe201b4",
+      "kind": "folder",
+      "name": "CRAFT"
+    },
+    {
+      "id": "aws-windows-rdp",
+      "kind": "app"
+    },
+    {
+      "id": "com.obsproject.Studio",
+      "kind": "app"
+    },
+    {
+      "id": "orca-ide",
+      "kind": "app"
+    },
+    {
+      "id": "tailscale-systray",
       "kind": "app"
     }
   ],

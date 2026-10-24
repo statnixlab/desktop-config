@@ -2,7 +2,7 @@
 Type=Application
 Version=1.0
 Name=Manggo
-Exec="@HOME@/.local/bin/Manggo"
+Exec="/usr/lib/manggo/bin/Manggo"
 Terminal=false
 NoDisplay=true
 X-GNOME-Autostart-enabled=true

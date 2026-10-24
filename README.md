@@ -2,7 +2,7 @@
 
 这个公开仓库保存当前桌面的可迁移配置、主题资源和安装脚本。桌面源码位于
 [statnixlab/quickshell](https://github.com/statnixlab/quickshell/tree/personal/cachyos-niri)，
-本仓库通过 `sources.lock.json` 固定 Clavis、定制 Niri、key-cli 和 MacTahoe 图标的版本。
+本仓库通过 `sources.lock.json` 固定 Clavis、定制 Niri、Smithay、key-cli 和 MacTahoe 图标的版本。
 
 ## 在另一台电脑上安装
 
@@ -31,7 +31,7 @@ cd desktop-config
 1. 校验快照并显示恢复计划，安装 Arch 依赖和固定版本的 key-cli。
 2. 备份目标电脑已有的同名文件，再恢复桌面设置。
 3. 编译固定版本的 `StatIndet/niri-edge` 并应用本仓库补丁；保留 Genie 最小化、
-   HiDPI 坐标修复和 PipeWire SHM 屏幕共享修复。
+   HiDPI 坐标修复和 PipeWire SHM 屏幕共享修复，并构建固定版本的 Smithay 防闪补丁。
 4. 安装固定提交的 MacTahoe 图标主题，编译并安装 Clavis 原生模块和 Niri Launchpad。
 5. 校验 Niri 配置，启用 Clavis、剪贴板、Fcitx5 和主题同步服务。
    旧独立 `nyx-dock.service` 会被关闭，避免出现两个 Dock。
@@ -108,7 +108,8 @@ Win 与其他按键组合时保持原来的修饰键功能。单击需在 300ms 
 
 ## 新机器上的差异
 
-- 本快照包含 `window-minimize-effect "genie"`，必须完成 `build-niri.sh` 后才使用该配置。
+- 定制构建支持 Genie 最小化；当前快照选择 `window-minimize-effect "scale"`。
+  必须完成 `build-niri.sh` 后才使用完整配置。
   普通发行版 Niri 可能尚不支持这个选项，不能只复制配置而跳过构建。
 - 启用中文 UTF-8 locale（通常是 `zh_CN.UTF-8`）。网络、蓝牙、声卡驱动和休眠能力
   由新系统设置；除上述 keyd 规则外，仓库不自动覆盖 `/etc`、bootloader、resume 或硬件授权。
@@ -150,9 +151,10 @@ Manggo 1.1.1 的 Wayland 顶部拖动兼容源码在
 
 ## 仅本机启用的显示兼容方案
 
-2026-10-18，在这台 **RTX 4070 SUPER / P2710V、4K 160Hz** 电脑上，使用 FP16
-输出与完整重绘组合规避了 Niri 右下区域闪烁。**另一台使用相同系统和桌面环境的电脑
-显示正常**；这不是给所有机器启用的通用默认设置。
+2026-10-24，在这台 **RTX 4070 SUPER / P2710V、4K 160Hz** 电脑上，用户确认
+Smithay PR #2151 的上一帧缓冲保留补丁消除了右下区域闪烁；日志确认使用 AB30 输出，
+此前的 FP16 与完整重绘规避已关闭。Orca 恢复 GPU 加速后，用户再次确认修复可行。
+**另一台使用相同系统和桌面环境的电脑显示正常**；这不是给所有机器启用的通用默认设置。
 
 硬件、版本、实测边界、代价和按需启停方法见
 [`system-reference/nvidia-flicker/`](system-reference/nvidia-flicker/)。相关补丁包含在
@@ -182,6 +184,21 @@ Manggo 1.1.1 的 Wayland 顶部拖动兼容源码在
 移除入口不会删除目录。选择窗口的“磁盘”区域列出已挂载到 `/mnt/`、`/media/`、
 `/run/media/` 的分区，包括 Windows 文件夹，也可以通过“文件系统”或 `Ctrl+L`
 输入路径。恢复书签不会自动挂载分区或连接网盘，目标路径需要先可用。
+
+## 2026-10-24 配置快照
+
+新增可复现的 Smithay #2151 补丁、Niri 配置开关及依赖锁定；新开关默认关闭，
+按需启用的本机入口和实测记录保存在 `system-reference/nvidia-flicker/`。
+`build-niri.sh --prepare-only` 可以只获取并校验两份源码与补丁，不编译或安装。
+若已有 Niri 源码包含不同修改，指定新的 `NIRI_SOURCE_DIR`，构建脚本不会覆盖它。
+
+Clavis 固定到包含 OpenList 托盘图标修复的提交，并保留之前的灵动岛文件夹快速访问、
+书签同步、窗口总览、独立模糊和顶栏定制。同步当前启动台布局、最小化动画、输入法
+通知设置、微信启动与通知桥接脚本。Orca 的启动器已恢复 GPU 加速。
+
+另保存默认应用文件图标生成器、MIME 关联、空白右键新建模板、Zotero/ArtCraft 入口、
+Tailscale 托盘和 ydotool socket 配置参考，见
+[`system-reference/desktop-extras/`](system-reference/desktop-extras/)。应用数据与程序二进制不包含在快照中。
 
 ## 刷新快照
 

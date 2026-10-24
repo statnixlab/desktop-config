@@ -1,0 +1,6 @@
+[Unit]
+Description=Sync file icons with default applications
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python %h/.local/libexec/default-app-icons.py

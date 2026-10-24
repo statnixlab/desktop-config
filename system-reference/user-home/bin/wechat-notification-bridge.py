@@ -1,234 +1,226 @@
 #!/usr/bin/python3
-"""Turn WeChat's blinking tray icon into one desktop notification per episode.
+"""Fill missing WeChat notifications using only its navigation unread count.
 
-Only tray status and icon alpha values are inspected. No chat files, message
-text, tooltip contents, or contacts are read or logged.
+No chat content, conversation names, contacts, screenshots, or chat databases
+are read. Native notification bodies are never unpacked. Based on the local
+desktop-config bridge's notification/action lifecycle, with an unread source.
 """
-
 import logging
+import re
 import signal
 import time
+from collections import deque
 
-from gi.repository import Gio, GLib, GLibUnix
+import gi
+gi.require_version('Atspi', '2.0')
+from gi.repository import Atspi, Gio, GLib, GLibUnix
 
-TRAY = "org.kde.StatusNotifierItem"
-TRAY_PATH = "/StatusNotifierItem"
-PROPERTIES = "org.freedesktop.DBus.Properties"
-DBUS = "org.freedesktop.DBus"
-DBUS_PATH = "/org/freedesktop/DBus"
-NOTIFICATIONS = "org.freedesktop.Notifications"
-NOTIFICATIONS_PATH = "/org/freedesktop/Notifications"
-
-
-class BlinkDetector:
-    """Recognize visible/transparent alternation, not arbitrary icon changes."""
-
-    QUIET_SECONDS = 4.0
-    MAX_EDGE_GAP = 1.5
-
-    def __init__(self):
-        self.previous_visible = None
-        self.last_edge = None
-        self.edges = 0
-        self.latched = False
-        self.attention = False
-
-    def tick(self, now):
-        if (not self.attention and self.last_edge is not None
-                and now - self.last_edge > self.QUIET_SECONDS):
-            self.latched = False
-            self.edges = 0
-            self.last_edge = None
-
-    def update(self, now, visible, status):
-        if self.attention and status != "NeedsAttention":
-            self.latched = False
-            self.edges = 0
-            self.last_edge = None
-        self.attention = status == "NeedsAttention"
-        self.tick(now)
-        if visible is not None:
-            if self.previous_visible is not None and visible != self.previous_visible:
-                if self.last_edge is not None and now - self.last_edge <= self.MAX_EDGE_GAP:
-                    self.edges += 1
-                else:
-                    self.edges = 1
-                self.last_edge = now
-            self.previous_visible = visible
-        if not self.latched and (self.attention or self.edges >= 2):
-            self.latched = True
-            return True
-        return False
-
-
-def icon_visible(pixmaps):
-    """The tray's D-Bus pixmaps are ARGB32; inspect alpha only."""
-    valid = False
-    for width, height, raw in pixmaps:
-        if width <= 0 or height <= 0 or len(raw) != width * height * 4:
-            continue
-        valid = True
-        if any(raw[::4]):
-            return True
-    return False if valid else None
-
-
-def icon_variant_visible(pixmaps):
-    # Avoid unpacking every image byte through GVariant/Python twice a second.
-    def images():
-        for index in range(pixmaps.n_children()):
-            item = pixmaps.get_child_value(index)
-            yield (item.get_child_value(0).get_int32(),
-                   item.get_child_value(1).get_int32(),
-                   item.get_child_value(2).get_data_as_bytes().get_data())
-    return icon_visible(images())
+NOTIFY = 'org.freedesktop.Notifications'
+NOTIFY_PATH = '/org/freedesktop/Notifications'
+MARKER = 'x-clavis-wechat-fallback'
+GRACE = 1.5
 
 
 class Bridge:
     def __init__(self):
         self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
         self.loop = GLib.MainLoop()
-        self.service = None
-        self.owner = None
-        self.detector = BlinkDetector()
-        self.notification_id = 0
-        self.pending = False
-        self.next_attempt = 0
+        self.monitor = None
+        self.button = None
+        self.pid = None
+        self.previous = None
+        self.pending_since = None
+        self.pending_count = 0
+        self.last_native = float('-inf')
+        self.fallback_id = 0
+        self.fallback_time = float('-inf')
         self.next_discovery = 0
-        self.bus.signal_subscribe(
-            DBUS, DBUS, "NameOwnerChanged", DBUS_PATH, None,
-            Gio.DBusSignalFlags.NONE, self.name_changed, None)
-        self.bus.signal_subscribe(
-            None, TRAY, None, TRAY_PATH, None,
-            Gio.DBusSignalFlags.NONE, self.tray_changed, None)
-        self.bus.signal_subscribe(
-            NOTIFICATIONS, NOTIFICATIONS, None, NOTIFICATIONS_PATH, None,
+        self.next_monitor = 0
+        self.bus.signal_subscribe(NOTIFY, NOTIFY, None, NOTIFY_PATH, None,
             Gio.DBusSignalFlags.NONE, self.notification_signal, None)
-        GLib.timeout_add_seconds(1, self.tick)
+        self.bus.signal_subscribe('org.freedesktop.DBus', 'org.freedesktop.DBus',
+            'NameOwnerChanged', '/org/freedesktop/DBus', NOTIFY,
+            Gio.DBusSignalFlags.NONE, self.owner_changed, None)
+        GLib.timeout_add(500, self.tick)
         GLibUnix.signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, self.stop)
         GLibUnix.signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, self.stop)
 
     def call(self, destination, path, interface, method, signature=None, args=()):
-        parameters = GLib.Variant(signature, args) if signature else None
-        return self.bus.call_sync(destination, path, interface, method, parameters,
-                                  None, Gio.DBusCallFlags.NONE, 1500, None).unpack()
+        return self.bus.call_sync(destination, path, interface, method,
+            GLib.Variant(signature, args) if signature else None, None,
+            Gio.DBusCallFlags.NONE, 1500, None).unpack()
 
-    def prop(self, name):
-        return self.call(self.service, TRAY_PATH, PROPERTIES, "Get", "(ss)",
-                         (TRAY, name))[0]
-
-    def disconnect_tray(self):
-        self.service = self.owner = None
-        self.detector = BlinkDetector()
-        self.pending = False
-
-    def discover(self):
-        self.next_discovery = time.monotonic() + 10
-        if self.service:
-            return False
+    def connect_monitor(self):
+        self.next_monitor = time.monotonic() + 10
+        conn = None
         try:
-            names = self.call(DBUS, DBUS_PATH, DBUS, "ListNames")[0]
-            for name in names:
-                if not name.startswith("org.kde.StatusNotifierItem-"):
+            address = Gio.dbus_address_get_for_bus_sync(Gio.BusType.SESSION, None)
+            conn = Gio.DBusConnection.new_for_address_sync(address,
+                Gio.DBusConnectionFlags.AUTHENTICATION_CLIENT |
+                Gio.DBusConnectionFlags.MESSAGE_BUS_CONNECTION, None, None)
+            conn.add_filter(self.observe_native, None)
+            conn.call_sync('org.freedesktop.DBus', '/org/freedesktop/DBus',
+                'org.freedesktop.DBus.Monitoring', 'BecomeMonitor',
+                GLib.Variant('(asu)', (["type='method_call',interface='org.freedesktop.Notifications',member='Notify'"], 0)),
+                None, Gio.DBusCallFlags.NONE, 1500, None)
+            self.monitor = conn
+            logging.info('Native notification deduplication connected')
+        except GLib.Error:
+            if conn and not conn.is_closed():
+                conn.close_sync(None)
+            logging.warning('Native notification monitor unavailable; will retry')
+
+    def observe_native(self, connection, message, incoming, data):
+        if (message.get_interface() == NOTIFY and message.get_member() == 'Notify'
+                and message.get_message_type() == Gio.DBusMessageType.METHOD_CALL):
+            body = message.get_body()
+            if body and body.n_children() == 8:
+                app = body.get_child_value(0).get_string().lower()
+                hints = body.get_child_value(6)
+                marker = hints.lookup_value(MARKER, None)
+                desktop = hints.lookup_value('desktop-entry', None)
+                entry = desktop.get_string().lower() if desktop else ''
+                if not marker and (app in ('wechat', 'weixin', '微信')
+                                   or entry in ('wechat', 'wechat.desktop')):
+                    GLib.idle_add(self.native_arrived)
+        # A monitor must never answer observed calls. Letting GDBus dispatch
+        # them would send UnknownMethod and cause the bus to disconnect it.
+        if incoming and message.get_message_type() == Gio.DBusMessageType.METHOD_CALL:
+            return None
+        return message
+
+    def native_arrived(self):
+        self.last_native = time.monotonic()
+        self.pending_since = None
+        if self.last_native - self.fallback_time < 3:
+            self.close_fallback()
+        logging.info('Native WeChat notification observed; fallback suppressed')
+        return GLib.SOURCE_REMOVE
+
+    def discover_button(self):
+        self.next_discovery = time.monotonic() + 3
+        desktop = Atspi.get_desktop(0)
+        for i in range(desktop.get_child_count()):
+            app = desktop.get_child_at_index(i)
+            if not app or app.get_name().lower() not in ('wechat', 'weixin', '微信'):
+                continue
+            queue = deque([(app, 0)])
+            visited = 0
+            while queue and visited < 200:
+                node, depth = queue.popleft()
+                visited += 1
+                if not node:
                     continue
-                try:
-                    identity = self.call(name, TRAY_PATH, PROPERTIES, "Get", "(ss)",
-                                         (TRAY, "Id"))[0]
-                    if str(identity).lower() != "wechat":
-                        continue
-                    owner = self.call(DBUS, DBUS_PATH, DBUS, "GetNameOwner", "(s)", (name,))[0]
-                except GLib.Error:
-                    continue
-                self.service, self.owner = name, owner
-                self.detector = BlinkDetector()
-                logging.info("Connected to WeChat tray")
-                self.sample()
-                break
-        except GLib.Error:
-            logging.warning("Tray discovery unavailable; will retry")
-        return False
+                if node.get_role() == Atspi.Role.TOOL_BAR and node.get_name() in ('导航', 'Navigation'):
+                    for j in range(node.get_child_count()):
+                        button = node.get_child_at_index(j)
+                        if button and button.get_role() == Atspi.Role.PUSH_BUTTON and button.get_name() in ('微信', 'WeChat'):
+                            self.button, self.pid = button, app.get_process_id()
+                            self.previous = None
+                            self.pending_since = None
+                            logging.info('Connected to WeChat unread counter')
+                            return
+                if depth < 6:
+                    for j in range(node.get_child_count()):
+                        queue.append((node.get_child_at_index(j), depth + 1))
 
-    def name_changed(self, connection, sender, path, iface, member, parameters, data):
-        name, old_owner, new_owner = parameters.unpack()
-        if name == NOTIFICATIONS:
-            self.notification_id = 0
-        if name == self.service and new_owner != self.owner:
-            self.disconnect_tray()
-        if name.startswith("org.kde.StatusNotifierItem-") and new_owner:
-            GLib.idle_add(self.discover)
-
-    def tray_changed(self, connection, sender, path, iface, member, parameters, data):
-        if sender == self.owner and member in ("NewIcon", "NewStatus", "NewAttentionIcon"):
-            self.sample()
-
-    def sample(self):
-        try:
-            response = self.bus.call_sync(
-                self.service, TRAY_PATH, PROPERTIES, "Get",
-                GLib.Variant("(ss)", (TRAY, "IconPixmap")), None,
-                Gio.DBusCallFlags.NONE, 1500, None)
-            visible = icon_variant_visible(response.get_child_value(0).get_variant())
-            status = self.prop("Status")
-            if self.detector.update(time.monotonic(), visible, status):
-                self.pending = True
-                self.next_attempt = 0
-            self.deliver()
-        except GLib.Error:
-            self.disconnect_tray()
-
-    def deliver(self):
-        now = time.monotonic()
-        if not self.pending or now < self.next_attempt:
-            return
-        if not self.detector.latched:
-            self.pending = False
-            return
-        self.next_attempt = now + 15
-        try:
-            hints = {"desktop-entry": GLib.Variant("s", "wechat"),
-                     "urgency": GLib.Variant("y", 1)}
-            self.notification_id = self.call(
-                NOTIFICATIONS, NOTIFICATIONS_PATH, NOTIFICATIONS, "Notify",
-                "(susssasa{sv}i)",
-                ("微信", self.notification_id,
-                 "/usr/share/icons/hicolor/256x256/apps/wechat.png",
-                 "微信有新消息", "点击打开微信查看。",
-                 ["default", "打开微信"], hints, 7000))[0]
-            self.pending = False
-            logging.info("Posted notification for a new tray attention episode")
-        except GLib.Error:
-            logging.warning("Desktop notification unavailable; will retry")
-
-    def notification_signal(self, connection, sender, path, iface, member, parameters, data):
-        args = parameters.unpack()
-        if not args or not self.notification_id or args[0] != self.notification_id:
-            return
-        if member == "NotificationClosed":
-            self.notification_id = 0
-        elif member == "ActionInvoked" and args[1] == "default" and self.service:
-            try:
-                self.call(self.service, TRAY_PATH, TRAY, "Activate", "(ii)", (0, 0))
-                logging.info("Activated WeChat from notification")
-            except GLib.Error:
-                logging.warning("WeChat tray activation unavailable")
+    def read_count(self):
+        self.button.clear_cache()
+        if self.button.get_state_set().contains(Atspi.StateType.DEFUNCT):
+            raise RuntimeError('Unread counter disconnected')
+        description = self.button.get_description().strip()
+        if not description or description in ('微信', 'WeChat'):
+            return 0
+        match = re.fullmatch(r'(\d+)\+?\s*(?:条新消息|new messages?)', description, re.I)
+        return int(match.group(1)) if match else None
 
     def tick(self):
         now = time.monotonic()
-        self.detector.tick(now)
-        if not self.service and now >= self.next_discovery:
-            self.discover()
-        self.deliver()
+        if (not self.monitor or self.monitor.is_closed()) and now >= self.next_monitor:
+            self.connect_monitor()
+        try:
+            if not self.button and now >= self.next_discovery:
+                self.discover_button()
+            if not self.button:
+                return GLib.SOURCE_CONTINUE
+            count = self.read_count()
+            if count is None:
+                self.previous = None
+                self.pending_since = None
+                return GLib.SOURCE_CONTINUE
+            if self.previous is not None and count > self.previous:
+                if self.pending_since is None:
+                    self.pending_since = now
+                self.pending_count = count
+            elif self.previous is not None and count < self.previous:
+                self.pending_since = None
+            self.previous = count
+            if self.pending_since is not None and now - self.pending_since >= GRACE:
+                if self.last_native >= self.pending_since - 1:
+                    self.pending_since = None
+                elif self.monitor and not self.monitor.is_closed():
+                    self.deliver()
+                    self.pending_since = None
+        except (GLib.Error, RuntimeError, AttributeError):
+            self.button = None
+            self.previous = None
+            self.pending_since = None
         return GLib.SOURCE_CONTINUE
+
+    def close_fallback(self):
+        if self.fallback_id:
+            try:
+                self.call(NOTIFY, NOTIFY_PATH, NOTIFY, 'CloseNotification', '(u)', (self.fallback_id,))
+            except GLib.Error:
+                pass
+            self.fallback_id = 0
+
+    def deliver(self):
+        self.close_fallback()
+        hints = {'desktop-entry': GLib.Variant('s', 'wechat'),
+                 'urgency': GLib.Variant('y', 1),
+                 'transient': GLib.Variant('b', False),
+                 MARKER: GLib.Variant('b', True)}
+        self.fallback_id = self.call(NOTIFY, NOTIFY_PATH, NOTIFY, 'Notify',
+            '(susssasa{sv}i)', ('WeChat', 0, 'wechat',
+            '微信有新消息', '点击打开微信查看。', ['default', '打开微信'], hints, 7000))[0]
+        self.fallback_time = time.monotonic()
+        logging.info('Posted fallback for an unread increase without a native notification')
+
+    def notification_signal(self, connection, sender, path, interface, member, parameters, data):
+        args = parameters.unpack()
+        if not args or args[0] != self.fallback_id:
+            return
+        if member == 'NotificationClosed':
+            self.fallback_id = 0
+        elif member == 'ActionInvoked' and args[1] == 'default' and self.pid:
+            names = self.call('org.freedesktop.DBus', '/org/freedesktop/DBus',
+                'org.freedesktop.DBus', 'ListNames')[0]
+            for name in names:
+                if name.startswith(f'org.kde.StatusNotifierItem-{self.pid}-'):
+                    try:
+                        self.call(name, '/StatusNotifierItem', 'org.kde.StatusNotifierItem', 'Activate', '(ii)', (0, 0))
+                    except GLib.Error:
+                        logging.warning('WeChat tray activation unavailable')
+                    break
+
+    def owner_changed(self, *args):
+        self.fallback_id = 0
 
     def stop(self):
         self.loop.quit()
         return GLib.SOURCE_REMOVE
 
     def run(self):
-        self.discover()
-        self.loop.run()
+        self.connect_monitor()
+        try:
+            self.loop.run()
+        finally:
+            self.close_fallback()
+            if self.monitor and not self.monitor.is_closed():
+                self.monitor.close_sync(None)
 
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
     Bridge().run()

@@ -2,7 +2,7 @@
   "clavis": {
     "repository": "https://github.com/statnixlab/quickshell.git",
     "branch": "personal/cachyos-niri",
-    "commit": "9ab561b9eafbc7a568ae8250796d6eb8bc75c9a0",
+    "commit": "c117eed28c5256de857863a66b8ece221d996e23",
     "upstream_repository": "https://github.com/StatIndet/quickshell.git",
     "upstream_commit": "ac388acf9a4537cf1c69232aceb326af9478b71f"
   },
@@ -30,14 +30,14 @@
     "niri_commit": "ed0fe6141a7cb82f23e947ec1e49bb6399ec9877"
   },
   "desktop_snapshot": {
-    "captured_at": "2026-10-23T16:53:18+08:00",
+    "captured_at": "2026-10-24T16:06:13+08:00",
     "dock": "clavis-native"
   },
   "niri": {
     "repository": "https://github.com/StatIndet/niri-edge.git",
     "commit": "ed0fe6141a7cb82f23e947ec1e49bb6399ec9877",
     "patch": "patches/niri-desktop.patch",
-    "patch_sha256": "f42f2b44a8ea55ad8eab1b021646800c70fd3839e01bb68970bcba750ccaef45",
+    "patch_sha256": "b469a40f8113ac4ec9c71e1073db0d5d93eeea5b0ec724a3538222faaf397029",
     "features": [
       "Dock minimize and Genie animation",
       "HiDPI Genie geometry",
@@ -47,7 +47,8 @@
       "Independent application and panel blur",
       "Titlebar maximize to column",
       "Refresh-aware output workaround",
-      "Optional full repaint with buffer reuse"
+      "Optional full repaint with buffer reuse",
+      "Optional retained previous-frame buffer for NVIDIA high-refresh flicker (Smithay PR 2151)"
     ]
   },
   "icon_theme": {
@@ -61,5 +62,14 @@
     "source": "components/launchpad",
     "installation": "scripts/build-launchpad.sh",
     "layout": "~/.config/clavis/launchpad.json"
+  },
+  "smithay": {
+    "repository": "https://github.com/Smithay/smithay.git",
+    "commit": "22571baa20d34d71092942dbb520c4e3fbbd6263",
+    "patch": "patches/smithay-retain-frame.patch",
+    "patch_sha256": "9079c96325172304c5668a84f3cecf09881a1eb596166ab11ed4318632e47de0",
+    "upstream_pr": "https://github.com/Smithay/smithay/pull/2151",
+    "upstream_patch_commit": "0c649d2d6824b60b7bfe27f1fdb5f2fbf4311ac4",
+    "source_subdirectory": "smithay-workaround"
   }
 }

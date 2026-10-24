@@ -1,0 +1,11 @@
+[Unit]
+Description=Catch application icon and association updates
+
+[Timer]
+OnStartupSec=30s
+OnUnitActiveSec=2min
+AccuracySec=10s
+Unit=default-app-icons.service
+
+[Install]
+WantedBy=timers.target

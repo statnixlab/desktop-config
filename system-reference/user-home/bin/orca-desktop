@@ -1,0 +1,3 @@
+#!/bin/sh
+# Native Wayland and IME integration; default GPU acceleration restored 2026-10-24.
+exec @HOME@/.local/lib/orca/Orca.AppImage --ozone-platform=wayland --enable-wayland-ime "$@"

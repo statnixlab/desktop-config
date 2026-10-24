@@ -1,0 +1,10 @@
+// Optional: use only on a machine affected by NVIDIA high-refresh flicker.
+// If there is an existing configuration entrypoint chain, include it here.
+include "config.kdl"
+debug {
+    force-full-repaint false
+    full-repaint-reuse-buffers false
+    prefer-16bit-output false
+    restrict-primary-scanout-to-matching-format false
+    keep-previous-frame-buffer
+}

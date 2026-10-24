@@ -1,3 +1,52 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 115b0427f3591c6eea9ff56212172c6ac2a9ad8c..d55c7ebb3cf952ce9d4176ef07accb0e8e1a1093 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -3455,7 +3455,6 @@ checksum = "e8e2fb0f499abb4d162f2bedad68f5ef91a1682b5a03596ddb67efd37768d100"
+ [[package]]
+ name = "smithay"
+ version = "0.7.0"
+-source = "git+https://github.com/Smithay/smithay.git?rev=22571baa20d34d71092942dbb520c4e3fbbd6263#22571baa20d34d71092942dbb520c4e3fbbd6263"
+ dependencies = [
+  "aliasable",
+  "appendlist",
+@@ -3532,7 +3531,6 @@ dependencies = [
+ [[package]]
+ name = "smithay-drm-extras"
+ version = "0.1.0"
+-source = "git+https://github.com/Smithay/smithay.git?rev=22571baa20d34d71092942dbb520c4e3fbbd6263#22571baa20d34d71092942dbb520c4e3fbbd6263"
+ dependencies = [
+  "drm",
+  "libdisplay-info",
+diff --git a/Cargo.toml b/Cargo.toml
+index 6c42c076c7c4b66715051e14aa1cb155a862b0fc..d1a1b7cdc1d59edc99d14cd1290ae6d85749b158 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -1,4 +1,5 @@
+ [workspace]
++exclude = ["smithay-workaround"]
+ members = [
+     "niri-config",
+     "niri-ipc",
+@@ -27,15 +28,13 @@ tracy-client = { version = "0.18.5", default-features = false }
+ 
+ [workspace.dependencies.smithay]
+ # version = "0.4.1"
+-git = "https://github.com/Smithay/smithay.git"
+-rev = "22571baa20d34d71092942dbb520c4e3fbbd6263"
++path = "smithay-workaround"
+ default-features = false
+ 
+ [workspace.dependencies.smithay-drm-extras]
+ # version = "0.1.0"
+-git = "https://github.com/Smithay/smithay.git"
+-rev = "22571baa20d34d71092942dbb520c4e3fbbd6263"
+-# path = "../smithay/smithay-drm-extras"
++path = "smithay-workaround/smithay-drm-extras"
++# path = "smithay-workaround/smithay-drm-extras"
+ 
+ [package]
+ name = "niri"
 diff --git a/docs/wiki/Configuration:-Debug-Options.md b/docs/wiki/Configuration:-Debug-Options.md
 index ae546b536dcca61064b138fe45a3561350eabf47..b6a5421c4424d55ca25432e659f1a5e33aafb941 100644
 --- a/docs/wiki/Configuration:-Debug-Options.md
@@ -232,20 +281,21 @@ index a1c832714986221a874e2e78ea119d62f114fca0..a8253416335b0b38b2cedf0f5dc3a9c8
      fn parse_gradient_interpolation() {
          assert_eq!(
 diff --git a/niri-config/src/debug.rs b/niri-config/src/debug.rs
-index 32de7f5310611f86b0b6eb16f02894e9335f627a..14be467b81386ba1fc84100ef906edcd254cfa43 100644
+index 32de7f5310611f86b0b6eb16f02894e9335f627a..be67c23dd84c19e582f243f8c14ad28658489e0e 100644
 --- a/niri-config/src/debug.rs
 +++ b/niri-config/src/debug.rs
-@@ -7,6 +7,9 @@ pub struct Debug {
+@@ -7,6 +7,10 @@ pub struct Debug {
      pub preview_render: Option<PreviewRender>,
      pub dbus_interfaces_in_non_session_instances: bool,
      pub wait_for_frame_completion_before_queueing: bool,
 +    pub force_full_repaint: bool,
 +    pub full_repaint_reuse_buffers: bool,
++    pub keep_previous_frame_buffer: bool,
 +    pub high_refresh_workaround_above: Option<u32>,
      pub enable_overlay_planes: bool,
      pub disable_cursor_plane: bool,
      pub disable_direct_scanout: bool,
-@@ -26,6 +29,7 @@ pub struct Debug {
+@@ -26,6 +30,7 @@ pub struct Debug {
      pub deactivate_unfocused_windows: bool,
      pub skip_cursor_only_updates_during_vrr: bool,
      pub disable_10bit_output: bool,
@@ -253,20 +303,22 @@ index 32de7f5310611f86b0b6eb16f02894e9335f627a..14be467b81386ba1fc84100ef906edcd
  }
  
  #[derive(knuffel::Decode, Debug, Default, PartialEq)]
-@@ -37,6 +41,12 @@ pub struct DebugPart {
+@@ -37,6 +42,14 @@ pub struct DebugPart {
      #[knuffel(child)]
      pub wait_for_frame_completion_before_queueing: Option<Flag>,
      #[knuffel(child)]
 +    pub force_full_repaint: Option<Flag>,
 +    #[knuffel(child)]
 +    pub full_repaint_reuse_buffers: Option<Flag>,
++    #[knuffel(child)]
++    pub keep_previous_frame_buffer: Option<Flag>,
 +    #[knuffel(child, unwrap(argument))]
 +    pub high_refresh_workaround_above: Option<u32>,
 +    #[knuffel(child)]
      pub enable_overlay_planes: Option<Flag>,
      #[knuffel(child)]
      pub disable_cursor_plane: Option<Flag>,
-@@ -74,6 +84,8 @@ pub struct DebugPart {
+@@ -74,6 +87,8 @@ pub struct DebugPart {
      pub skip_cursor_only_updates_during_vrr: Option<Flag>,
      #[knuffel(child)]
      pub disable_10bit_output: Option<Flag>,
@@ -275,16 +327,17 @@ index 32de7f5310611f86b0b6eb16f02894e9335f627a..14be467b81386ba1fc84100ef906edcd
  }
  
  impl MergeWith<DebugPart> for Debug {
-@@ -82,6 +94,8 @@ impl MergeWith<DebugPart> for Debug {
+@@ -82,6 +97,9 @@ impl MergeWith<DebugPart> for Debug {
              (self, part),
              dbus_interfaces_in_non_session_instances,
              wait_for_frame_completion_before_queueing,
 +            force_full_repaint,
 +            full_repaint_reuse_buffers,
++            keep_previous_frame_buffer,
              enable_overlay_planes,
              disable_cursor_plane,
              disable_direct_scanout,
-@@ -99,9 +113,11 @@ impl MergeWith<DebugPart> for Debug {
+@@ -99,9 +117,11 @@ impl MergeWith<DebugPart> for Debug {
              deactivate_unfocused_windows,
              skip_cursor_only_updates_during_vrr,
              disable_10bit_output,
@@ -334,7 +387,7 @@ index f84528bd33bfd679c4197c33d6c77168d9cadd3b..69e768f518a565cc1b5e46462fed5611
      #[knuffel(child, unwrap(argument, str))]
      pub default_column_display: Option<ColumnDisplay>,
 diff --git a/niri-config/src/lib.rs b/niri-config/src/lib.rs
-index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..02ab2861488d2ed399c445591e9911d834a7fe96 100644
+index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..e3c1b2ece123bd54395e3a499e87f119bcb44635 100644
 --- a/niri-config/src/lib.rs
 +++ b/niri-config/src/lib.rs
 @@ -640,6 +640,45 @@ mod tests {
@@ -423,17 +476,18 @@ index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..02ab2861488d2ed399c445591e9911d8
                              noise: None,
                              saturation: None,
                          },
-@@ -2284,6 +2328,9 @@ mod tests {
+@@ -2284,6 +2328,10 @@ mod tests {
                  preview_render: None,
                  dbus_interfaces_in_non_session_instances: false,
                  wait_for_frame_completion_before_queueing: false,
 +                force_full_repaint: false,
 +                full_repaint_reuse_buffers: false,
++                keep_previous_frame_buffer: false,
 +                high_refresh_workaround_above: None,
                  enable_overlay_planes: false,
                  disable_cursor_plane: false,
                  disable_direct_scanout: false,
-@@ -2308,6 +2355,7 @@ mod tests {
+@@ -2308,6 +2356,7 @@ mod tests {
                  deactivate_unfocused_windows: false,
                  skip_cursor_only_updates_during_vrr: false,
                  disable_10bit_output: false,
@@ -477,7 +531,7 @@ index 8085095609d9d72090f26d4134a390ab2cf02526..5b6cfa27ec1a0592deb05c8017d04b98
      }
  
 diff --git a/src/backend/tty.rs b/src/backend/tty.rs
-index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad266a8188 100644
+index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..46de5346fc3d1b86a1b6323b61239cef985806c1 100644
 --- a/src/backend/tty.rs
 +++ b/src/backend/tty.rs
 @@ -18,7 +18,7 @@ use niri_config::output::{MaxBpc, Modeline};
@@ -513,7 +567,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
  
  // When copying from rendering Nvidia dGPU to target iGPU,
  // it only understands X/Abgr and not X/Argb.
-@@ -78,6 +81,129 @@ const SUPPORTED_COLOR_FORMATS_10BIT: [Fourcc; 3] =
+@@ -78,6 +81,132 @@ const SUPPORTED_COLOR_FORMATS_10BIT: [Fourcc; 3] =
  // Smithay should fall back to Xrgb/Xbgr automatically if needed.
  const SUPPORTED_COLOR_FORMATS: [Fourcc; 2] = [Fourcc::Argb8888, Fourcc::Abgr8888];
  
@@ -601,6 +655,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
 +    color: OutputColorPolicy,
 +    force_full_repaint: bool,
 +    reuse_buffers: bool,
++    keep_previous_frame_buffer: bool,
 +    restrict_primary_scanout: bool,
 +}
 +
@@ -622,6 +677,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
 +            color,
 +            force_full_repaint,
 +            reuse_buffers: force_full_repaint && debug.full_repaint_reuse_buffers,
++            keep_previous_frame_buffer: allowed && debug.keep_previous_frame_buffer,
 +            restrict_primary_scanout: allowed && debug.restrict_primary_scanout_to_matching_format,
 +        }
 +    }
@@ -634,6 +690,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
 +            requested_color = ?self.color,
 +            force_full_repaint = self.force_full_repaint,
 +            reuse_buffers = self.reuse_buffers,
++            keep_previous_frame_buffer = self.keep_previous_frame_buffer,
 +            restrict_primary_scanout = self.restrict_primary_scanout,
 +            "output rendering policy"
 +        );
@@ -643,7 +700,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
  pub struct Tty {
      config: Rc<RefCell<Config>>,
      session: LibSeatSession,
-@@ -374,6 +500,10 @@ struct TtyOutputState {
+@@ -374,6 +503,10 @@ struct TtyOutputState {
  struct Surface {
      name: OutputName,
      compositor: GbmDrmCompositor,
@@ -654,7 +711,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
      connector: connector::Handle,
      dmabuf_feedback: Option<SurfaceDmabufFeedback>,
      gamma_props: Option<GammaProps>,
-@@ -390,6 +520,71 @@ struct Surface {
+@@ -390,6 +523,73 @@ struct Surface {
      sequence_delta_plot_name: tracy_client::PlotName,
  }
  
@@ -714,6 +771,8 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
 +            }
 +        }
 +
++        self.compositor
++            .set_keep_previous_frame_buffer(policy.keep_previous_frame_buffer);
 +        self.render_policy = policy;
 +        policy.log(
 +            &self.name.connector,
@@ -726,7 +785,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
  pub struct SurfaceDmabufFeedback {
      pub render: DmabufFeedback,
      pub scanout: DmabufFeedback,
-@@ -1437,13 +1632,9 @@ impl Tty {
+@@ -1437,13 +1637,9 @@ impl Tty {
              })
              .collect::<FormatSet>();
  
@@ -743,16 +802,17 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
  
          // Create the compositor.
          let res = DrmCompositor::new(
-@@ -1495,6 +1686,8 @@ impl Tty {
+@@ -1495,6 +1691,9 @@ impl Tty {
              compositor.set_debug_flags(DebugFlags::TINT);
          }
  
++        compositor.set_keep_previous_frame_buffer(render_policy.keep_previous_frame_buffer);
 +        render_policy.log(&connector_name, wl_mode.refresh, compositor.format());
 +
          let mut dmabuf_feedback = None;
          if let Ok(primary_renderer) = self.gpu_manager.single_renderer(&self.primary_render_node) {
              let primary_formats = primary_renderer.dmabuf_formats();
-@@ -1540,6 +1733,9 @@ impl Tty {
+@@ -1540,6 +1739,9 @@ impl Tty {
              name: output_name,
              connector: connector.handle(),
              compositor,
@@ -762,7 +822,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
              dmabuf_feedback,
              gamma_props,
              pending_gamma_change: None,
-@@ -1888,6 +2084,10 @@ impl Tty {
+@@ -1888,6 +2090,10 @@ impl Tty {
              return rv;
          }
  
@@ -773,7 +833,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
          let mut renderer = match self.gpu_manager.renderer(
              &self.primary_render_node,
              &device.render_node.unwrap_or(self.primary_render_node),
-@@ -1908,6 +2108,16 @@ impl Tty {
+@@ -1908,6 +2114,16 @@ impl Tty {
          };
          let mut elements = niri.render_to_vec(ctx, output, true);
  
@@ -790,7 +850,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
          // Visualize the damage, if enabled.
          if niri.debug_draw_damage {
              let output_state = niri.output_state.get_mut(output).unwrap();
-@@ -1919,7 +2129,7 @@ impl Tty {
+@@ -1919,7 +2135,7 @@ impl Tty {
          let flags = {
              let debug = &self.config.borrow().debug;
  
@@ -799,7 +859,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
                  FrameFlags::ALLOW_PRIMARY_PLANE_SCANOUT
              } else {
                  FrameFlags::ALLOW_PRIMARY_PLANE_SCANOUT_ANY
-@@ -1948,6 +2158,10 @@ impl Tty {
+@@ -1948,6 +2164,10 @@ impl Tty {
  
          // Hand them over to the DRM.
          let drm_compositor = &mut surface.compositor;
@@ -810,13 +870,14 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
          match drm_compositor.render_frame::<_, _>(&mut renderer, &elements, [0.; 4], flags) {
              Ok(res) => {
                  let needs_sync = res.needs_sync()
-@@ -3538,8 +3752,118 @@ mod tests {
+@@ -3538,8 +3758,163 @@ mod tests {
      use insta::assert_debug_snapshot;
      use niri_config::output::Modeline;
      use niri_ipc::{HSyncPolarity, VSyncPolarity};
 +    use smithay::backend::allocator::format::FormatSet;
 +    use smithay::backend::allocator::{Format, Fourcc, Modifier};
-+
+ 
+-    use crate::backend::tty::{calculate_drm_mode_from_modeline, calculate_mode_cvt};
 +    use crate::backend::tty::{
 +        calculate_drm_mode_from_modeline, calculate_mode_cvt, output_format_modifiers,
 +        OutputColorPolicy, OutputRenderPolicy,
@@ -868,8 +929,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
 +             prefer-16bit-output; restrict-primary-scanout-to-matching-format; }",
 +        )
 +        .unwrap();
- 
--    use crate::backend::tty::{calculate_drm_mode_from_modeline, calculate_mode_cvt};
++
 +        // Follow actual advertised millihertz, including the monitor's 143.998 Hz mode,
 +        // an exact threshold, and repeated switches in both directions.
 +        for (refresh, active) in [
@@ -926,6 +986,51 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..433f65b55bee2777e5990bc34f89dcad
 +        // Large valid u32 thresholds must not overflow when converted to millihertz.
 +        config.debug.high_refresh_workaround_above = Some(u32::MAX);
 +        assert!(!OutputRenderPolicy::for_refresh(&config.debug, 160_000).force_full_repaint);
++    }
++
++    #[test]
++    fn retained_frame_policy_supports_isolated_trial_and_rollback() {
++        let sh = xshell::Shell::new().unwrap();
++        let temp = sh.create_temp_dir().unwrap();
++        let original = temp.path().join("original.kdl");
++        let trial = temp.path().join("trial.kdl");
++        let rollback = temp.path().join("rollback.kdl");
++        std::fs::write(
++            &original,
++            "debug { high-refresh-workaround-above 144; force-full-repaint; \
++             prefer-16bit-output; restrict-primary-scanout-to-matching-format; }",
++        )
++        .unwrap();
++        std::fs::write(
++            &trial,
++            "include \"original.kdl\"\n\
++             debug { force-full-repaint false; prefer-16bit-output false; \
++             restrict-primary-scanout-to-matching-format false; keep-previous-frame-buffer; }",
++        )
++        .unwrap();
++        let config = niri_config::Config::load(&trial).config.unwrap();
++        for (refresh, active) in [(160_000, true), (144_000, false), (160_000, true)] {
++            let policy = OutputRenderPolicy::for_refresh(&config.debug, refresh);
++            assert_eq!(policy.keep_previous_frame_buffer, active);
++            assert_eq!(policy.color, OutputColorPolicy::TenBit);
++            assert!(!policy.force_full_repaint);
++            assert!(!policy.restrict_primary_scanout);
++        }
++        std::fs::write(
++            &rollback,
++            "include \"trial.kdl\"\n\
++             debug { keep-previous-frame-buffer false; force-full-repaint; prefer-16bit-output; }",
++        )
++        .unwrap();
++        let config = niri_config::Config::load(&rollback).config.unwrap();
++        let policy = OutputRenderPolicy::for_refresh(&config.debug, 160_000);
++        assert!(!policy.keep_previous_frame_buffer);
++        assert!(policy.force_full_repaint);
++        assert_eq!(policy.color, OutputColorPolicy::PreferSixteenBit);
++        assert!(
++            !OutputRenderPolicy::for_refresh(&niri_config::Debug::default(), 160_000)
++                .keep_previous_frame_buffer
++        );
 +    }
  
      #[test]

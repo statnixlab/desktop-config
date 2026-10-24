@@ -1,0 +1,15 @@
+[Unit]
+Description=Watch file associations and application launchers for icon changes
+
+[Path]
+PathChanged=%h/.config/mimeapps.list
+PathChanged=%h/.config/niri-mimeapps.list
+PathChanged=%h/.config/gnome-mimeapps.list
+PathChanged=%h/.local/share/applications
+PathChanged=/usr/share/applications
+PathChanged=%h/.local/share/mime
+PathChanged=/usr/share/mime
+Unit=default-app-icons.service
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,7 @@
+#!/bin/bash
+# The shared Windows library must be mounted before Zotero starts.
+if ! /usr/bin/mountpoint -q /mnt/windows/files || [[ ! -r /mnt/windows/files/zotero/zotero.sqlite || ! -w /mnt/windows/files/zotero ]]; then
+    /usr/bin/notify-send --app-name=Zotero --urgency=critical '无法打开 Zotero 文献库' '请先确认 Windows 文件分区已挂载且可读写。'
+    exit 1
+fi
+exec /usr/bin/zotero "$@"

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Orca
+Exec="@HOME@/.local/bin/orca-desktop" %U
+Terminal=false
+Type=Application
+Icon=orca-ide
+StartupWMClass=orca
+X-AppImage-Version=1.4.237
+Comment=Next-gen IDE for parallel agentic development
+MimeType=text/markdown;text/csv;text/tab-separated-values;x-scheme-handler/orca;
+Categories=Development;IDE;
