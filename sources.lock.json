@@ -35,9 +35,9 @@
   },
   "niri": {
     "repository": "https://github.com/StatIndet/niri-edge.git",
-    "commit": "ed0fe6141a7cb82f23e947ec1e49bb6399ec9877",
+    "commit": "b2aaeb3c619610827577e4fbbb3225ce88d19baa",
     "patch": "patches/niri-desktop.patch",
-    "patch_sha256": "b469a40f8113ac4ec9c71e1073db0d5d93eeea5b0ec724a3538222faaf397029",
+    "patch_sha256": "7c8369a3f3d11f330949b024503c22b7fe1984905d691f710cfbac1a8e7d632a",
     "features": [
       "Dock minimize and Genie animation",
       "HiDPI Genie geometry",
@@ -65,9 +65,9 @@
   },
   "smithay": {
     "repository": "https://github.com/Smithay/smithay.git",
-    "commit": "22571baa20d34d71092942dbb520c4e3fbbd6263",
+    "commit": "79bbed5e1199090d787115614847a79c76607181",
     "patch": "patches/smithay-retain-frame.patch",
-    "patch_sha256": "9079c96325172304c5668a84f3cecf09881a1eb596166ab11ed4318632e47de0",
+    "patch_sha256": "036360da3d12826ae51b94d4d4b9473f664b03301c1dca9fa8c705ef1d5bfbbc",
     "upstream_pr": "https://github.com/Smithay/smithay/pull/2151",
     "upstream_patch_commit": "0c649d2d6824b60b7bfe27f1fdb5f2fbf4311ac4",
     "source_subdirectory": "smithay-workaround"

@@ -187,6 +187,10 @@ Smithay PR #2151 的上一帧缓冲保留补丁消除了右下区域闪烁；日
 
 ## 2026-10-24 配置快照
 
+Niri 基线更新至 `StatIndet/niri-edge` 的 `b2aaeb3`，Smithay 更新至 `79bbed5`。
+保留全部个人补丁和 Smithay #2151 防闪烁开关；已由上游包含的 SHM 录屏、
+Genie HiDPI 修复不再重复携带。标题栏、独立模糊与旧防闪烁回退选项继续保留。
+
 新增可复现的 Smithay #2151 补丁、Niri 配置开关及依赖锁定；新开关默认关闭，
 按需启用的本机入口和实测记录保存在 `system-reference/nvidia-flicker/`。
 `build-niri.sh --prepare-only` 可以只获取并校验两份源码与补丁，不编译或安装。

@@ -1,52 +1,44 @@
 diff --git a/Cargo.lock b/Cargo.lock
-index 115b0427f3591c6eea9ff56212172c6ac2a9ad8c..d55c7ebb3cf952ce9d4176ef07accb0e8e1a1093 100644
+index e6e96c3660ba3f60259c891ac8d584bb5ae735e0..f04678d1834591c5aaae47da9c26b31071d6c30a 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
-@@ -3455,7 +3455,6 @@ checksum = "e8e2fb0f499abb4d162f2bedad68f5ef91a1682b5a03596ddb67efd37768d100"
+@@ -3396,7 +3396,6 @@ checksum = "e8e2fb0f499abb4d162f2bedad68f5ef91a1682b5a03596ddb67efd37768d100"
  [[package]]
  name = "smithay"
  version = "0.7.0"
--source = "git+https://github.com/Smithay/smithay.git?rev=22571baa20d34d71092942dbb520c4e3fbbd6263#22571baa20d34d71092942dbb520c4e3fbbd6263"
+-source = "git+https://github.com/Smithay/smithay.git?rev=79bbed5e1199090d787115614847a79c76607181#79bbed5e1199090d787115614847a79c76607181"
  dependencies = [
   "aliasable",
   "appendlist",
-@@ -3532,7 +3531,6 @@ dependencies = [
+@@ -3473,7 +3472,6 @@ dependencies = [
  [[package]]
  name = "smithay-drm-extras"
  version = "0.1.0"
--source = "git+https://github.com/Smithay/smithay.git?rev=22571baa20d34d71092942dbb520c4e3fbbd6263#22571baa20d34d71092942dbb520c4e3fbbd6263"
+-source = "git+https://github.com/Smithay/smithay.git?rev=79bbed5e1199090d787115614847a79c76607181#79bbed5e1199090d787115614847a79c76607181"
  dependencies = [
   "drm",
   "libdisplay-info",
 diff --git a/Cargo.toml b/Cargo.toml
-index 6c42c076c7c4b66715051e14aa1cb155a862b0fc..d1a1b7cdc1d59edc99d14cd1290ae6d85749b158 100644
+index 0daaa148015eca258ee599e4ffedd98a38dcd7b9..4e3005c1f5aec69a1581b149149280ace15f6af3 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -1,4 +1,5 @@
- [workspace]
-+exclude = ["smithay-workaround"]
- members = [
-     "niri-config",
-     "niri-ipc",
-@@ -27,15 +28,13 @@ tracy-client = { version = "0.18.5", default-features = false }
+@@ -27,14 +27,12 @@ tracy-client = { version = "0.18.5", default-features = false }
  
  [workspace.dependencies.smithay]
  # version = "0.4.1"
 -git = "https://github.com/Smithay/smithay.git"
--rev = "22571baa20d34d71092942dbb520c4e3fbbd6263"
+-rev = "79bbed5e1199090d787115614847a79c76607181"
 +path = "smithay-workaround"
  default-features = false
  
  [workspace.dependencies.smithay-drm-extras]
  # version = "0.1.0"
 -git = "https://github.com/Smithay/smithay.git"
--rev = "22571baa20d34d71092942dbb520c4e3fbbd6263"
--# path = "../smithay/smithay-drm-extras"
+-rev = "79bbed5e1199090d787115614847a79c76607181"
 +path = "smithay-workaround/smithay-drm-extras"
-+# path = "smithay-workaround/smithay-drm-extras"
+ # path = "../smithay/smithay-drm-extras"
  
  [package]
- name = "niri"
 diff --git a/docs/wiki/Configuration:-Debug-Options.md b/docs/wiki/Configuration:-Debug-Options.md
 index ae546b536dcca61064b138fe45a3561350eabf47..b6a5421c4424d55ca25432e659f1a5e33aafb941 100644
 --- a/docs/wiki/Configuration:-Debug-Options.md
@@ -387,7 +379,7 @@ index f84528bd33bfd679c4197c33d6c77168d9cadd3b..69e768f518a565cc1b5e46462fed5611
      #[knuffel(child, unwrap(argument, str))]
      pub default_column_display: Option<ColumnDisplay>,
 diff --git a/niri-config/src/lib.rs b/niri-config/src/lib.rs
-index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..e3c1b2ece123bd54395e3a499e87f119bcb44635 100644
+index 80329b5a93fcb91a63e3d59b109e7687506c009b..614e6947a3a9188faad3b3be153dfe42ae2a0fc0 100644
 --- a/niri-config/src/lib.rs
 +++ b/niri-config/src/lib.rs
 @@ -640,6 +640,45 @@ mod tests {
@@ -436,7 +428,7 @@ index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..e3c1b2ece123bd54395e3a499e87f119
      #[track_caller]
      fn do_parse(text: &str) -> Config {
          Config::parse_mem(text)
-@@ -1483,6 +1522,7 @@ mod tests {
+@@ -1484,6 +1523,7 @@ mod tests {
                  ],
                  center_focused_column: OnOverflow,
                  always_center_single_column: false,
@@ -444,7 +436,7 @@ index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..e3c1b2ece123bd54395e3a499e87f119
                  empty_workspace_above_first: false,
                  default_column_display: Tabbed,
                  gaps: 8.0,
-@@ -1920,6 +1960,7 @@ mod tests {
+@@ -1921,6 +1961,7 @@ mod tests {
                      background_effect: BackgroundEffectRule {
                          xray: None,
                          blur: None,
@@ -452,7 +444,7 @@ index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..e3c1b2ece123bd54395e3a499e87f119
                          noise: None,
                          saturation: None,
                      },
-@@ -1929,6 +1970,7 @@ mod tests {
+@@ -1930,6 +1971,7 @@ mod tests {
                          background_effect: BackgroundEffectRule {
                              xray: None,
                              blur: None,
@@ -460,7 +452,7 @@ index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..e3c1b2ece123bd54395e3a499e87f119
                              noise: None,
                              saturation: None,
                          },
-@@ -1971,6 +2013,7 @@ mod tests {
+@@ -1972,6 +2014,7 @@ mod tests {
                      background_effect: BackgroundEffectRule {
                          xray: None,
                          blur: None,
@@ -468,7 +460,7 @@ index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..e3c1b2ece123bd54395e3a499e87f119
                          noise: None,
                          saturation: None,
                      },
-@@ -1980,6 +2023,7 @@ mod tests {
+@@ -1981,6 +2024,7 @@ mod tests {
                          background_effect: BackgroundEffectRule {
                              xray: None,
                              blur: None,
@@ -476,7 +468,7 @@ index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..e3c1b2ece123bd54395e3a499e87f119
                              noise: None,
                              saturation: None,
                          },
-@@ -2284,6 +2328,10 @@ mod tests {
+@@ -2285,6 +2329,10 @@ mod tests {
                  preview_render: None,
                  dbus_interfaces_in_non_session_instances: false,
                  wait_for_frame_completion_before_queueing: false,
@@ -487,7 +479,7 @@ index 7ed8987bb227d9b32e79d083df8d1bf9b45fe92e..e3c1b2ece123bd54395e3a499e87f119
                  enable_overlay_planes: false,
                  disable_cursor_plane: false,
                  disable_direct_scanout: false,
-@@ -2308,6 +2356,7 @@ mod tests {
+@@ -2309,6 +2357,7 @@ mod tests {
                  deactivate_unfocused_windows: false,
                  skip_cursor_only_updates_during_vrr: false,
                  disable_10bit_output: false,
@@ -531,7 +523,7 @@ index 8085095609d9d72090f26d4134a390ab2cf02526..5b6cfa27ec1a0592deb05c8017d04b98
      }
  
 diff --git a/src/backend/tty.rs b/src/backend/tty.rs
-index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..46de5346fc3d1b86a1b6323b61239cef985806c1 100644
+index c30ca6ba6b74634ad4fa91e53456f6729c5ff198..3429279bf9b7d7f361a9ab0b451fe3b5565f9466 100644
 --- a/src/backend/tty.rs
 +++ b/src/backend/tty.rs
 @@ -18,7 +18,7 @@ use niri_config::output::{MaxBpc, Modeline};
@@ -785,7 +777,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..46de5346fc3d1b86a1b6323b61239cef
  pub struct SurfaceDmabufFeedback {
      pub render: DmabufFeedback,
      pub scanout: DmabufFeedback,
-@@ -1437,13 +1637,9 @@ impl Tty {
+@@ -1449,13 +1649,9 @@ impl Tty {
              })
              .collect::<FormatSet>();
  
@@ -802,7 +794,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..46de5346fc3d1b86a1b6323b61239cef
  
          // Create the compositor.
          let res = DrmCompositor::new(
-@@ -1495,6 +1691,9 @@ impl Tty {
+@@ -1507,6 +1703,9 @@ impl Tty {
              compositor.set_debug_flags(DebugFlags::TINT);
          }
  
@@ -812,7 +804,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..46de5346fc3d1b86a1b6323b61239cef
          let mut dmabuf_feedback = None;
          if let Ok(primary_renderer) = self.gpu_manager.single_renderer(&self.primary_render_node) {
              let primary_formats = primary_renderer.dmabuf_formats();
-@@ -1540,6 +1739,9 @@ impl Tty {
+@@ -1552,6 +1751,9 @@ impl Tty {
              name: output_name,
              connector: connector.handle(),
              compositor,
@@ -822,7 +814,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..46de5346fc3d1b86a1b6323b61239cef
              dmabuf_feedback,
              gamma_props,
              pending_gamma_change: None,
-@@ -1888,6 +2090,10 @@ impl Tty {
+@@ -1900,6 +2102,10 @@ impl Tty {
              return rv;
          }
  
@@ -833,7 +825,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..46de5346fc3d1b86a1b6323b61239cef
          let mut renderer = match self.gpu_manager.renderer(
              &self.primary_render_node,
              &device.render_node.unwrap_or(self.primary_render_node),
-@@ -1908,6 +2114,16 @@ impl Tty {
+@@ -1920,6 +2126,16 @@ impl Tty {
          };
          let mut elements = niri.render_to_vec(ctx, output, true);
  
@@ -850,7 +842,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..46de5346fc3d1b86a1b6323b61239cef
          // Visualize the damage, if enabled.
          if niri.debug_draw_damage {
              let output_state = niri.output_state.get_mut(output).unwrap();
-@@ -1919,7 +2135,7 @@ impl Tty {
+@@ -1931,7 +2147,7 @@ impl Tty {
          let flags = {
              let debug = &self.config.borrow().debug;
  
@@ -859,7 +851,7 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..46de5346fc3d1b86a1b6323b61239cef
                  FrameFlags::ALLOW_PRIMARY_PLANE_SCANOUT
              } else {
                  FrameFlags::ALLOW_PRIMARY_PLANE_SCANOUT_ANY
-@@ -1948,6 +2164,10 @@ impl Tty {
+@@ -1960,6 +2176,10 @@ impl Tty {
  
          // Hand them over to the DRM.
          let drm_compositor = &mut surface.compositor;
@@ -870,14 +862,13 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..46de5346fc3d1b86a1b6323b61239cef
          match drm_compositor.render_frame::<_, _>(&mut renderer, &elements, [0.; 4], flags) {
              Ok(res) => {
                  let needs_sync = res.needs_sync()
-@@ -3538,8 +3758,163 @@ mod tests {
+@@ -3619,8 +3839,163 @@ mod tests {
      use insta::assert_debug_snapshot;
      use niri_config::output::Modeline;
      use niri_ipc::{HSyncPolarity, VSyncPolarity};
 +    use smithay::backend::allocator::format::FormatSet;
 +    use smithay::backend::allocator::{Format, Fourcc, Modifier};
- 
--    use crate::backend::tty::{calculate_drm_mode_from_modeline, calculate_mode_cvt};
++
 +    use crate::backend::tty::{
 +        calculate_drm_mode_from_modeline, calculate_mode_cvt, output_format_modifiers,
 +        OutputColorPolicy, OutputRenderPolicy,
@@ -987,7 +978,8 @@ index bbd72e7783c572f68dfb2d9dcbc2e48ad48341ff..46de5346fc3d1b86a1b6323b61239cef
 +        config.debug.high_refresh_workaround_above = Some(u32::MAX);
 +        assert!(!OutputRenderPolicy::for_refresh(&config.debug, 160_000).force_full_repaint);
 +    }
-+
+ 
+-    use crate::backend::tty::{calculate_drm_mode_from_modeline, calculate_mode_cvt};
 +    #[test]
 +    fn retained_frame_policy_supports_isolated_trial_and_rollback() {
 +        let sh = xshell::Shell::new().unwrap();
@@ -1068,10 +1060,10 @@ index e7ceea6c4a4650f10a08ce496741f5f065c042ac..d702c12d6b44fd216a031c8a4d4e9ac2
          Request::SetWindowAnimationTargets { targets } => {
              if targets.len() > 1024 {
 diff --git a/src/layout/mod.rs b/src/layout/mod.rs
-index f68061a8eeaf0dff185e578ed6c895a1477c0b3d..ed565eba619786696358ff5677ca4208f12c4ecc 100644
+index 0c58feaa36a5baf585953eb364fb3d6410953cd8..96eb14d900783d63e6135fb8e8ad8de0039f6eaf 100644
 --- a/src/layout/mod.rs
 +++ b/src/layout/mod.rs
-@@ -3153,6 +3153,20 @@ impl<W: LayoutElement> Layout<W> {
+@@ -3164,6 +3164,20 @@ impl<W: LayoutElement> Layout<W> {
          workspace.toggle_full_width();
      }
  
@@ -1112,10 +1104,10 @@ index c7d94c548d5cfef0756992083ebc4b0eeb8c70d8..c02bf44c3c0e8bf77d53579621f52216
          if self.columns.is_empty() {
              return;
 diff --git a/src/layout/workspace.rs b/src/layout/workspace.rs
-index 80cdea43e9cceb3e9597bd6765f51edf8aaec224..1a54e0bb1b8eb93bb35a7e0edaf33acef53ddda8 100644
+index e0048a1ae001805de578a52f0a449a8b1b882116..ac83094bf2373606a38e896c6dada57ac5eeaf3f 100644
 --- a/src/layout/workspace.rs
 +++ b/src/layout/workspace.rs
-@@ -1275,6 +1275,14 @@ impl<W: LayoutElement> Workspace<W> {
+@@ -1303,6 +1303,14 @@ impl<W: LayoutElement> Workspace<W> {
          self.scrolling.toggle_full_width();
      }
  
@@ -1131,10 +1123,10 @@ index 80cdea43e9cceb3e9597bd6765f51edf8aaec224..1a54e0bb1b8eb93bb35a7e0edaf33ace
          if self.floating_is_active.get() {
              self.floating.set_window_width(None, change, true);
 diff --git a/src/niri.rs b/src/niri.rs
-index 450fb2473268ee50b0f69e9099587bcbe9a8ba25..c2183d3fecfae5151195e2e2daa9dd70dcdaa177 100644
+index 2215ef9977e24cda9c514bab59bda8b5ab573be8..ece15580570623292bb8163c7f04e17d55d80e73 100644
 --- a/src/niri.rs
 +++ b/src/niri.rs
-@@ -7515,6 +7515,7 @@ niri_render_elements! {
+@@ -7526,6 +7526,7 @@ niri_render_elements! {
  
  niri_render_elements! {
      OutputRenderElements<R> => {
@@ -1237,334 +1229,26 @@ index b1e113bbed4a1a7824eabb58118613d5b6a98a6e..06abc4cbe8bf2e050a2aef8327e986b0
 +    }
 +}
 diff --git a/src/render_helpers/shaders/genie.frag b/src/render_helpers/shaders/genie.frag
-index 2d1913433b197e8fbe52a5bcfd8d1f1fa8cd1287..6e8384866fe1ee3f3e3950f21292241b86243e04 100644
+index 510139c9122914928df4c5cfb71e4eb507f06ad8..6e8384866fe1ee3f3e3950f21292241b86243e04 100644
 --- a/src/render_helpers/shaders/genie.frag
 +++ b/src/render_helpers/shaders/genie.frag
-@@ -57,7 +57,8 @@ float funnel_pull(float distance) {
+@@ -57,7 +57,7 @@ float funnel_pull(float distance) {
  void main() {
      vec4 w = axis_rect(window_rect);
      vec4 t = axis_rect(target_rect);
--    vec2 point = to_axis(area_origin + niri_v_coords * niri_size);
+-    // niri_size is the physical render quad; all animation rectangles are logical.
 +    // niri_size is in physical pixels; the geometry uniforms are output-local logical units.
-+    vec2 point = to_axis(area_origin + niri_v_coords * (niri_size / niri_scale));
+     vec2 point = to_axis(area_origin + niri_v_coords * (niri_size / niri_scale));
  
      float lead = smoothstep(0.0, 0.55, morph);
-     // Form the neck before drawing the trailing edge away from the window.
-diff --git a/src/screencasting/mod.rs b/src/screencasting/mod.rs
-index 465935de06e38157fe7894175989ebbcdd10902c..485515dd098f2c857bc3daeaf3ad13e478bacf07 100644
---- a/src/screencasting/mod.rs
-+++ b/src/screencasting/mod.rs
-@@ -154,7 +154,7 @@ impl State {
-             CastTarget::Nothing => {
-                 self.backend.with_primary_renderer(|renderer| {
-                     if cast.dequeue_buffer_and_clear(renderer) {
--                        cast.last_frame_time = get_monotonic_time();
-+                        cast.record_frame_time(get_monotonic_time());
-                     }
-                 });
-                 return;
-@@ -243,7 +243,7 @@ impl State {
-                     bbox.size,
-                     scale,
-                 ) {
--                    cast.last_frame_time = get_monotonic_time();
-+                    cast.record_frame_time(get_monotonic_time());
-                 }
-             });
- 
-@@ -613,7 +613,7 @@ impl Niri {
-             let cursor_data = cursor_data.as_ref().unwrap();
- 
-             if cast.dequeue_buffer_and_render(renderer, &elements, cursor_data, size, scale) {
--                cast.last_frame_time = target_presentation_time;
-+                cast.record_frame_time(target_presentation_time);
-             }
-         }
-         self.casting.casts = casts;
-@@ -698,7 +698,7 @@ impl Niri {
-             let cursor_data = CursorData::compute(&elements, main_start, pointer_location, scale);
- 
-             if cast.dequeue_buffer_and_render(renderer, &elements, &cursor_data, bbox.size, scale) {
--                cast.last_frame_time = target_presentation_time;
-+                cast.record_frame_time(target_presentation_time);
-             }
-         }
-         self.casting.casts = casts;
-diff --git a/src/screencasting/pw_utils.rs b/src/screencasting/pw_utils.rs
-index fab3fda116590a7df1752a9c98eccc6a75695c59..a4d2aa95d0c4616d8fa9b554033351fe44c6805c 100644
---- a/src/screencasting/pw_utils.rs
-+++ b/src/screencasting/pw_utils.rs
-@@ -50,7 +50,6 @@ use smithay::reexports::rustix::fd::OwnedFd;
- use smithay::reexports::rustix::fs::{
-     fcntl_add_seals, ftruncate, memfd_create, MemfdFlags, SealFlags,
- };
--use smithay::reexports::rustix::mm::{mmap, munmap, MapFlags, ProtFlags};
- use smithay::utils::{DeviceFd, Logical, Physical, Point, Scale, Size, Transform};
- use zbus::object_server::SignalEmitter;
- 
-@@ -63,6 +62,9 @@ use crate::render_helpers::{
- use crate::screencasting::CastRenderElement;
- use crate::utils::{get_monotonic_time, CastSessionId, CastStreamId};
- 
-+mod shm_mapping;
-+use shm_mapping::ShmMapping;
-+
- // Give a 0.1 ms allowance for presentation time errors.
- const CAST_DELAY_ALLOWANCE: Duration = Duration::from_micros(100);
- const SHM_BLOCKS: usize = 1;
-@@ -104,7 +106,8 @@ pub struct Cast {
-     formats: FormatSet,
-     offer_alpha: bool,
-     cursor_mode: CursorMode,
--    pub last_frame_time: Duration,
-+    last_frame_time: Duration,
-+    last_frame_interval: Duration,
-     scheduled_redraw: Option<RegistrationToken>,
-     // Incremented once per successful frame, stored in buffer meta.
-     sequence_counter: u64,
-@@ -944,6 +947,7 @@ impl PipeWire {
-             offer_alpha: alpha,
-             cursor_mode,
-             last_frame_time: Duration::ZERO,
-+            last_frame_interval: Duration::ZERO,
-             scheduled_redraw: None,
-             sequence_counter: 0,
-             inner,
-@@ -1017,6 +1021,25 @@ impl Cast {
-         Ok(())
-     }
- 
-+    pub fn record_frame_time(&mut self, recorded: Duration) {
-+        let interval = self.inner.borrow().min_time_between_frames;
-+        let ideal = self.last_frame_time + interval;
-+
-+        // Absorb small (< 1 frame) differences in output refresh interval vs. screencast framerate
-+        // to keep the screencast time base consistent instead of shifting forward every frame.
-+        //
-+        // After a missed interval or a rate change, restart instead of catching up in a burst.
-+        self.last_frame_time = if self.last_frame_interval == interval
-+            && recorded >= self.last_frame_time
-+            && recorded < ideal + interval
-+        {
-+            ideal
-+        } else {
-+            recorded
-+        };
-+        self.last_frame_interval = interval;
-+    }
-+
-     fn compute_extra_delay(&self, target_frame_time: Duration) -> Duration {
-         let inner = self.inner.borrow();
- 
-@@ -1292,7 +1315,7 @@ impl Cast {
-                         .map(|x| (x, SharingBuf::Dma))
-                 }
-                 x if x == DataType::MemFd.as_raw() => {
--                    let shmbuf = inner_.shmbufs[&fd].clone();
-+                    let shmbuf = &inner_.shmbufs[&fd];
- 
-                     let fourcc = if alpha {
-                         Fourcc::Argb8888
-@@ -1300,8 +1323,8 @@ impl Cast {
-                         Fourcc::Xrgb8888
-                     };
- 
--                    render_to_shmbuf(renderer, damage_tracker, &shmbuf, fourcc, elements, states)
--                        .map(|()| (SyncPoint::signaled(), SharingBuf::Shm(shmbuf)))
-+                    render_to_shmbuf(renderer, damage_tracker, shmbuf, fourcc, elements, states)
-+                        .map(|()| (SyncPoint::signaled(), SharingBuf::Shm(shmbuf.layout)))
-                 }
-                 _ => Err(anyhow::anyhow!(
-                     "unknown data type in dequeue_buffer_and_render"
-@@ -1361,8 +1384,10 @@ impl Cast {
-                     clear_dmabuf(renderer, dmabuf).map(|x| (x, SharingBuf::Dma))
-                 }
-                 x if x == DataType::MemFd.as_raw() => {
--                    let shmbuf = self.inner.borrow().shmbufs[&fd].clone();
--                    clear_shmbuf(&shmbuf).map(|()| (SyncPoint::signaled(), SharingBuf::Shm(shmbuf)))
-+                    let inner = self.inner.borrow();
-+                    let shmbuf = &inner.shmbufs[&fd];
-+                    clear_shmbuf(shmbuf);
-+                    Ok((SyncPoint::signaled(), SharingBuf::Shm(shmbuf.layout)))
-                 }
-                 _ => Err(anyhow::anyhow!(
-                     "unknown data type in dequeue_buffer_and_clear"
-@@ -1616,10 +1641,11 @@ fn allocate_dmabuf(
-     Ok(dmabuf)
- }
- 
--#[derive(Debug, Clone)]
-+#[derive(Debug)]
- pub struct Shmbuf {
--    fd: Rc<OwnedFd>,
-+    fd: OwnedFd,
-     layout: ShmLayout,
-+    mapping: ShmMapping,
- }
- 
- #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-@@ -1651,7 +1677,7 @@ impl ShmLayout {
- 
- enum SharingBuf {
-     Dma,
--    Shm(Shmbuf),
-+    Shm(ShmLayout),
- }
- 
- fn allocate_shmbuf(size: Size<u32, Physical>) -> anyhow::Result<Shmbuf> {
-@@ -1664,9 +1690,13 @@ fn allocate_shmbuf(size: Size<u32, Physical>) -> anyhow::Result<Shmbuf> {
-     ftruncate(&fd, layout.size.into()).context("error setting size of the fd")?;
-     fcntl_add_seals(&fd, SealFlags::SEAL | SealFlags::SHRINK | SealFlags::GROW)
-         .context("error sealing the fd")?;
-+    // SAFETY: The file has the requested size and is sealed against shrinking.
-+    // We only access the mapping while we own the dequeued PipeWire buffer.
-+    let mapping = unsafe { ShmMapping::new(fd.as_fd(), layout.size_usize()) }?;
-     Ok(Shmbuf {
--        fd: fd.into(),
-+        fd,
-         layout,
-+        mapping,
-     })
- }
- 
-@@ -1706,8 +1736,8 @@ unsafe fn mark_buffer_as_good(pw_buffer: NonNull<pw_buffer>, sequence: &mut u64,
-             // Clear the corrupted flag we may have set before.
-             (*chunk).flags = SPA_CHUNK_FLAG_NONE as i32;
-         }
--        SharingBuf::Shm(shmbuf) => {
--            (*chunk).size = shmbuf.layout.size;
-+        SharingBuf::Shm(layout) => {
-+            (*chunk).size = layout.size;
-             (*chunk).flags = SPA_CHUNK_FLAG_NONE as i32;
-         }
-     }
-@@ -1899,45 +1929,12 @@ fn render_to_shmbuf(
-         .map_texture(&mapping)
-         .context("error mapping texture")?;
- 
--    unsafe {
--        let buf = mmap(
--            std::ptr::null_mut(),
--            buffer.layout.size_usize(),
--            ProtFlags::READ | ProtFlags::WRITE,
--            MapFlags::SHARED,
--            buffer.fd.clone(),
--            0,
--        )?;
--        {
--            let buf = slice::from_raw_parts_mut(buf.cast::<u8>(), buffer.layout.size_usize());
--            buf.copy_from_slice(bytes);
--        }
--        if let Err(err) = munmap(buf, buffer.layout.size_usize()) {
--            warn!("error unmapping shm buffer: {err:?}");
--        }
--    }
-+    buffer.mapping.copy_frame(bytes);
-     Ok(())
- }
- 
--fn clear_shmbuf(buffer: &Shmbuf) -> anyhow::Result<()> {
--    unsafe {
--        let buf = mmap(
--            std::ptr::null_mut(),
--            buffer.layout.size_usize(),
--            ProtFlags::READ | ProtFlags::WRITE,
--            MapFlags::SHARED,
--            buffer.fd.clone(),
--            0,
--        )?;
--        {
--            let buf = slice::from_raw_parts_mut(buf.cast::<u8>(), buffer.layout.size_usize());
--            buf.fill(0);
--        }
--        if let Err(err) = munmap(buf, buffer.layout.size_usize()) {
--            warn!("error unmapping shm buffer: {err:?}");
--        }
--    }
--    Ok(())
-+fn clear_shmbuf(buffer: &Shmbuf) {
-+    buffer.mapping.clear();
- }
- 
- #[cfg(test)]
-diff --git a/src/screencasting/pw_utils/shm_mapping.rs b/src/screencasting/pw_utils/shm_mapping.rs
-new file mode 100644
-index 0000000000000000000000000000000000000000..ebc92e8c925ec2067bc48dd30bc7b15638211faf
---- /dev/null
-+++ b/src/screencasting/pw_utils/shm_mapping.rs
-@@ -0,0 +1,63 @@
-+use std::os::fd::BorrowedFd;
-+use std::{ptr, slice};
-+
-+use anyhow::{ensure, Context as _};
-+use smithay::reexports::rustix::mm::{mmap, munmap, MapFlags, ProtFlags};
-+
-+/// Owns a mapping of a sealed, fixed-size memfd. No references into it escape.
-+#[derive(Debug)]
-+pub(super) struct ShmMapping {
-+    address: *mut std::ffi::c_void,
-+    len: usize,
-+}
-+
-+impl ShmMapping {
-+    /// # Safety
-+    ///
-+    /// The file must contain at least `len` initialized bytes and must not shrink
-+    /// while mapped. Access through other mappings must be synchronized with
-+    /// calls to `copy_frame` and `clear` for the lifetime of this mapping.
-+    pub(super) unsafe fn new(fd: BorrowedFd<'_>, len: usize) -> anyhow::Result<Self> {
-+        ensure!(
-+            len > 0 && len <= isize::MAX as usize,
-+            "invalid mapping length"
-+        );
-+        let address = unsafe {
-+            mmap(
-+                ptr::null_mut(),
-+                len,
-+                ProtFlags::READ | ProtFlags::WRITE,
-+                MapFlags::SHARED,
-+                fd,
-+                0,
-+            )
-+        }
-+        .context("error mapping SHM buffer")?;
-+        Ok(Self { address, len })
-+    }
-+
-+    pub(super) fn copy_frame(&self, bytes: &[u8]) {
-+        let _span = tracy_client::span!();
-+
-+        // SAFETY: The constructor's contract keeps the memory valid and ensures
-+        // exclusive access during this write. No references into the mapping escape.
-+        let buffer = unsafe { slice::from_raw_parts_mut(self.address.cast::<u8>(), self.len) };
-+        buffer.copy_from_slice(bytes);
-+    }
-+
-+    pub(super) fn clear(&self) {
-+        let _span = tracy_client::span!();
-+
-+        // SAFETY: As in copy_frame, the mapping is valid and exclusively accessed.
-+        let buffer = unsafe { slice::from_raw_parts_mut(self.address.cast::<u8>(), self.len) };
-+        buffer.fill(0);
-+    }
-+}
-+
-+impl Drop for ShmMapping {
-+    fn drop(&mut self) {
-+        if let Err(err) = unsafe { munmap(self.address, self.len) } {
-+            warn!("error unmapping SHM buffer: {err}");
-+        }
-+    }
-+}
 diff --git a/src/tests/minimize_animation.rs b/src/tests/minimize_animation.rs
-index 8faab3d9f9be7e314cea40ea5ed0933a9d6a3fd8..12e03948561b1d6451d7502c240b5421d458ea21 100644
+index 55c8ed7dae669637fe24980b58369d1e142923d9..2f3e04102a92001eba774b9d4a83af52c27b8703 100644
 --- a/src/tests/minimize_animation.rs
 +++ b/src/tests/minimize_animation.rs
-@@ -1172,3 +1172,64 @@ fn egl_genie_first_frame_preserves_texture_padding_when_overlapping_dock() {
-         );
+@@ -1168,6 +1168,67 @@ fn egl_genie_first_frame_preserves_texture_padding_when_overlapping_dock() {
      }
  }
-+
+ 
 +#[test]
 +fn egl_genie_first_frame_stays_at_window_position_on_hidpi_output() {
 +    let mut f = setup_with_timing(
@@ -1625,11 +1309,15 @@ index 8faab3d9f9be7e314cea40ea5ed0933a9d6a3fd8..12e03948561b1d6451d7502c240b5421
 +        "Genie restore did not start near the Dock icon"
 +    );
 +}
++
+ #[test]
+ fn egl_genie_scaled_output_keeps_snapshot_in_logical_coordinates() {
+     for scale in [1., 1.25, 1.5, 2.] {
 diff --git a/src/tests/mod.rs b/src/tests/mod.rs
-index 209370017b224a5dd3be20969cea290391ca3922..bc01b9517f8053ea69471f483a1cc1ac5faed552 100644
+index 0212dac1553491826dbd60d4bd4a2aee4998d1ee..4c7075ad32fd42003ced88a9f87bff2a42f30e40 100644
 --- a/src/tests/mod.rs
 +++ b/src/tests/mod.rs
-@@ -13,6 +13,7 @@ mod minimize_animation;
+@@ -15,6 +15,7 @@ mod minimize_animation;
  mod minimize_capture;
  mod minimize_ipc;
  mod remove_output;

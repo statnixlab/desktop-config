@@ -1,5 +1,5 @@
 diff --git a/src/backend/drm/compositor/mod.rs b/src/backend/drm/compositor/mod.rs
-index 3f471cf3bd95..df679c2ecb33 100644
+index 3f471cf3bd95a21aa13ce9eeb9cf5df1d5ecf4fc..df679c2ecb3379528bdb86c1b16cf6290b321fc6 100644
 --- a/src/backend/drm/compositor/mod.rs
 +++ b/src/backend/drm/compositor/mod.rs
 @@ -1067,6 +1067,8 @@ where
