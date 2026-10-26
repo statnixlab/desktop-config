@@ -34,6 +34,7 @@ REFERENCE_CONFIG_FILES = [
     'systemd/user/default-app-icons.service', 'systemd/user/default-app-icons.path',
     'systemd/user/default-app-icons.timer', 'systemd/user/tailscale-systray.service',
     'systemd/user/ydotool.service.d/10-user-socket.conf',
+    'systemd/user/nyx-theme-sync.path',
     'mimeapps.list', 'niri-mimeapps.list', 'chatgpt-flags.conf', 'user-dirs.dirs',
     'systemd/user/niri.service.d/90-full-repaint-diagnostic.conf',
     'systemd/user/niri.service.d/95-titlebar-column.conf',
@@ -136,6 +137,9 @@ def capture(home, root=ROOT):
                 if key in data:
                     data[key] = ''
             data['cloudBackupFolders'] = []
+            put('system-reference/desktop-extras/cloud-preferences.json', json.dumps({
+                'cloudDefaultRemoteName': data.get('cloudDefaultRemoteName', '')
+            }, ensure_ascii=False, indent=2) + '\n')
             data['cloudDefaultRemoteName'] = ''
         put('config/clavis/' + name, json.dumps(data, ensure_ascii=False, indent=2) + '\n')
 
@@ -156,6 +160,8 @@ def capture(home, root=ROOT):
             r'\s*(?:render-drm-device|disable-cursor-plane|prefer-16bit-output|restrict-primary-scanout-to-matching-format|force-full-repaint|full-repaint-reuse-buffers|high-refresh-workaround-above|keep-previous-frame-buffer)\b', line)
             and not line.strip().startswith(('// Use the NVIDIA GPU', '// NVIDIA high-refresh workaround:'))) + '\n'
         niri_config.write_text(content)
+    copy(home / '.local/share/nautilus-python/extensions/copy_path.py',
+         'share/nautilus-python/extensions/copy_path.py')
     for name in ['manggo-shortcuts.py', 'qq-native-screenshot.py']:
         copy(home / '.local/libexec' / name, 'libexec/' + name)
     for relative in ['.config/systemd/user/manggo-shortcuts.service',

@@ -39,6 +39,10 @@ application/wps-office.wpt=wps-office-prometheus.desktop
 text/x-ms-regedit=org.kde.kate.desktop
 application/pdf=ai.storyteller.pdfcraft.desktop
 text/plain=org.kde.kate.desktop
+x-scheme-handler/mailto=userapp-Thunderbird-4YZGX3.desktop
+x-scheme-handler/mid=userapp-Thunderbird-4YZGX3.desktop
+message/rfc822=userapp-Thunderbird-4YZGX3.desktop
+x-scheme-handler/net.thunderbird=userapp-Thunderbird-UL7HX3.desktop
 
 [Added Associations]
 video/mp4=smplayer.desktop;
@@ -51,3 +55,7 @@ application/illustrator=ai.storyteller.vectorcraft.desktop;
 text/x-ms-regedit=org.kde.kate.desktop;
 application/pdf=ai.storyteller.pdfcraft.desktop;
 text/plain=org.kde.kate.desktop;
+x-scheme-handler/mailto=userapp-Thunderbird-4YZGX3.desktop;
+x-scheme-handler/mid=userapp-Thunderbird-4YZGX3.desktop;
+message/rfc822=userapp-Thunderbird-4YZGX3.desktop;
+x-scheme-handler/net.thunderbird=userapp-Thunderbird-UL7HX3.desktop;

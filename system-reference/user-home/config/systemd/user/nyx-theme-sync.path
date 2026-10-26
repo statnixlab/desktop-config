@@ -1,0 +1,10 @@
+[Unit]
+Description=Watch the current Clavis color palette
+PartOf=niri.service
+
+[Path]
+PathChanged=%h/.local/share/clavis/profiles/default/generated/clavis/colors.json
+Unit=nyx-theme-sync.service
+
+[Install]
+WantedBy=niri.service

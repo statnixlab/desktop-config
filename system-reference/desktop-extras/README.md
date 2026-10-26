@@ -19,3 +19,14 @@
   也不自动修改 `/dev/uinput` 权限。
 
 所有 `user-home/` 文件中的 `@HOME@` 需替换为目标用户 Home。
+
+## 2026-10-26 更新
+
+- `cloud-preferences.json` 仅记录默认远端名称 `quark-openlist`，不包含 rclone
+  账号或令牌。目标电脑先配置同名远端，再将该字段合并到 Clavis 的
+  `ui-preferences.json`；通用快照仍清空该字段，避免引用不存在的账号配置。
+- `../user-home/config/systemd/user/nyx-theme-sync.path` 保存当前主题同步监听
+  随 Niri 会话启停的配置。按需替换后需重新加载用户单元，并从旧的
+  `default.target` 启用关系迁移到 `niri.service`；不会自动应用。
+- 默认邮件关联指向本机 Thunderbird 自动生成的 desktop ID；迁移时应重新选择
+  目标电脑已安装的 Thunderbird 入口。ArtCraft 的 AppImage 版本入口已同步。

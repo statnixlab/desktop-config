@@ -2,7 +2,7 @@
 Type=Application
 Name=PdfCraft
 Comment=Reading, organizing and protecting PDFs
-Exec="@HOME@/Applications/pdfcraft-0.13.0-linux-x86_64.AppImage" %F
+Exec="@HOME@/Applications/pdfcraft-0.14.0-linux-x86_64.AppImage" %F
 Icon=ai.storyteller.pdfcraft
 Terminal=false
 Categories=Office;Viewer;

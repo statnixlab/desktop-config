@@ -22,7 +22,7 @@ fi
 sudo pacman -Syu --needed git python curl github-cli rclone fcitx5 fcitx5-rime fcitx5-configtool \
     fcitx5-gtk fcitx5-qt librime xorg-xrdb xwayland-satellite \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk xdg-user-dirs \
-    polkit polkit-kde-agent keyd flatpak breeze breeze-gtk plasma-integration nautilus papirus-icon-theme smplayer konsole alacritty fuzzel \
+    polkit polkit-kde-agent keyd flatpak breeze breeze-gtk plasma-integration nautilus nautilus-python papirus-icon-theme smplayer konsole alacritty fuzzel \
     noto-fonts noto-fonts-cjk noto-fonts-emoji fontconfig kconfig python-gobject \
     wl-clipboard swaylock playerctl brightnessctl fd libqalculate kitty fish fuse3 \
     base-devel cmake ninja pkgconf clang "$rust_package" wayland wayland-protocols \

@@ -204,6 +204,23 @@ Clavis 固定到包含 OpenList 托盘图标修复的提交，并保留之前的
 Tailscale 托盘和 ydotool socket 配置参考，见
 [`system-reference/desktop-extras/`](system-reference/desktop-extras/)。应用数据与程序二进制不包含在快照中。
 
+## 2026-10-26 配置快照
+
+Clavis 更新到通知应用图标补全和 CPU/GPU 独立功耗显示版本；同步 Dock 排列、
+Niri 中文快捷键说明、默认应用关联和 ArtCraft 应用入口版本。Fcitx5 的两类
+Wayland 诊断通知隐藏设置继续保留。
+
+Nautilus 右键新增“复制路径”和“复制当前文件夹路径”，多选时每行一个路径。
+扩展位于 `share/nautilus-python/extensions/copy_path.py`，随默认恢复安装；
+依赖 `nautilus-python`、GTK4 和 `wl-clipboard`，Arch 依赖脚本已包含这些包。
+当前扩展适用于 Nautilus 4.1 扩展接口，恢复后重新打开 Nautilus 加载。
+
+本机云盘远端选择与主题同步服务生命周期作为按需合并参考保留，见
+[`system-reference/desktop-extras/`](system-reference/desktop-extras/)。
+代理策略只保存[脱敏模板](system-reference/proxy-policy/README.md)，不包含账号、
+订阅链接、节点地址或密钥。此快照不包含 NVIDIA 防卡顿频率服务及其开机重试修改；
+此前已发布的 Smithay 防闪烁补丁和配置参考保持原状。
+
 ## 刷新快照
 
 先提交并推送 Clavis 源码，再运行：

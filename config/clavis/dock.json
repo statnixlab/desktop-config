@@ -33,15 +33,11 @@
     },
     {
       "kind": "app",
-      "desktopId": "org.gnome.Nautilus"
-    },
-    {
-      "kind": "app",
       "desktopId": "chatgpt"
     },
     {
       "kind": "app",
-      "desktopId": "org.clavis.Settings"
+      "desktopId": "org.gnome.Nautilus"
     }
   ]
 }
