@@ -169,8 +169,14 @@
       "kind": "app"
     },
     {
-      "id": "org.remmina.Remmina",
-      "kind": "app"
+      "children": [
+        "aws-windows-rdp",
+        "org.remmina.Remmina",
+        "aws-windows-public-rdp"
+      ],
+      "id": "folder:dd18643c",
+      "kind": "folder",
+      "name": "远程"
     },
     {
       "children": [
@@ -226,10 +232,6 @@
       "name": "CRAFT"
     },
     {
-      "id": "aws-windows-rdp",
-      "kind": "app"
-    },
-    {
       "id": "com.obsproject.Studio",
       "kind": "app"
     },
@@ -239,6 +241,14 @@
     },
     {
       "id": "tailscale-systray",
+      "kind": "app"
+    },
+    {
+      "id": "com.anthropic.Claude",
+      "kind": "app"
+    },
+    {
+      "id": "org.mozilla.Thunderbird",
       "kind": "app"
     }
   ],

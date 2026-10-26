@@ -1,0 +1,11 @@
+[Unit]
+Description=WPS Zotero Proxy
+After=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/python @HOME@/.local/share/Kingsoft/wps/jsaddons/wps-zotero_0.2.0/proxy.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

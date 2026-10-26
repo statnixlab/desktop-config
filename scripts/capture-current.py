@@ -18,6 +18,7 @@ REFERENCE_CONFIG_FILES = [
     'xwayland-chat.Xresources', 'xwayland-wps.Xresources',
     'systemd/user/xwayland-chat.service', 'systemd/user/xwayland-wps.service',
     'systemd/user/wechat-notification-bridge.service',
+    'systemd/user/wps-zotero-proxy.service',
     'systemd/user/jbl-ps3500-volume.service',
     'systemd/user/quickshell-app-icon-refresh.path',
     'systemd/user/quickshell-app-icon-refresh.service',
@@ -116,7 +117,7 @@ def capture(home, root=ROOT):
         (root / relative).chmod(path.stat().st_mode & 0o777)
 
     for name in ['config.json', 'ui-preferences.json', 'quick-toggles.json', 'idle-policy.json', 'tray.json',
-                 'dock.json', 'launchpad.json', 'launchpad-backend.json']:
+                 'dock.json', 'launchpad.json', 'launchpad-backend.json', 'quick-access.json']:
         path = home / '.config/clavis' / name
         if not path.is_file():
             continue
@@ -255,11 +256,19 @@ def capture(home, root=ROOT):
     for name in REFERENCE_DESKTOP_FILES:
         copy(home / '.local/share/applications' / name,
              'system-reference/user-home/share/applications/' + name)
+    # Keep the installed add-on's small local source overrides and provenance;
+    # never traverse Zotero libraries, WPS documents, profiles or account stores.
+    addon = home / '.local/share/Kingsoft/wps/jsaddons/wps-zotero_0.2.0'
+    for name in ['LOCAL-INSTALL.txt', 'LICENSE.txt', 'lang.cfg',
+                 'proxy.py', 'js/ribbon.js', 'js/i18n.js']:
+        copy(addon / name, 'system-reference/wps-zotero/' + name)
     if home == Path.home().resolve():
         copy(Path('/usr/local/libexec/chatgpt-startup-fix.py'),
              'system-reference/chatgpt/chatgpt-startup-fix.py')
         copy(Path('/etc/pacman.d/hooks/95-chatgpt-startup-fix.hook'),
              'system-reference/chatgpt/95-chatgpt-startup-fix.hook')
+        copy(Path('/etc/modprobe.d/nvidia-595-suspend-compat.conf'),
+             'system-reference/power/nvidia-595-suspend-compat.conf')
     # Keep the custom file chooser and exact machine entrypoints as opt-in references.
     for source_path, relative in [
         ('.local/libexec/nautilus-niri-filechooser.py', 'libexec/nautilus-niri-filechooser.py'),

@@ -1,5 +1,45 @@
 // Managed by Clavis.
 layer-rule {
+    match namespace="^clavis-keystone-backdrop-pill$";
+    geometry-corner-radius 10000;
+    background-effect {
+        blur true;
+        xray false;
+    };
+};
+layer-rule {
+    match namespace="^clavis-keystone-backdrop-top$";
+    geometry-corner-radius 0 0 10000 10000;
+    background-effect {
+        blur true;
+        xray false;
+    };
+};
+layer-rule {
+    match namespace="^clavis-keystone-backdrop-bottom$";
+    geometry-corner-radius 10000 10000 0 0;
+    background-effect {
+        blur true;
+        xray false;
+    };
+};
+layer-rule {
+    match namespace="^clavis-keystone-backdrop-left$";
+    geometry-corner-radius 0 10000 10000 0;
+    background-effect {
+        blur true;
+        xray false;
+    };
+};
+layer-rule {
+    match namespace="^clavis-keystone-backdrop-right$";
+    geometry-corner-radius 10000 0 0 10000;
+    background-effect {
+        blur true;
+        xray false;
+    };
+};
+layer-rule {
     match namespace="^clavis-shell-";
     background-effect { xray false; };
 }

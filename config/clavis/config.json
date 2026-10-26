@@ -65,8 +65,9 @@
     "parallax": {
       "verticalEnabled": false,
       "followWorkspaces": true,
-      "followSidebars": false,
+      "followSidebars": true,
       "followTiledColumns": false,
+      "floatingWindowsEnabled": true,
       "preferredScale": 1.1,
       "tiledColumnSpan": 6
     }
@@ -80,6 +81,7 @@
       "yazi": true
     },
     "mode": "light",
+    "settingsWindowControlsSide": "left",
     "superKeyStyle": "arch",
     "lockScreenStyle": "default",
     "cursorTheme": "breeze_cursors",
@@ -100,6 +102,36 @@
     "shellBlurXray": false
   },
   "keystone": {
+    "enabled": true,
+    "dimensions": {
+      "edgeSpacing": 0,
+      "exclusiveZoneOffset": 0,
+      "thickness": 37,
+      "compactLength": 180,
+      "insetPadding": 10,
+      "itemSpacing": 6,
+      "popupGap": 20
+    },
+    "overlay": true,
+    "fullDisplay": true,
+    "longShowNames": false,
+    "longShowMonitorValues": true,
+    "longShowValues": true,
+    "hoverOpenDelay": 150,
+    "hoverCloseDelay": 250,
+    "longLeading": [
+      "media"
+    ],
+    "longTrailing": [
+      "networkSpeed",
+      "cpuTemperature",
+      "memoryUsage"
+    ],
+    "media": {
+      "progressStyle": "wave",
+      "coverStyle": "rounded",
+      "colorStyle": "theme"
+    },
     "style": "pill",
     "position": "top",
     "capsLockOsd": true,
@@ -172,10 +204,21 @@
     }
   },
   "bar": {
+    "enabled": true,
+    "overlay": false,
+    "showNames": false,
+    "showValues": false,
+    "dimensions": {
+      "exclusiveZoneOffset": 0,
+      "innerPadding": 3,
+      "insetPadding": 0,
+      "lengthPadding": 0,
+      "moduleRadius": 12
+    },
     "position": "top",
     "edgeMargin": 0,
-    "thickness": 38,
-    "pillThickness": 36,
+    "thickness": 39,
+    "pillThickness": 37,
     "barLeadingComponents": [
       "workspaces",
       "information",
