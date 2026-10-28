@@ -40,6 +40,14 @@ layer-rule {
     };
 };
 layer-rule {
+    match namespace="^clavis-bar-backdrop$";
+    geometry-corner-radius 12;
+    background-effect {
+        blur true;
+        xray false;
+    };
+};
+layer-rule {
     match namespace="^clavis-shell-";
     background-effect { xray false; };
 }
