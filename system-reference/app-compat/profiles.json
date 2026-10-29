@@ -28,5 +28,12 @@
     ".config/systemd/user/xwayland-chat.service",
     ".local/share/applications/abdownloadmanager.desktop",
     ".local/share/applications/com-abdownloadmanager-desktop-AppKt.desktop"
+  ],
+  "wechat": [
+    ".local/bin/chat-hidpi-launch",
+    ".local/bin/chat-hidpi-input",
+    ".config/xwayland-chat.Xresources",
+    ".config/systemd/user/xwayland-chat.service",
+    ".local/share/applications/wechat.desktop"
   ]
 }

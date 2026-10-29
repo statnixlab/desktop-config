@@ -1,6 +1,8 @@
 import importlib.util
+import configparser
 import json
 from pathlib import Path
+import shlex
 import tempfile
 import unittest
 
@@ -43,6 +45,35 @@ class AppCompatibilityRestoreTests(unittest.TestCase):
     def test_wps_experiment_is_not_in_install_inventory(self):
         profiles = json.loads((ROOT / 'system-reference/app-compat/profiles.json').read_text())
         self.assertFalse(any('repaint' in path for path in profiles['wps']))
+
+    def test_wechat_launcher_rebases_spaced_home_and_preserves_existing_entry(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / 'new user'
+            desktop = home / '.local/share/applications/wechat.desktop'
+            desktop.parent.mkdir(parents=True)
+            original = '[Desktop Entry]\nType=Application\nName=Previous\nExec=/opt/wechat/wechat\n'
+            desktop.write_text(original)
+            backup = home / 'backup'
+            compat.restore_settings(home, ['wechat'], backup)
+            entry = configparser.ConfigParser(interpolation=None)
+            entry.read(desktop)
+            self.assertEqual(shlex.split(entry['Desktop Entry']['Exec']),
+                             [str(home / '.local/bin/chat-hidpi-launch'), 'wechat', '%U'])
+            self.assertEqual((backup / '.local/share/applications/wechat.desktop').read_text(), original)
+            self.assertTrue((home / '.config/systemd/user/xwayland-chat.service').is_file())
+            self.assertFalse((home / '.abdm').exists())
+
+    def test_combined_chat_profiles_preserve_original_shared_service_backup(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            relative = '.config/systemd/user/xwayland-chat.service'
+            service = home / relative
+            service.parent.mkdir(parents=True)
+            service.write_text('[Service]\nEnvironment=ORIGINAL=1\n')
+            backup = home / 'backup'
+            compat.restore_settings(home, ['abdownloadmanager', 'wechat'], backup)
+            self.assertEqual((backup / relative).read_text(), '[Service]\nEnvironment=ORIGINAL=1\n')
+            self.assertNotEqual(service.read_bytes(), (backup / relative).read_bytes())
 
 
 if __name__ == '__main__':

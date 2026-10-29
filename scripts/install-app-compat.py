@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Restore selected WPS/AB compatibility settings; default mode only prints a plan."""
+"""Restore selected WPS/AB/WeChat compatibility settings; default mode only prints a plan."""
 import argparse
 from datetime import datetime
 import hashlib
@@ -39,11 +39,13 @@ def write_file(home, relative, data, mode, backup):
 
 def restore_settings(home, selected, backup):
     profiles = json.loads((ROOT / 'system-reference/app-compat/profiles.json').read_text())
-    for profile in selected:
-        for relative in profiles[profile]:
-            source = ROOT / 'system-reference/app-compat/files' / relative
-            data = source.read_text().replace('@HOME@', str(home)).encode()
-            write_file(home, relative, data, source.stat().st_mode & 0o777, backup)
+    # AB and WeChat share a display service. Back up each destination once,
+    # so selecting both cannot overwrite an original backup with restored data.
+    files = dict.fromkeys(relative for profile in selected for relative in profiles[profile])
+    for relative in files:
+        source = ROOT / 'system-reference/app-compat/files' / relative
+        data = source.read_text().replace('@HOME@', str(home)).encode()
+        write_file(home, relative, data, source.stat().st_mode & 0o777, backup)
     if 'abdownloadmanager' in selected:
         relative = '.abdm/config/appSettings.json'
         existing = home / relative
@@ -56,13 +58,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--wps', action='store_true')
     parser.add_argument('--abdownloadmanager', action='store_true')
+    parser.add_argument('--wechat', action='store_true')
     parser.add_argument('--target-home', type=Path, default=Path.home())
     parser.add_argument('--build-root', type=Path)
     parser.add_argument('--apply', action='store_true')
     args = parser.parse_args()
-    selected = [name for name in ['wps', 'abdownloadmanager'] if getattr(args, name)]
+    selected = [name for name in ['wps', 'abdownloadmanager', 'wechat'] if getattr(args, name)]
     if not selected:
-        parser.error('Choose --wps and/or --abdownloadmanager')
+        parser.error('Choose --wps, --abdownloadmanager and/or --wechat')
     home = args.target_home.expanduser().absolute()
     if any(char in str(home) for char in '\n\r"\'`$\\'):
         parser.error('Unsupported characters in target home')
@@ -74,7 +77,9 @@ def main():
     if platform.machine() != 'x86_64':
         parser.error('These compatibility builds were verified on x86_64 only')
     if home.resolve() == Path.home().resolve():
-        for profile, executable in [('wps', '/usr/bin/wps'), ('abdownloadmanager', '/opt/abdownloadmanager/bin/ABDownloadManager')]:
+        for profile, executable in [('wps', '/usr/bin/wps'),
+                                    ('abdownloadmanager', '/opt/abdownloadmanager/bin/ABDownloadManager'),
+                                    ('wechat', '/opt/wechat/wechat')]:
             if profile in selected and not Path(executable).is_file():
                 parser.error('Install the application first: ' + executable)
         if 'abdownloadmanager' in selected:
@@ -92,8 +97,7 @@ def main():
     spec.loader.exec_module(module)
     build_root = args.build_root or home / '.cache/desktop-config/build'
     backup = home / '.local/state/desktop-config-backups' / datetime.now().strftime('apps-%Y%m%d-%H%M%S-%f')
-    for profile in selected:
-        kind = 'wps' if profile == 'wps' else 'chat'
+    for kind in dict.fromkeys('wps' if profile == 'wps' else 'chat' for profile in selected):
         binary = Path('.local/libexec') / ('xwayland-satellite-wps' if kind == 'wps' else 'xwayland-satellite-hidpi')
         if (home / binary).is_file():
             saved = backup / binary
@@ -121,6 +125,8 @@ def main():
             subprocess.run(['systemctl', '--user', 'enable', '--now', 'abdownloadmanager-native-path.path'], check=True)
     print('Restored. Backup:', backup)
     print('Open the applications normally. Dedicated displays are used only with uniform 200% Niri scaling.')
+    if 'wechat' in selected:
+        print('Fully quit and reopen WeChat to use the new launcher; the installer does not restart it.')
 
 
 if __name__ == '__main__':

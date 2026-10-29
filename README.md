@@ -84,16 +84,17 @@ NIRI_SOURCE_DIR="$HOME/.local/share/niri-desktop-source-20261029" \
 和 GTK/X11 DPI。首次安装使用默认参数；`--same-hardware` 只适合同一台源电脑重装。
 本机 NVIDIA 防闪／显示唤醒特例仍是可选参考，不自动部署到另一台电脑。
 
-WPS 和 AB Download Manager 本体需另行安装，再恢复兼容层：
+WPS、AB Download Manager 和微信本体需另行安装，再按需恢复兼容层：
 
 ```bash
 # 先预览，不写配置或编译
-python3 scripts/install-app-compat.py --wps --abdownloadmanager
+python3 scripts/install-app-compat.py --wps --abdownloadmanager --wechat
 # 退出 AB 下载器后，构建并恢复选定配置
-python3 scripts/install-app-compat.py --wps --abdownloadmanager --apply
+python3 scripts/install-app-compat.py --wps --abdownloadmanager --wechat --apply
 ```
 
 说明和适用条件见 [`system-reference/app-compat/README.md`](system-reference/app-compat/README.md)。
+可单独传 `--wechat` 恢复微信启动入口。完成后本人完全退出并重开微信；安装器不自动重启应用。
 WPS Zotero／快捷引用单独见 [`system-reference/wps-zotero/README.md`](system-reference/wps-zotero/README.md)。
 AB 的下载列表和浏览器账户不迁移；安装器只合并两个显示／自启设置。新电脑的 WeTypeX
 设备配对、各应用登录和文献库位置需重新设置。
@@ -347,3 +348,9 @@ Niri Launchpad 的构建、交互回归测试、应用/分组模型测试和进�
 桌面迁移 27 项测试、Niri 最大化 3 项与独立浮窗层级 8 项测试通过；字体四组下载校验、
 WPS／AB 完整构建并安装至临时 Home、快捷引用配对包准备与协议测试通过。
 完整新机器安装、各硬件图形效果仍需在目标电脑确认。
+
+## 2026-10-29 微信启动入口补充
+
+将本机新恢复的微信 XWayland 启动入口加入 `--wechat` 可选安装。底层聊天显示桥接保持
+此前验证版本；统一 200% 缩放时使用 `:2` 并连接输入法，其他缩放使用原显示服务。
+本机已确认新入口生效，息屏唤醒问题的长期效果仍待实际验证。未上传聊天数据或账号信息。

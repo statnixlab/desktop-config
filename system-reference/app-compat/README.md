@@ -1,7 +1,7 @@
-# WPS 与 AB Download Manager 的可选兼容安装
+# WPS、AB Download Manager 与微信的可选兼容安装
 
 默认桌面恢复不启用这组应用专用显示服务。安装应用本体后，用仓库根目录的
-`scripts/install-app-compat.py --wps --abdownloadmanager --apply` 按需选择。
+`scripts/install-app-compat.py --wps --abdownloadmanager --wechat --apply` 按需选择。
 只传其中一个选项即可仅安装对应应用的兼容配置。
 
 构建依赖：Rust/Cargo、GCC、pkgconf、clang、libxcb、xcb-util-cursor、xorg-xwayland、
@@ -35,6 +35,27 @@ jq、xorg-xrdb、libnotify。请通过图形 polkit 认证安装缺失依赖；�
 
 浏览器清单由目标电脑的 AB／浏览器扩展自行生成。路径监视器只把已知的原版 NativeMessaging
 可执行路径改为用户兼容入口；不上传浏览器 profile、扩展凭据或下载历史。
+
+## 微信
+
+安装目标为官方 Linux 微信 `/opt/wechat/wechat`，本机核验软件包为 `wechat-bin 4.1.13.26-1`。
+新增的用户桌面入口调用 `chat-hidpi-launch wechat`，以 `QT_QPA_PLATFORM=xcb` 启动。
+在所有活动显示器均为 200% 的 Niri 会话中使用已有 `:2` 兼容服务，并连接 Fcitx5；
+其他缩放使用原 `DISPLAY`，不启用专用 200% 显示。
+
+```bash
+# 单独预览／恢复微信入口
+python3 scripts/install-app-compat.py --wechat
+python3 scripts/install-app-compat.py --wechat --apply
+```
+
+本机息屏唤醒时曾出现显示器连续重连和缩放重置，微信原生 Wayland 绘制区域未跟随窗口尺寸。
+此入口已在本机恢复并完全重启微信，核验实际进程使用 `DISPLAY=:2`、`QT_QPA_PLATFORM=xcb`；
+**是否彻底解决仍待真实息屏唤醒验证**，不将启动成功等同于长期问题已经消失。
+
+安装器不会关闭微信或重启共用显示服务。安装后本人结束通话／传输并完全退出、重开微信，
+新入口才会生效。此选项不复制聊天记录、账户、缓存或登录信息，也不启用额外的通知桥接。
+与 AB 同时选择时只构建一次共用显示桥接，并保留目标电脑原来的共用配置备份。
 
 ## 备份与单独构建
 

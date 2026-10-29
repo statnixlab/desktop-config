@@ -3,5 +3,7 @@
   "abdownloadmanager": "1.0.0-makepkg-snapshot",
   "xwayland": "24.1.14",
   "display_scale": 2,
-  "wps_repaint_experiment": "excluded; disabled after Alt overlay SHM fix was confirmed"
+  "wps_repaint_experiment": "excluded; disabled after Alt overlay SHM fix was confirmed",
+  "wechat": "4.1.13.26-1 (wechat-bin)",
+  "wechat_validation": "Launcher restored and restarted; DISPLAY=:2 and QT_QPA_PLATFORM=xcb verified; a real display sleep/wake cycle remains to be confirmed."
 }
