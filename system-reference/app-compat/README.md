@@ -38,35 +38,41 @@ jq、xorg-xrdb、libnotify。请通过图形 polkit 认证安装缺失依赖；�
 
 ## 微信
 
-安装目标为官方 Linux 微信 `/opt/wechat/wechat`，本机核验软件包为 `wechat-bin 4.1.13.26-1`。
-新增的用户桌面入口调用 `chat-hidpi-launch wechat`，以 `QT_QPA_PLATFORM=xcb` 启动。
-在所有活动显示器均为 200% 的 Niri 会话中使用已有 `:2` 兼容服务，并连接 Fcitx5；
-其他缩放使用原 `DISPLAY`，不启用专用 200% 显示。
+安装目标为官方 Linux 微信 `/opt/wechat/wechat`，本机核验版本为 `wechat-bin 4.1.13.26-1`。
+用户桌面入口调用 `chat-hidpi-launch wechat`，以 `QT_QPA_PLATFORM=xcb` 启动。在所有活动
+显示器均为 200% 的 Niri 会话中，微信使用独立的 `xwayland-wechat.service`（`:4`），
+保留共享内存渲染 `-glamor none`、光标比例和 Fcitx5 连接。QQ／AB 继续使用原 `:2` 服务。
+其他缩放使用原 `DISPLAY`，不启用这一组 200% 专用设置。
 
 ```bash
-# 单独预览／恢复微信入口
 python3 scripts/install-app-compat.py --wechat
 python3 scripts/install-app-compat.py --wechat --apply
 ```
 
-本机息屏唤醒时曾出现显示器连续重连和缩放重置，微信原生 Wayland 绘制区域未跟随窗口尺寸。
-此入口已在本机恢复并完全重启微信，核验实际进程使用 `DISPLAY=:2`、`QT_QPA_PLATFORM=xcb`；
-**是否彻底解决仍待真实息屏唤醒验证**，不将启动成功等同于长期问题已经消失。
+微信专用桥接从公开上游加完整补丁重建，来源见 `../wechat-compat/source.json`。
+`XWS_FILE_CLIPBOARD_EXE=/opt/wechat/wechat` 限定请求进程：文件管理器复制文件时，只向微信
+展示文件 URL 格式，避免把同一剪贴板里的纯文本路径粘进输入框。原始文件列表和字节不变，
+普通文字／图片及其他进程的格式列表保持原样。没有进程内注入，也没有临时剪贴板接管程序。
 
-安装器不会关闭微信或重启共用显示服务。安装后本人结束通话／传输并完全退出、重开微信，
-新入口才会生效。此选项不复制聊天记录、账户、缓存或登录信息，也不启用额外的通知桥接。
-与 AB 同时选择时只构建一次共用显示桥接，并保留目标电脑原来的共用配置备份。
+本机已由用户确认：重新复制文件后微信出现附件，随后复制新文字能正常更新，QQ 文件粘贴
+仍正常。独立测试覆盖请求进程范围、属性长度查询、文件到文字切换及原始数据保持。
+XWayland／共享内存显示方案继续保留；真实息屏唤醒的长期表现仍需观察。
+
+安装器不会关闭微信或重启显示服务。安装后本人结束通话／传输并完全退出、重开微信。
+输入法重新启动时会重新连接独立显示。此选项不复制聊天记录、账户、缓存或登录信息，
+也不启用额外通知桥接。先前失败的进程内剪贴板试验不包含在安装流程中。
 
 ## 备份与单独构建
 
 安装器备份已存在的配置和显示桥接至 `~/.local/state/desktop-config-backups/apps-*`。
-运行中的显示服务不被重启。两个 `xwayland-*.service` 按启动器需要启动，AB 路径监视器会启用。
+运行中的显示服务不被重启。三个 `xwayland-*.service` 按启动器需要启动，AB 路径监视器会启用。
 
 单独准备／检查源码，不构建或安装：
 
 ```bash
 python3 scripts/build-app-compat.py wps --prepare-only
 python3 scripts/build-app-compat.py chat --prepare-only
+python3 scripts/build-app-compat.py wechat --prepare-only
 ```
 
 `--target-home` 可用于临时目录验证；`--build-root` 可给应用安装器指定独立构建缓存。

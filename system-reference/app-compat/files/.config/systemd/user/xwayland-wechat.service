@@ -1,0 +1,18 @@
+[Unit]
+Description=WeChat XWayland display and file clipboard compatibility
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=notify
+NotifyAccess=main
+Environment=XWS_CURSOR_SCALE=2
+Environment=XCURSOR_THEME=breeze_cursors
+Environment=XCURSOR_SIZE=48
+Environment=XWS_FILE_CLIPBOARD_EXE=/opt/wechat/wechat
+ExecStart=%h/.local/libexec/xwayland-satellite-wechat :4 -nolisten tcp -glamor none
+ExecStartPost=/usr/bin/xrdb -display :4 -merge %h/.config/xwayland-wechat.Xresources
+ExecStartPost=-%h/.local/bin/wechat-xwayland-input
+TimeoutStartSec=20
+Restart=on-failure
+RestartSec=3

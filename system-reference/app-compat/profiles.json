@@ -31,9 +31,11 @@
   ],
   "wechat": [
     ".local/bin/chat-hidpi-launch",
-    ".local/bin/chat-hidpi-input",
-    ".config/xwayland-chat.Xresources",
-    ".config/systemd/user/xwayland-chat.service",
+    ".local/bin/wechat-xwayland-input",
+    ".config/xwayland-wechat.Xresources",
+    ".config/systemd/user/xwayland-wechat.service",
+    ".config/systemd/user/fcitx5-niri.service.d/40-wechat-display.conf",
+    ".config/systemd/user/app-org.fcitx.Fcitx5@autostart.service.d/40-wechat-display.conf",
     ".local/share/applications/wechat.desktop"
   ]
 }

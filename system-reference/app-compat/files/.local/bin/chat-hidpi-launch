@@ -11,15 +11,23 @@ esac
 # With other monitor scales, use the ordinary display at normal cursor size.
 chat_display="${DISPLAY:-:0}"
 chat_cursor_size=24
+chat_display_service=xwayland-chat.service
+chat_display_target=:2
+chat_input_helper="$HOME/.local/bin/chat-hidpi-input"
+if [[ "$chat_app" == wechat && -x "$HOME/.local/libexec/xwayland-satellite-wechat" ]]; then
+    chat_display_service=xwayland-wechat.service
+    chat_display_target=:4
+    chat_input_helper="$HOME/.local/bin/wechat-xwayland-input"
+fi
 if [[ -n "${NIRI_SOCKET:-}" && -S "$NIRI_SOCKET" ]] && /usr/bin/niri msg --json outputs | /usr/bin/jq -e '
     [.[] | select(.logical != null) | .logical.scale] as $scales
     | ($scales | length) > 0 and ($scales | all(. == 2))' >/dev/null; then
-    if ! /usr/bin/systemctl --user start xwayland-chat.service; then
-        /usr/bin/notify-send --app-name='聊天应用' '光标兼容服务启动失败' '请检查 xwayland-chat.service 的运行状态。'
+    if ! /usr/bin/systemctl --user start "$chat_display_service"; then
+        /usr/bin/notify-send --app-name='聊天应用' '光标兼容服务启动失败' "请检查 $chat_display_service 的运行状态。"
         exit 1
     fi
-    if "@HOME@/.local/bin/chat-hidpi-input"; then
-        chat_display=:2
+    if "$chat_input_helper"; then
+        chat_display="$chat_display_target"
         chat_cursor_size=48
     else
         /usr/bin/notify-send --app-name='聊天应用' '暂用原显示服务' '输入法尚未连接，优先保留中文输入。'

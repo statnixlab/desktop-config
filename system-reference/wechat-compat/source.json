@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/Supreeeme/xwayland-satellite.git",
+  "base_commit": "8d135d3b2854b30fd01ea6cd6c27e523dd50a839",
+  "features": [
+    "systemd"
+  ],
+  "patch": "xwayland-wechat.patch",
+  "patch_sha256": "d4162f18a1be24c3716c1a1a47271be60d34f63f552b14e506665df793f4dccf",
+  "installed_sha256": "82fd1c682035945a98aa3f3529b02bbc53cc6f942d3cc05d29c10e274aad0d2b",
+  "scope": "Independent WeChat display :4; URI-only GNOME file-copy view for /opt/wechat/wechat; other clients and text offers unchanged",
+  "build": "cargo build --release --locked --features systemd",
+  "validation": [
+    "88 library tests passed",
+    "37 isolated integration tests passed, including executable scoping, consistent property-size queries, file-to-text clipboard updates and payload preservation",
+    "User confirmed WeChat file attachments and new text paste; QQ file paste remains normal"
+  ],
+  "preload_hook": "not used"
+}

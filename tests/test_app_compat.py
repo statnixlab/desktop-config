@@ -60,7 +60,9 @@ class AppCompatibilityRestoreTests(unittest.TestCase):
             self.assertEqual(shlex.split(entry['Desktop Entry']['Exec']),
                              [str(home / '.local/bin/chat-hidpi-launch'), 'wechat', '%U'])
             self.assertEqual((backup / '.local/share/applications/wechat.desktop').read_text(), original)
-            self.assertTrue((home / '.config/systemd/user/xwayland-chat.service').is_file())
+            self.assertTrue((home / '.config/systemd/user/xwayland-wechat.service').is_file())
+            self.assertFalse((home / '.config/systemd/user/xwayland-chat.service').exists())
+            self.assertTrue((home / '.local/bin/wechat-xwayland-input').is_file())
             self.assertFalse((home / '.abdm').exists())
 
     def test_combined_chat_profiles_preserve_original_shared_service_backup(self):

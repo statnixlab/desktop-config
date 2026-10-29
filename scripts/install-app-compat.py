@@ -39,8 +39,7 @@ def write_file(home, relative, data, mode, backup):
 
 def restore_settings(home, selected, backup):
     profiles = json.loads((ROOT / 'system-reference/app-compat/profiles.json').read_text())
-    # AB and WeChat share a display service. Back up each destination once,
-    # so selecting both cannot overwrite an original backup with restored data.
+    # Back up each destination once when selected profiles share helpers.
     files = dict.fromkeys(relative for profile in selected for relative in profiles[profile])
     for relative in files:
         source = ROOT / 'system-reference/app-compat/files' / relative
@@ -97,8 +96,11 @@ def main():
     spec.loader.exec_module(module)
     build_root = args.build_root or home / '.cache/desktop-config/build'
     backup = home / '.local/state/desktop-config-backups' / datetime.now().strftime('apps-%Y%m%d-%H%M%S-%f')
-    for kind in dict.fromkeys('wps' if profile == 'wps' else 'chat' for profile in selected):
-        binary = Path('.local/libexec') / ('xwayland-satellite-wps' if kind == 'wps' else 'xwayland-satellite-hidpi')
+    kinds = {'wps': 'wps', 'abdownloadmanager': 'chat', 'wechat': 'wechat'}
+    binaries = {'wps': 'xwayland-satellite-wps', 'chat': 'xwayland-satellite-hidpi',
+                'wechat': 'xwayland-satellite-wechat'}
+    for kind in dict.fromkeys(kinds[profile] for profile in selected):
+        binary = Path('.local/libexec') / binaries[kind]
         if (home / binary).is_file():
             saved = backup / binary
             saved.parent.mkdir(parents=True, exist_ok=True)
