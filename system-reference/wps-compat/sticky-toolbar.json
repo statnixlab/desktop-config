@@ -1,0 +1,10 @@
+{
+  "revision": 3,
+  "status": "Writer and Spreadsheet toolbar persistence confirmed by user on 2026-10-27",
+  "library_sha256": "07c7b285c240f9cff2969667538b340767ca7eb20dcd237605d9d2d86dd7f744",
+  "hook_sha256": "e90e4bdae9e01f2c3724533689a5eef6fffa05a306245a14cc7b8e1f95c2bbce",
+  "validation": "Real WPS library in independent process: target mouse-move branch patched; disabled flag and non-WPS executable leave branch unchanged. Original on-disk WPS library unchanged.",
+  "scope": "WPS Writer (wps) and Spreadsheets (et) only",
+  "architecture": "x86_64",
+  "wps_version": "12.1.2.29183"
+}

@@ -1,0 +1,53 @@
+#!/bin/bash
+set -euo pipefail
+
+wps_component="${1:-wps}"
+case "$wps_component" in
+    wps|et|wpp|wpspdf) if (( $# > 0 )); then shift; fi ;;
+    *) printf '%s\n' 'Usage: wps-niri-launch wps|et|wpp|wpspdf [files...]' >&2; exit 2 ;;
+esac
+
+# Keep the selection mini toolbar until normal click/selection dismissal.
+# Only load against the WPS library ABI verified for this local compatibility hook.
+wps_extra_env=()
+wps_sticky_library="$HOME/.local/lib/wps-compat/libwps-sticky-toolbar.so"
+if [[ ( "$wps_component" == wps || "$wps_component" == et ) && -r "$wps_sticky_library" ]] && \
+    [[ "$(/usr/bin/sha256sum /usr/lib/office6/libkshell.so | /usr/bin/cut -d ' ' -f 1)" == 07c7b285c240f9cff2969667538b340767ca7eb20dcd237605d9d2d86dd7f744 ]]; then
+    /usr/bin/mkdir -p "$HOME/.local/state/wps-compat"
+    wps_extra_env=("LD_PRELOAD=$wps_sticky_library${LD_PRELOAD:+:$LD_PRELOAD}" "WPS_STICKY_SELECTION_TOOLBAR=1" "WPS_STICKY_TOOLBAR_LOG=${WPS_STICKY_TOOLBAR_LOG:-$HOME/.local/state/wps-compat/sticky-toolbar.log}")
+fi
+
+# Use this dedicated cursor correction only in a uniform 200% Niri session.
+if [[ -z "${NIRI_SOCKET:-}" || ! -S "$NIRI_SOCKET" ]] || ! /usr/bin/niri msg --json outputs | /usr/bin/jq -e '
+    [.[] | select(.logical != null) | .logical.scale] as $scales
+    | ($scales | length) > 0 and ($scales | all(. == 2))' >/dev/null; then
+    exec /usr/bin/env "${wps_extra_env[@]}" "/usr/bin/$wps_component" "$@"
+fi
+
+# Load an updated WPS display bridge on the next launch, but only after
+# every WPS window (including minimized windows) has been closed. Serialize
+# concurrent launches so a second launch cannot restart the first one.
+(
+    /usr/bin/flock -x 9
+    wps_bridge_pid=$(/usr/bin/systemctl --user show xwayland-wps.service -p MainPID --value)
+    if [[ "$wps_bridge_pid" =~ ^[1-9][0-9]*$ && -r "/proc/$wps_bridge_pid/exe" ]] &&
+        [[ ! "/proc/$wps_bridge_pid/exe" -ef "$HOME/.local/libexec/xwayland-satellite-wps" || -e "$HOME/.local/state/wps-compat/display-refresh-required" ]] &&
+        /usr/bin/niri msg --json windows | /usr/bin/jq -e '
+            all(.[]; ((.app_id // "") | test("^(wpsoffice|wps|et|wpp|wpspdf)$"; "i") | not))
+        ' >/dev/null; then
+        /usr/bin/systemctl --user restart xwayland-wps.service
+        /usr/bin/rm -f "$HOME/.local/state/wps-compat/display-refresh-required"
+    fi
+) 9>"${XDG_RUNTIME_DIR:-/run/user/$(/usr/bin/id -u)}/wps-display-refresh.lock"
+
+if ! /usr/bin/systemctl --user start xwayland-wps.service; then
+    /usr/bin/notify-send --app-name=WPS 'WPS 显示服务启动失败' '请检查 xwayland-wps.service 的运行状态。'
+    exit 1
+fi
+if ! "@HOME@/.local/bin/wps-xwayland-input"; then
+    /usr/bin/notify-send --app-name=WPS 'WPS 输入法尚未连接' '请确认 Fcitx5 正在运行，然后重新打开 WPS。'
+fi
+
+exec /usr/bin/env "${wps_extra_env[@]}" DISPLAY=:3 XCURSOR_THEME=capitaine-cursors XCURSOR_SIZE=48 \
+    QT_QPA_PLATFORM=xcb QT_FONT_DPI=192 GTK_IM_MODULE=fcitx QT_IM_MODULE=fcitx XMODIFIERS=@im=fcitx \
+    "/usr/bin/$wps_component" "$@"

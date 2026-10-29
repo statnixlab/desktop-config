@@ -1,0 +1,7 @@
+{
+  "wps": "12.1.2.29183",
+  "abdownloadmanager": "1.0.0-makepkg-snapshot",
+  "xwayland": "24.1.14",
+  "display_scale": 2,
+  "wps_repaint_experiment": "excluded; disabled after Alt overlay SHM fix was confirmed"
+}

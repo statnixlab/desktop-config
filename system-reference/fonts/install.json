@@ -1,0 +1,40 @@
+[
+  {
+    "id": "harmonyos-sans-sc",
+    "family": "HarmonyOS Sans SC",
+    "download": "https://developer.huawei.com/images/download/general/HarmonyOS-Sans.zip",
+    "sha256": "fb02c86e358cd9aad8d4dfa957ee502381e7ee2e94499a9133add4324b6ce69a",
+    "format": "zip",
+    "members": [
+      "HarmonyOS Sans/HarmonyOS_Sans_SC/*.ttf"
+    ]
+  },
+  {
+    "id": "clavis-inter",
+    "family": "Inter",
+    "download": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",
+    "sha256": "9883fdd4a49d4fb66bd8177ba6625ef9a64aa45899767dde3d36aa425756b11e",
+    "format": "zip",
+    "members": [
+      "extras/ttf/Inter-*.ttf"
+    ]
+  },
+  {
+    "id": "clavis-maple-mono-cn",
+    "family": "Maple Mono CN",
+    "download": "https://github.com/subframe7536/maple-font/releases/download/v7.9/MapleMono-CN-unhinted.zip",
+    "sha256": "d41cb72721e99cfe4fbd1a7b0f182a013457de46aa612018f924dd024699d3b9",
+    "format": "zip",
+    "members": [
+      "*.ttf"
+    ]
+  },
+  {
+    "id": "clavis-symbols-nerd",
+    "family": "Symbols Nerd Font Mono",
+    "download": "https://raw.githubusercontent.com/ryanoasis/nerd-fonts/v3.5.1/patched-fonts/NerdFontsSymbolsOnly/SymbolsNerdFontMono-Regular.ttf",
+    "sha256": "fe471e538392f51910faab985fa8e192a39dd3426125edd15b71b3680df0e749",
+    "format": "ttf",
+    "filename": "SymbolsNerdFontMono-Regular.ttf"
+  }
+]

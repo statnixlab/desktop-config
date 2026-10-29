@@ -3,7 +3,7 @@
     {
       "schema": "org.gnome.desktop.interface",
       "key": "icon-theme",
-      "value": "'Clavis-Default-Apps-Refresh'"
+      "value": "'Clavis-Default-Apps'"
     },
     {
       "schema": "org.gnome.desktop.interface",
@@ -18,12 +18,12 @@
     {
       "schema": "org.gnome.desktop.interface",
       "key": "font-name",
-      "value": "'Inter 10'"
+      "value": "'HarmonyOS Sans SC 10'"
     },
     {
       "schema": "org.gnome.desktop.interface",
       "key": "document-font-name",
-      "value": "'Inter 10'"
+      "value": "'HarmonyOS Sans SC 10'"
     },
     {
       "schema": "org.gnome.desktop.interface",

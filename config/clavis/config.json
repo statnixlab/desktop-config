@@ -90,10 +90,10 @@
     "cursorHideAfterInactiveMs": 0,
     "iconTheme": "MacTahoe-light",
     "fonts": {
-      "ui": "Inter",
+      "ui": "HarmonyOS Sans SC",
       "mono": "Maple Mono CN",
-      "numeric": "Inter",
-      "expressive": "Inter"
+      "numeric": "HarmonyOS Sans SC",
+      "expressive": "HarmonyOS Sans SC"
     }
   },
   "effects": {

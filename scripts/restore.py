@@ -31,7 +31,7 @@ def verify(root=ROOT):
             raise ValueError(f'Snapshot checksum mismatch: {relative}')
 
 
-def plan(target_home, same_hardware=False, root=ROOT):
+def plan(target_home, same_hardware=False, root=ROOT, keep_target_hardware=False):
     result = {}
     for source_dir, target_dir in [('config', '.config'), ('share', '.local/share'),
                                    ('lib', '.local/lib'), ('libexec', '.local/libexec'), ('bin', '.local/bin'),
@@ -51,6 +51,11 @@ def plan(target_home, same_hardware=False, root=ROOT):
         result[Path('.config/clavis/primary-display.json')] = (root / 'hardware/primary-display.json', 0o600)
     rendered = {}
     for relative, (source, mode) in result.items():
+        if keep_target_hardware and relative in [Path('.config/niri/clavis/outputs.kdl'),
+                                                Path('.config/clavis/primary-display.json'),
+                                                Path('.config/niri/clavis/mouse.kdl')]:
+            if (target_home / relative).exists():
+                continue
         data = source.read_bytes()
         if b'\0' not in data:
             try:
@@ -63,10 +68,26 @@ def plan(target_home, same_hardware=False, root=ROOT):
             settings = json.loads(data)
             settings.update(json.loads((root / 'hardware/monitor-metrics.json').read_text()))
             data = (json.dumps(settings, ensure_ascii=False, indent=2) + '\n').encode()
+        if relative == Path('.config/clavis/ui-preferences.json') and keep_target_hardware:
+            current = target_home / relative
+            if current.is_file():
+                settings = json.loads(data)
+                previous = json.loads(current.read_text())
+                for key in ['systemMonitorGpuId', 'systemMonitorDiskDevice', 'systemMonitorNetworkInterface',
+                            'storageCapacityDiskDevice']:
+                    if key in previous:
+                        settings[key] = previous[key]
+                data = (json.dumps(settings, ensure_ascii=False, indent=2) + '\n').encode()
         if not same_hardware and relative in [Path('.config/gtk-3.0/settings.ini'), Path('.config/gtk-4.0/settings.ini')]:
             data = b'\n'.join(line for line in data.splitlines() if not line.startswith(b'gtk-xft-dpi=')) + b'\n'
+            current = target_home / relative
+            if keep_target_hardware and current.is_file():
+                data += b''.join(line + b'\n' for line in current.read_bytes().splitlines()
+                                 if line.startswith(b'gtk-xft-dpi='))
         if not same_hardware and relative == Path('.config/fcitx5/x11-dpi.Xresources'):
             data = b'! Set Xft.dpi here after choosing scaling for this computer.\n'
+            if keep_target_hardware and (target_home / relative).is_file():
+                data = (target_home / relative).read_bytes()
         if relative.suffix == '.json':
             json.loads(data)
         rendered[relative] = (data, mode)
@@ -84,16 +105,19 @@ def destination(target_home, relative):
     return path
 
 
-def restore(target_home, same_hardware=False, apply=False, root=ROOT):
+def restore(target_home, same_hardware=False, apply=False, root=ROOT, keep_target_hardware=False):
     target_home = target_home.expanduser().absolute()
     if any(char in str(target_home) for char in '\n\r"\'`$\\'):
         raise ValueError('The target path must not contain quotes, shell substitutions or line breaks')
     verify(root)
-    files = plan(target_home, same_hardware, root)
+    if same_hardware and keep_target_hardware:
+        raise ValueError('Choose source hardware or target hardware, not both')
+    files = plan(target_home, same_hardware, root, keep_target_hardware)
     # Check every destination before touching any file.
     for relative in files:
         destination(target_home, relative)
-    print(f'{len(files)} files -> {target_home}; hardware={"preserved" if same_hardware else "reset"}')
+    hardware = 'target preserved' if keep_target_hardware else 'source preserved' if same_hardware else 'reset'
+    print(f'{len(files)} files -> {target_home}; hardware={hardware}')
     if not apply:
         print('Plan only. Add --apply to restore. Existing files will be backed up.')
         return None
@@ -152,10 +176,12 @@ def restore(target_home, same_hardware=False, apply=False, root=ROOT):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--target-home', type=Path, default=Path.home())
-    parser.add_argument('--same-hardware', action='store_true', help='Keep monitor layout, primary display and hardware metric bindings')
+    hardware = parser.add_mutually_exclusive_group()
+    hardware.add_argument('--same-hardware', action='store_true', help='Use hardware settings from the source snapshot')
+    hardware.add_argument('--keep-target-hardware', action='store_true', help='Keep this target computer monitor layout, mouse, metric bindings and DPI')
     parser.add_argument('--apply', action='store_true')
     args = parser.parse_args()
-    restore(args.target_home, args.same_hardware, args.apply)
+    restore(args.target_home, args.same_hardware, args.apply, keep_target_hardware=args.keep_target_hardware)
 
 
 if __name__ == '__main__':

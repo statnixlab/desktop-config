@@ -5,5 +5,8 @@
     "systemd"
   ],
   "patch": "hidpi-minimize.patch",
-  "installed_sha256": "505c36bd3df0d90a2e19f031a8293d9e1a0a5093b77f619a619e4864183a47c1"
+  "patch_sha256": "c728803daa99274684efdfba943335b3ff0416a1b50675a028c5f9ae2a0a2bba",
+  "installed_sha256": "ca3b0a9437ec155af567b3f4eb066d56745aea157761eb505b2a7319409addc6",
+  "scope": "QQ / WeChat / AB Download Manager",
+  "build": "cargo build --release --locked --features systemd"
 }

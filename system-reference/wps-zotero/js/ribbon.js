@@ -60,6 +60,7 @@ function OnAddinLoad(ribbonUI) {
     refreshRibbonLabels();
 
     // Linux local installation: proxy lifecycle is managed by systemd user service.
+    startWpsEasyCite();
     return true;
 }
 

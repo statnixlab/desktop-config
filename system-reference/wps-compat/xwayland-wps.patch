@@ -1,0 +1,875 @@
+diff --git a/src/lib.rs b/src/lib.rs
+index 8c27f2d..1f06270 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -19,6 +19,9 @@ pub trait XConnection: Sized + 'static {
+ 
+     fn set_window_dims(&mut self, window: x::Window, dims: PendingSurfaceState) -> bool;
+     fn set_fullscreen(&mut self, window: x::Window, fullscreen: bool);
++    fn set_toplevel_state(&mut self, window: x::Window, fullscreen: bool, _maximized: bool) {
++        self.set_fullscreen(window, fullscreen);
++    }
+     fn focus_window(&mut self, window: x::Window, output_name: Option<String>);
+     fn close_window(&mut self, window: x::Window);
+     fn unmap_window(&mut self, window: x::Window);
+diff --git a/src/server/dispatch.rs b/src/server/dispatch.rs
+index 9704f25..1db9e9f 100644
+--- a/src/server/dispatch.rs
++++ b/src/server/dispatch.rs
+@@ -65,6 +65,47 @@ use wayland_server::{
+     },
+ };
+ 
++// Local, opt-in workaround for upstream issue #194. X11 clients on this
++// dedicated instance load scale-times-larger cursors; only cursor surfaces
++// are divided back to logical size. Ordinary application buffers are unchanged.
++struct HiDpiCursor(i32);
++
++fn parse_cursor_scale(value: Option<&str>) -> i32 {
++    value.and_then(|v| v.parse::<i32>().ok())
++        .filter(|v| (1..=4).contains(v))
++        .unwrap_or(1)
++}
++
++fn cursor_scale_override() -> i32 {
++    static SCALE: OnceLock<i32> = OnceLock::new();
++    *SCALE.get_or_init(|| parse_cursor_scale(std::env::var("XWS_CURSOR_SCALE").ok().as_deref()))
++}
++
++fn cursor_hotspot(x: i32, y: i32, scale: i32) -> (i32, i32) {
++    (x.div_euclid(scale), y.div_euclid(scale))
++}
++
++#[cfg(test)]
++mod hidpi_cursor_tests {
++    use super::*;
++
++    #[test]
++    fn workaround_is_opt_in_and_bounded() {
++        for value in [None, Some(""), Some("0"), Some("-1"), Some("5"), Some("1.5")] {
++            assert_eq!(parse_cursor_scale(value), 1);
++        }
++        assert_eq!(parse_cursor_scale(Some("2")), 2);
++        assert_eq!(parse_cursor_scale(Some("4")), 4);
++    }
++
++    #[test]
++    fn hotspot_uses_logical_coordinates() {
++        assert_eq!(cursor_hotspot(10, 14, 2), (5, 7));
++        assert_eq!(cursor_hotspot(11, 15, 2), (5, 7));
++        assert_eq!(cursor_hotspot(10, 14, 1), (10, 14));
++    }
++}
++
+ // noop
+ impl<S: X11Selection> Dispatch<WlCallback, ()> for InnerServerState<S> {
+     fn request(
+@@ -167,6 +208,7 @@ impl<S: X11Selection> Dispatch<WlSurface, Entity> for InnerServerState<S> {
+                 }
+             }
+             Request::<WlSurface>::SetBufferScale { scale } => {
++                let scale = data.get::<&HiDpiCursor>().map_or(scale, |cursor| cursor.0);
+                 client.set_buffer_scale(scale);
+             }
+             Request::<WlSurface>::SetInputRegion { region } => {
+@@ -358,6 +400,17 @@ impl<S: X11Selection> Dispatch<WlPointer, Entity> for InnerServerState<S> {
+                 hotspot_y,
+                 surface,
+             } => {
++                let scale = cursor_scale_override();
++                if scale != 1 {
++                    if let Some(cursor_entity) = surface.as_ref().and_then(|s| s.data().copied()) {
++                        state.world.insert_one(cursor_entity, HiDpiCursor(scale)).unwrap();
++                        let cursor_surface = state.world
++                            .get::<&client::wl_surface::WlSurface>(cursor_entity).unwrap();
++                        cursor_surface.set_buffer_scale(scale);
++                        cursor_surface.commit();
++                    }
++                }
++                let (hotspot_x, hotspot_y) = cursor_hotspot(hotspot_x, hotspot_y, scale);
+                 let c_pointer = state
+                     .world
+                     .get::<&client::wl_pointer::WlPointer>(*entity)
+diff --git a/src/server/event.rs b/src/server/event.rs
+index 3725178..064179b 100644
+--- a/src/server/event.rs
++++ b/src/server/event.rs
+@@ -390,13 +390,23 @@ impl SurfaceEvents {
+ 
+                 let mut role = data.get::<&mut SurfaceRole>().unwrap();
+                 if let SurfaceRole::Toplevel(Some(toplevel)) = &mut *role {
+-                    let prev_fs = toplevel.fullscreen;
+-                    toplevel.fullscreen =
+-                        states.contains(&(u32::from(xdg_toplevel::State::Fullscreen) as u8));
+-                    if toplevel.fullscreen != prev_fs {
+-                        state.connection.set_fullscreen(
++                    let previous = (toplevel.fullscreen, toplevel.maximized);
++                    let has_state = |wanted: xdg_toplevel::State| {
++                        states.chunks_exact(4).any(|bytes| {
++                            u32::from_ne_bytes(bytes.try_into().unwrap()) == u32::from(wanted)
++                        })
++                    };
++                    toplevel.fullscreen = has_state(xdg_toplevel::State::Fullscreen);
++                    toplevel.maximized = toplevel
++                        .column_maximized
++                        .unwrap_or_else(|| has_state(xdg_toplevel::State::Maximized));
++                    if (toplevel.fullscreen, toplevel.maximized) != previous
++                        || toplevel.column_maximized.is_some()
++                    {
++                        state.connection.set_toplevel_state(
+                             *data.get::<&x::Window>().unwrap(),
+                             toplevel.fullscreen,
++                            toplevel.maximized,
+                         );
+                         if let Some(decorations) = toplevel.decoration.satellite.as_mut() {
+                             decorations.handle_fullscreen(toplevel.fullscreen);
+diff --git a/src/server/mod.rs b/src/server/mod.rs
+index ccdc249..6775bdf 100644
+--- a/src/server/mod.rs
++++ b/src/server/mod.rs
+@@ -239,6 +239,10 @@ struct ToplevelData {
+     toplevel: XdgToplevel,
+     xdg: XdgSurfaceData,
+     fullscreen: bool,
++    maximized: bool,
++    // Opt-in adapter for this desktop's client-maximize-to-column Niri patch.
++    // Niri treats set_maximized as a toggle and does not advertise Maximized.
++    column_maximized: Option<bool>,
+     decoration: decoration::DecorationsData,
+ }
+ 
+@@ -1185,6 +1189,75 @@ impl<S: X11Selection + 'static> InnerServerState<S> {
+         self.last_focused_toplevel.unwrap_or(x::WINDOW_NONE)
+     }
+ 
++    pub fn minimize_window(&mut self, window: x::Window) {
++        let Some(data) = self
++            .windows
++            .get(&window)
++            .copied()
++            .and_then(|id| self.world.entity(id).ok())
++        else {
++            return;
++        };
++        let Some(role) = data.get::<&SurfaceRole>() else {
++            return;
++        };
++        if let SurfaceRole::Toplevel(Some(toplevel)) = &*role {
++            // Let the compositor own visibility and restoration. Do not unmap
++            // the X window or claim an iconic state before it accepts the request.
++            toplevel.toplevel.set_minimized();
++        }
++    }
++
++    pub fn set_maximized(&mut self, window: x::Window, state: super::xstate::SetState) {
++        let Some(data) = self
++            .windows
++            .get(&window)
++            .copied()
++            .and_then(|id| self.world.entity(id).ok())
++        else {
++            warn!("Tried to set unknown window {window:?} maximized");
++            return;
++        };
++
++        let Some(mut role) = data.get::<&mut SurfaceRole>() else {
++            warn!("Tried to set window without role maximized: {window:?}");
++            return;
++        };
++
++        let SurfaceRole::Toplevel(Some(toplevel)) = &mut *role else {
++            warn!("Tried to set an unmapped toplevel or non toplevel maximized: {window:?}");
++            return;
++        };
++
++        use crate::xstate::SetState;
++        if let Some(current) = toplevel.column_maximized.as_mut() {
++            let next = match state {
++                SetState::Add => true,
++                SetState::Remove => false,
++                SetState::Toggle => !*current,
++            };
++            if next != *current {
++                *current = next;
++                // Both transitions must use the custom compositor's toggle request.
++                // Remember immediately: WPS sends duplicate ADD/REMOVE messages
++                // before the compositor can respond with a configure.
++                toplevel.toplevel.set_maximized();
++            }
++            return;
++        }
++        match state {
++            SetState::Add => toplevel.toplevel.set_maximized(),
++            SetState::Remove => toplevel.toplevel.unset_maximized(),
++            SetState::Toggle => {
++                if toplevel.maximized {
++                    toplevel.toplevel.unset_maximized()
++                } else {
++                    toplevel.toplevel.set_maximized()
++                }
++            }
++        }
++    }
++
+     pub fn set_fullscreen(&mut self, window: x::Window, state: super::xstate::SetState) {
+         let Some(data) = self
+             .windows
+@@ -1581,6 +1654,10 @@ impl<S: X11Selection + 'static> InnerServerState<S> {
+             },
+             toplevel,
+             fullscreen: false,
++            maximized: false,
++            column_maximized: (std::env::var("XWS_CLIENT_MAXIMIZE_TO_COLUMN").as_deref()
++                == Ok("1"))
++                .then_some(false),
+             decoration: DecorationsData {
+                 wl: wl_decoration,
+                 satellite: sat_decoration,
+diff --git a/src/server/tests.rs b/src/server/tests.rs
+index deae742..e1a8fc7 100644
+--- a/src/server/tests.rs
++++ b/src/server/tests.rs
+@@ -162,6 +162,7 @@ struct FakeXConnection {
+     focused_window: Option<Window>,
+     windows: HashMap<Window, WindowData>,
+     set_window_dims_counter: usize,
++    maximized: HashMap<Window, bool>,
+ }
+ 
+ impl FakeXConnection {
+@@ -213,6 +214,12 @@ impl super::XConnection for FakeXConnection {
+         self.window_mut(window).fullscreen = fullscreen;
+     }
+ 
++    fn set_toplevel_state(&mut self, window: Window, fullscreen: bool, maximized: bool) {
++        let data = self.window_mut(window);
++        data.fullscreen = fullscreen;
++        self.maximized.insert(window, maximized);
++    }
++
+     #[track_caller]
+     fn set_window_dims(&mut self, window: Window, state: super::PendingSurfaceState) -> bool {
+         self.window_mut(window).dims = WindowDims {
+@@ -1218,6 +1225,88 @@ fn override_redirect_window_after_toplevel_close() {
+     )
+ }
+ 
++#[test]
++fn maximized() {
++    let (mut f, comp) = TestFixture::new_with_compositor();
++    let win = Window::new(1);
++    let (_, id) = f.create_toplevel(&comp, win);
++
++    f.satellite.set_maximized(win, SetState::Add);
++    f.run();
++    f.run();
++
++    let data = f.testwl.get_surface_data(id).unwrap();
++    assert!(
++        data.toplevel()
++            .states
++            .contains(&xdg_toplevel::State::Maximized)
++    );
++
++    f.satellite.set_maximized(win, SetState::Remove);
++    f.run();
++    f.run();
++
++    let data = f.testwl.get_surface_data(id).unwrap();
++    assert!(
++        !data
++            .toplevel()
++            .states
++            .contains(&xdg_toplevel::State::Maximized)
++    );
++
++    f.satellite.set_maximized(win, SetState::Toggle);
++    f.run();
++    f.run();
++
++    let data = f.testwl.get_surface_data(id).unwrap();
++    assert!(
++        data.toplevel()
++            .states
++            .contains(&xdg_toplevel::State::Maximized)
++    );
++
++    f.satellite.set_maximized(win, SetState::Toggle);
++    f.run();
++    f.run();
++
++    let data = f.testwl.get_surface_data(id).unwrap();
++    assert!(
++        !data
++            .toplevel()
++            .states
++            .contains(&xdg_toplevel::State::Maximized)
++    );
++}
++
++// WPS emits two identical messages for each click. The custom Niri mode
++// toggles on set_maximized and sends configure without the Maximized state.
++#[test]
++fn column_maximized_duplicate_wps_requests() {
++    let (mut f, comp) = TestFixture::new_with_compositor();
++    let win = Window::new(1);
++    let (_, id) = f.create_toplevel(&comp, win);
++    {
++        let entity = f.satellite.windows[&win];
++        let mut role = f.satellite.world.get::<&mut super::SurfaceRole>(entity).unwrap();
++        let super::SurfaceRole::Toplevel(Some(toplevel)) = &mut *role else { panic!() };
++        toplevel.column_maximized = Some(false);
++    }
++    for (action, expected) in [(SetState::Add, true), (SetState::Remove, false), (SetState::Add, true)] {
++        f.satellite.set_maximized(win, action);
++        f.satellite.set_maximized(win, action);
++        f.run();
++        f.run();
++        // The fixture records one Maximized entry per set_maximized request.
++        // Even REMOVE must forward one set request for Niri's toggle protocol.
++        assert_eq!(f.testwl.get_surface_data(id).unwrap().toplevel().states
++            .iter().filter(|s| **s == xdg_toplevel::State::Maximized).count(), 1);
++        f.testwl.configure_toplevel(id, 900, 700, vec![]);
++        f.run();
++        f.run();
++        assert_eq!(f.connection().maximized.get(&win), Some(&expected));
++    }
++}
++
+ #[test]
+ fn fullscreen() {
+     let (mut f, comp) = TestFixture::new_with_compositor();
+@@ -1604,6 +1693,37 @@ fn raise_window_on_pointer_event() {
+     assert_eq!(f.satellite.last_hovered, Some(win1));
+ }
+ 
++#[test]
++fn hidpi_cursor_protocol_keeps_windows_unscaled() {
++    let expected: i32 = std::env::var("XWS_CURSOR_SCALE").ok()
++        .and_then(|s| s.parse().ok()).unwrap_or(1);
++    let (mut f, comp) = TestFixture::new_with_compositor();
++    let pointer = TestObject::<WlPointer>::from_request(
++        &comp.seat.obj, wl_seat::Request::GetPointer {});
++    let (_, cursor) = comp.create_surface();
++    f.run();
++    let cursor_id = f.testwl.last_created_surface_id().unwrap();
++    pointer.send_request(Req::<WlPointer>::SetCursor {
++        serial: 0, surface: Some(cursor.obj.clone()), hotspot_x: 10, hotspot_y: 14,
++    }).unwrap();
++    f.run();
++    let data = f.testwl.get_surface_data(cursor_id).unwrap();
++    assert_eq!(data.buffer_scale, expected);
++    assert_eq!(data.cursor_hotspot, Some((10 / expected, 14 / expected)));
++
++    // Xwayland may resend scale=1 on every pointer-enter or shape change.
++    cursor.send_request(Req::<WlSurface>::SetBufferScale { scale: 1 }).unwrap();
++    cursor.send_request(Req::<WlSurface>::Commit {}).unwrap();
++    f.run();
++    assert_eq!(f.testwl.get_surface_data(cursor_id).unwrap().buffer_scale, expected);
++
++    let (_, window) = comp.create_surface();
++    window.send_request(Req::<WlSurface>::SetBufferScale { scale: 1 }).unwrap();
++    f.run();
++    let window_id = f.testwl.last_created_surface_id().unwrap();
++    assert_eq!(f.testwl.get_surface_data(window_id).unwrap().buffer_scale, 1);
++}
++
+ #[test]
+ fn override_redirect_choose_hover_window() {
+     let (mut f, comp) = TestFixture::new_with_compositor();
+diff --git a/src/xstate/mod.rs b/src/xstate/mod.rs
+index efcb13d..641c723 100644
+--- a/src/xstate/mod.rs
++++ b/src/xstate/mod.rs
+@@ -292,6 +292,8 @@ impl XState {
+                 self.atoms.motif_wm_hints,
+                 self.atoms.net_wm_state,
+                 self.atoms.wm_fullscreen,
++                self.atoms.wm_maximized_horz,
++                self.atoms.wm_maximized_vert,
+                 self.atoms.moveresize,
+             ],
+         );
+@@ -537,6 +539,15 @@ impl XState {
+                 };
+                 server_state.set_window_serial(e.window(), [data[0], data[1]]);
+             }
++            x if x == self.atoms.wm_change_state => {
++                // ICCCM clients (including Electron and Qt on X11) request
++                // minimization with a 32-bit WM_CHANGE_STATE/IconicState.
++                if let x::ClientMessageData::Data32(data) = e.data() {
++                    if data[0] == WmState::Iconic as u32 {
++                        server_state.minimize_window(e.window());
++                    }
++                }
++            }
+             x if x == self.atoms.net_wm_state => {
+                 let x::ClientMessageData::Data32(data) = e.data() else {
+                     unreachable!();
+@@ -550,6 +561,13 @@ impl XState {
+ 
+                 trace!("_NET_WM_STATE ({action:?}) props: {prop1:?} {prop2:?}");
+ 
++                // Both EWMH axes represent one Wayland maximize request.
++                // Process once so a pair of TOGGLE atoms cannot cancel itself.
++                if [prop1, prop2].iter().any(|prop| {
++                    *prop == self.atoms.wm_maximized_horz || *prop == self.atoms.wm_maximized_vert
++                }) {
++                    server_state.set_maximized(e.window(), action);
++                }
+                 for prop in [prop1, prop2] {
+                     match prop {
+                         x if x == self.atoms.wm_fullscreen => {
+@@ -623,6 +641,7 @@ impl XState {
+         if title.is_none() {
+             title = self.get_wm_name(window)?;
+         }
++        let wm_name = title.as_ref().map(|title| title.name().to_owned());
+         if let Some(name) = title {
+             server_state.set_win_title(window, name);
+         }
+@@ -664,6 +683,7 @@ impl XState {
+             window_types,
+             motif_wm_hints,
+             wm_class,
++            wm_name,
+             wm_normal_hints: size_hints,
+         };
+         let role = heuristics.guess_window_role(&self.window_atoms);
+@@ -896,12 +916,15 @@ xcb::atoms_struct! {
+         wm_delete_window => b"WM_DELETE_WINDOW" only_if_exists = false,
+         wm_transient_for => b"WM_TRANSIENT_FOR" only_if_exists = false,
+         wm_state => b"WM_STATE" only_if_exists = false,
++        wm_change_state => b"WM_CHANGE_STATE" only_if_exists = false,
+         wm_s0 => b"WM_S0" only_if_exists = false,
+         net_wm_cm_s0 => b"_NET_WM_CM_S0" only_if_exists = false,
+         wm_check => b"_NET_SUPPORTING_WM_CHECK" only_if_exists = false,
+         net_wm_name => b"_NET_WM_NAME" only_if_exists = false,
+         wm_pid => b"_NET_WM_PID" only_if_exists = false,
+         net_wm_state => b"_NET_WM_STATE" only_if_exists = false,
++        wm_maximized_horz => b"_NET_WM_STATE_MAXIMIZED_HORZ" only_if_exists = false,
++        wm_maximized_vert => b"_NET_WM_STATE_MAXIMIZED_VERT" only_if_exists = false,
+         wm_fullscreen => b"_NET_WM_STATE_FULLSCREEN" only_if_exists = false,
+         active_win => b"_NET_ACTIVE_WINDOW" only_if_exists = false,
+         client_list => b"_NET_CLIENT_LIST" only_if_exists = false,
+@@ -927,6 +950,7 @@ xcb::atoms_struct! {
+     struct WindowTypes {
+         ty => b"_NET_WM_WINDOW_TYPE" only_if_exists = false,
+         normal => b"_NET_WM_WINDOW_TYPE_NORMAL" only_if_exists = false,
++        kde_override => b"_KDE_NET_WM_WINDOW_TYPE_OVERRIDE" only_if_exists = false,
+         dialog => b"_NET_WM_WINDOW_TYPE_DIALOG" only_if_exists = false,
+         drag_n_drop => b"_NET_WM_WINDOW_TYPE_DND" only_if_exists = false,
+         splash => b"_NET_WM_WINDOW_TYPE_SPLASH" only_if_exists = false,
+@@ -1144,6 +1168,7 @@ struct WindowRoleHeuristics {
+     window_types: Vec<x::Atom>,
+     motif_wm_hints: Option<motif::Hints>,
+     wm_class: Option<String>,
++    wm_name: Option<String>,
+     wm_normal_hints: Option<WmNormalHints>,
+ }
+ impl WindowRoleHeuristics {
+@@ -1176,6 +1201,26 @@ impl WindowRoleHeuristics {
+                 .is_some_and(|(min, max)| min == max)
+         });
+ 
++        // WPS Writer/Spreadsheets 12's selection toolbar is a fixed-size, borderless tool
++        // window, but Qt advertises it as KDE_OVERRIDE + NORMAL without a
++        // transient parent. A toplevel loses its requested position and WPS
++        // immediately dismisses it when the pointer moves. Keep this narrow:
++        // titled dialogs, resizable documents and other applications stay
++        // toplevels. Normal popup parenting/positioning handles the toolbar.
++        let is_wps_selection_toolbar = matches!(
++            (self.wm_class.as_deref(), self.wm_name.as_deref()),
++            (Some("wps"), Some("wps")) | (Some("et"), Some("et"))
++        );
++        if is_wps_selection_toolbar
++            && !self.has_transient_for
++            && motif_no_decor
++            && forced_size
++            && self.window_types.contains(&window_atoms.kde_override)
++            && self.window_types.contains(&window_atoms.normal)
++        {
++            return WindowRole::Popup;
++        }
++
+         let mut window_types = self.window_types.clone();
+         if self.window_types.is_empty() {
+             if !self.override_redirect && self.has_transient_for {
+@@ -1350,11 +1395,18 @@ impl XConnection for RealConnection {
+     }
+ 
+     fn set_fullscreen(&mut self, window: x::Window, fullscreen: bool) {
+-        let data = if fullscreen {
+-            std::slice::from_ref(&self.atoms.wm_fullscreen)
+-        } else {
+-            &[]
+-        };
++        self.set_toplevel_state(window, fullscreen, false);
++    }
++
++    fn set_toplevel_state(&mut self, window: x::Window, fullscreen: bool, maximized: bool) {
++        let mut states = Vec::new();
++        if fullscreen {
++            states.push(self.atoms.wm_fullscreen);
++        }
++        if maximized {
++            states.extend([self.atoms.wm_maximized_horz, self.atoms.wm_maximized_vert]);
++        }
++        let data = states.as_slice();
+ 
+         if let Err(e) = self
+             .connection
+diff --git a/src/xstate/tests.rs b/src/xstate/tests.rs
+index 0e77dc9..819ed2d 100644
+--- a/src/xstate/tests.rs
++++ b/src/xstate/tests.rs
+@@ -6,6 +6,7 @@ impl WindowTypes {
+         Self {
+             ty: Atom::new(0x100),
+             normal: Atom::new(0x101),
++            kde_override: Atom::new(0x10b),
+             dialog: Atom::new(0x102),
+             drag_n_drop: Atom::new(0x103),
+             splash: Atom::new(0x104),
+@@ -123,6 +124,7 @@ mod window_role_heuristics {
+             .program_size(133, 28)
+             .win_gravity(Gravity::NorthWest);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             window_types: vec![win_types.dialog],
+             has_transient_for: true,
+             motif_wm_hints: Some(motif::Hints::from([0x3_u32, 0, 0, 0, 0].as_slice())),
+@@ -139,6 +141,7 @@ mod window_role_heuristics {
+         let win_types = WindowTypes::new();
+         let wm_normal_hints = WmNormalHints::new().program_size(936, 1048);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             motif_wm_hints: Some(motif::Hints::from([0x2_u32, 0, 0x11, 0, 0].as_slice())),
+             window_types: vec![win_types.normal],
+             wm_normal_hints: Some(wm_normal_hints.into()),
+@@ -157,6 +160,7 @@ mod window_role_heuristics {
+             .min_size(382, 160)
+             .max_size(382, 160);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             override_redirect: true,
+             wm_normal_hints: Some(wm_normal_hints.into()),
+             wm_class: Some("REAPER".into()),
+@@ -171,6 +175,7 @@ mod window_role_heuristics {
+     fn chromium_tooltip() {
+         let win_types = WindowTypes::new();
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             window_types: vec![win_types.menu],
+             ..Default::default()
+         };
+@@ -183,6 +188,7 @@ mod window_role_heuristics {
+     fn discord_dnd() {
+         let win_types = WindowTypes::new();
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             window_types: vec![win_types.drag_n_drop],
+             override_redirect: true,
+             ..Default::default()
+@@ -200,6 +206,7 @@ mod window_role_heuristics {
+             .min_size(1, 1)
+             .resize_incr(1, 1);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             window_types: vec![win_types.popup_menu],
+             override_redirect: true,
+             wm_normal_hints: Some(wm_normal_hints.into()),
+@@ -214,6 +221,7 @@ mod window_role_heuristics {
+     fn dropdown_menu() {
+         let win_types = WindowTypes::new();
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             window_types: vec![win_types.dropdown_menu],
+             ..Default::default()
+         };
+@@ -234,6 +242,7 @@ mod window_role_heuristics {
+             .base_size(0, 0)
+             .win_gravity(Gravity::Static);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             override_redirect: true,
+             has_transient_for: true,
+             motif_wm_hints: Some(motif::Hints::from([0x2_u32, 1, 0, 0, 0].as_slice())),
+@@ -255,6 +264,7 @@ mod window_role_heuristics {
+             .min_size(245, 329)
+             .max_size(245, 329);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             has_transient_for: true,
+             wm_normal_hints: Some(wm_normal_hints.into()),
+             override_redirect: true,
+@@ -275,6 +285,7 @@ mod window_role_heuristics {
+             .min_size(340, 400)
+             .max_size(340, 400);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             has_transient_for: true,
+             wm_normal_hints: Some(wm_normal_hints.into()),
+             window_types: vec![win_types.utility],
+@@ -296,6 +307,7 @@ mod window_role_heuristics {
+             .max_size(1190, 769)
+             .win_gravity(Gravity::NorthWest);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             window_types: vec![win_types.utility],
+             wm_normal_hints: Some(wm_normal_hints.into()),
+             wm_class: Some("Ardour-8.12.0".into()),
+@@ -311,6 +323,7 @@ mod window_role_heuristics {
+             .min_size(633, 397)
+             .win_gravity(Gravity::NorthWest);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             has_transient_for: true,
+             window_types: vec![win_types.utility],
+             wm_normal_hints: Some(wm_normal_hints.into()),
+@@ -331,6 +344,7 @@ mod window_role_heuristics {
+             .min_size(660, 590)
+             .win_gravity(Gravity::Static);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             has_transient_for: true,
+             motif_wm_hints: Some(motif::Hints::from([0x2_u32, 0x1, 0, 0, 0].as_slice())),
+             window_types: vec![win_types.utility, win_types.normal],
+@@ -346,6 +360,7 @@ mod window_role_heuristics {
+     fn fcitx5_popup() {
+         let win_types = WindowTypes::new();
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             window_types: vec![win_types.combo],
+             override_redirect: true,
+             wm_class: Some("fcitx".into()),
+@@ -366,6 +381,7 @@ mod window_role_heuristics {
+             .max_size(307, 700)
+             .win_gravity(Gravity::Static);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             window_types: vec![win_types.normal],
+             motif_wm_hints: Some(motif::Hints::from([0x3_u32, 0x24, 0, 0, 0].as_slice())),
+             wm_normal_hints: Some(wm_normal_hints.into()),
+@@ -386,6 +402,7 @@ mod window_role_heuristics {
+             .max_size(1600, 800)
+             .win_gravity(Gravity::Static);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             window_types: vec![win_types.normal],
+             motif_wm_hints: Some(motif::Hints::from([0x3_u32, 0x24, 0, 0, 0].as_slice())),
+             wm_normal_hints: Some(wm_normal_hints.into()),
+@@ -403,6 +420,7 @@ mod window_role_heuristics {
+             .max_size(362, 645)
+             .win_gravity(Gravity::Static);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             window_types: vec![win_types.normal],
+             motif_wm_hints: Some(motif::Hints::from([0x3_u32, 0x2c, 0, 0, 0].as_slice())),
+             wm_normal_hints: Some(wm_normal_hints.into()),
+@@ -419,6 +437,7 @@ mod window_role_heuristics {
+             .program_pos(1920, 0)
+             .win_gravity(Gravity::Static);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             window_types: vec![win_types.normal],
+             motif_wm_hints: Some(motif::Hints::from([0x3_u32, 0x3e, 0, 0, 0].as_slice())),
+             wm_normal_hints: Some(wm_normal_hints.into()),
+@@ -439,6 +458,7 @@ mod window_role_heuristics {
+             .max_size(363, 801)
+             .win_gravity(Gravity::Static);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             motif_wm_hints: Some(motif::Hints::from([0x3_u32, 0x24, 0, 0, 0].as_slice())),
+             window_types: vec![win_types.dialog],
+             has_transient_for: true,
+@@ -463,6 +483,7 @@ mod window_role_heuristics {
+             .base_size(-2 as _, -2 as _)
+             .win_gravity(Gravity::Static);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             has_transient_for: true,
+             motif_wm_hints: Some(motif::Hints::from([0x2_u32, 0x1, 0, 0, 0].as_slice())),
+             window_types: vec![win_types.dialog, win_types.normal],
+@@ -484,6 +505,7 @@ mod window_role_heuristics {
+             .min_size(371, 356)
+             .win_gravity(Gravity::Static);
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             has_transient_for: true,
+             motif_wm_hints: Some(motif::Hints::from([0x3, 0x26, 0x1e, 0x0, 0x0].as_slice())),
+             window_types: vec![win_types.dialog, win_types.normal],
+@@ -498,9 +520,88 @@ mod window_role_heuristics {
+     fn splash_screen() {
+         let win_types = WindowTypes::new();
+         let win = WindowRoleHeuristics {
++            wm_name: None,
+             window_types: vec![win_types.splash],
+             ..Default::default()
+         };
+         assert_eq!(win.guess_window_role(&win_types), WindowRole::Splash);
+     }
+ }
++
++// Captured from WPS Writer 12.1.2.29183's text-selection mini toolbar.
++fn wps_toolbar_hints(types: &WindowTypes) -> WindowRoleHeuristics {
++    WindowRoleHeuristics {
++        wm_class: Some("wps".into()),
++        wm_name: Some("wps".into()),
++        motif_wm_hints: Some(motif::Hints::from([0x2_u32, 1, 0, 0, 0].as_slice())),
++        window_types: vec![types.kde_override, types.normal],
++        wm_normal_hints: Some(WmNormalHints::new().user_pos(1804, 606)
++            .user_size(676, 178).min_size(676, 178).max_size(676, 178)
++            .win_gravity(xcb::x::Gravity::Static).into()),
++        ..Default::default()
++    }
++}
++
++#[test]
++fn wps_selection_toolbar_is_popup() {
++    let types = WindowTypes::new();
++    assert_eq!(wps_toolbar_hints(&types).guess_window_role(&types), WindowRole::Popup);
++}
++
++#[test]
++fn wps_document_and_dialog_windows_remain_toplevels() {
++    let types = WindowTypes::new();
++    let mut titled = wps_toolbar_hints(&types);
++    titled.wm_name = Some("Document preferences".into());
++    assert_eq!(titled.guess_window_role(&types), WindowRole::Toplevel);
++    let mut resizable = wps_toolbar_hints(&types);
++    resizable.wm_normal_hints = Some(WmNormalHints::new().min_size(500, 300).into());
++    assert_eq!(resizable.guess_window_role(&types), WindowRole::Toplevel);
++    let mut transient = wps_toolbar_hints(&types);
++    transient.has_transient_for = true;
++    assert_eq!(transient.guess_window_role(&types), WindowRole::Toplevel);
++}
++
++#[test]
++fn wps_toolbar_workaround_does_not_match_other_windows() {
++    let types = WindowTypes::new();
++    let mut other = wps_toolbar_hints(&types);
++    other.wm_class = Some("other-qt-app".into());
++    assert_eq!(other.guess_window_role(&types), WindowRole::Toplevel);
++    let mut no_hint = wps_toolbar_hints(&types);
++    no_hint.window_types = vec![types.normal];
++    assert_eq!(no_hint.guess_window_role(&types), WindowRole::Toplevel);
++    let mut decorated = wps_toolbar_hints(&types);
++    decorated.motif_wm_hints = None;
++    assert_eq!(decorated.guess_window_role(&types), WindowRole::Toplevel);
++}
++
++// Captured from the Spreadsheet selection toolbar: et/et, 824x128,
++// NORMAL + KDE_OVERRIDE, no transient parent, no override_redirect.
++#[test]
++fn et_selection_toolbar_is_popup_without_raising_floating_layer() {
++    let types = WindowTypes::new();
++    let mut toolbar = wps_toolbar_hints(&types);
++    toolbar.wm_class = Some("et".into());
++    toolbar.wm_name = Some("et".into());
++    toolbar.wm_normal_hints = Some(WmNormalHints::new().user_pos(2126, 538)
++        .user_size(824, 128).min_size(824, 128).max_size(824, 128)
++        .win_gravity(xcb::x::Gravity::Static).into());
++    assert_eq!(toolbar.guess_window_role(&types), WindowRole::Popup);
++}
++
++#[test]
++fn et_workbook_and_named_dialog_are_not_selection_popups() {
++    let types = WindowTypes::new();
++    let mut window = wps_toolbar_hints(&types);
++    window.wm_class = Some("et".into());
++    window.wm_name = Some("workbook.xlsx".into());
++    assert_eq!(window.guess_window_role(&types), WindowRole::Toplevel);
++    window.wm_name = Some("et".into());
++    window.wm_normal_hints = Some(WmNormalHints::new().min_size(400, 200).into());
++    assert_eq!(window.guess_window_role(&types), WindowRole::Toplevel);
++    let mut other = wps_toolbar_hints(&types);
++    other.wm_class = Some("wpp".into());
++    other.wm_name = Some("wpp".into());
++    assert_eq!(other.guess_window_role(&types), WindowRole::Toplevel);
++}
+diff --git a/testwl/src/lib.rs b/testwl/src/lib.rs
+index b9b5503..ca94cb9 100644
+--- a/testwl/src/lib.rs
++++ b/testwl/src/lib.rs
+@@ -108,6 +108,8 @@ pub struct Viewport {
+ #[derive(Debug, PartialEq, Eq)]
+ pub struct SurfaceData {
+     pub surface: WlSurface,
++    pub buffer_scale: i32,
++    pub cursor_hotspot: Option<(i32, i32)>,
+     pub buffer: Option<WlBuffer>,
+     pub last_damage: Option<BufferDamage>,
+     pub role: Option<SurfaceRole>,
+@@ -336,7 +338,7 @@ impl State {
+         toplevel.states = states.clone();
+         let states: Vec<u8> = states
+             .into_iter()
+-            .map(|state| u32::from(state) as u8)
++            .flat_map(|state| u32::from(state).to_ne_bytes())
+             .collect();
+         toplevel.toplevel.configure(width, height, states);
+         toplevel.xdg.configure(last_serial);
+@@ -1447,9 +1449,10 @@ impl Dispatch<WlPointer, ()> for State {
+         _: &mut wayland_server::DataInit<'_, Self>,
+     ) {
+         match request {
+-            wl_pointer::Request::SetCursor { surface, .. } => {
++            wl_pointer::Request::SetCursor { surface, hotspot_x, hotspot_y, .. } => {
+                 if let Some(surface) = surface {
+                     let data = state.surfaces.get_mut(&SurfaceId::from(&surface)).unwrap();
++                    data.cursor_hotspot = Some((hotspot_x, hotspot_y));
+ 
+                     assert!(
+                         matches!(
+@@ -1569,6 +1572,32 @@ impl Dispatch<XdgToplevel, SurfaceId> for State {
+                     None
+                 };
+             }
++            xdg_toplevel::Request::SetMaximized => {
++                let data = state.surfaces.get_mut(surface_id).unwrap();
++                let Some(SurfaceRole::Toplevel(toplevel)) = &mut data.role else {
++                    unreachable!();
++                };
++                toplevel.states.push(xdg_toplevel::State::Maximized);
++                let states = toplevel.states.clone();
++                state.configure_toplevel(*surface_id, 100, 100, states);
++            }
++            xdg_toplevel::Request::UnsetMaximized => {
++                let data = state.surfaces.get_mut(surface_id).unwrap();
++                let Some(SurfaceRole::Toplevel(toplevel)) = &mut data.role else {
++                    unreachable!();
++                };
++                let Some(pos) = toplevel
++                    .states
++                    .iter()
++                    .copied()
++                    .position(|p| p == xdg_toplevel::State::Maximized)
++                else {
++                    return;
++                };
++                toplevel.states.swap_remove(pos);
++                let states = toplevel.states.clone();
++                state.configure_toplevel(*surface_id, 100, 100, states);
++            }
+             xdg_toplevel::Request::SetFullscreen { .. } => {
+                 let data = state.surfaces.get_mut(surface_id).unwrap();
+                 let Some(SurfaceRole::Toplevel(toplevel)) = &mut data.role else {
+@@ -1957,6 +1986,8 @@ impl Dispatch<WlCompositor, ()> for State {
+                     SurfaceId(id),
+                     SurfaceData {
+                         surface,
++                        buffer_scale: 1,
++                        cursor_hotspot: None,
+                         buffer: None,
+                         last_damage: None,
+                         role: None,
+@@ -2059,7 +2090,7 @@ impl Dispatch<WlSurface, ()> for State {
+                 state.surfaces.remove(&id);
+             }
+             SetInputRegion { .. } => {}
+-            SetBufferScale { .. } => {}
++            SetBufferScale { scale } => data.buffer_scale = scale,
+             other => todo!("unhandled request {other:?}"),
+         }
+     }

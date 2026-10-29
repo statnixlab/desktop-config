@@ -11,7 +11,7 @@
   "displayOffEnabled": true,
   "displayOffTimeout": 900,
   "displayOffRespectInhibitors": true,
-  "suspendEnabled": true,
+  "suspendEnabled": false,
   "suspendTimeout": 900,
   "suspendRespectInhibitors": true
 }

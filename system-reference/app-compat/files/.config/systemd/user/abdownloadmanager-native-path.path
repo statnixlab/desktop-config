@@ -1,0 +1,15 @@
+[Unit]
+Description=Watch AB Download Manager browser launcher registration
+
+[Path]
+PathChanged=@HOME@/.config/google-chrome/NativeMessagingHosts/com.abdownloadmanager.json
+PathChanged=@HOME@/.config/chromium/NativeMessagingHosts/com.abdownloadmanager.json
+PathChanged=@HOME@/.config/microsoft-edge/NativeMessagingHosts/com.abdownloadmanager.json
+PathChanged=@HOME@/.config/opera/NativeMessagingHosts/com.abdownloadmanager.json
+PathChanged=@HOME@/.config/vivaldi/NativeMessagingHosts/com.abdownloadmanager.json
+PathChanged=@HOME@/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.abdownloadmanager.json
+PathChanged=@HOME@/.mozilla/native-messaging-hosts/com.abdownloadmanager.json
+Unit=abdownloadmanager-native-path.service
+
+[Install]
+WantedBy=default.target

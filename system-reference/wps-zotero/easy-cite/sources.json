@@ -1,0 +1,10 @@
+{
+  "wps": {
+    "url": "https://codeload.github.com/danielhluna/WPS-Zotero/tar.gz/83867d199a6ef947b7f7d0cf8ef966388d6e88fe",
+    "sha256": "8168928d99d4b8de1c3f69d4a06b96d0671a15170bb67e93a6b0f2d02cff0e83"
+  },
+  "easier_citation": {
+    "url": "https://github.com/MuiseDestiny/zotero-citation/releases/download/0.5.11/zotero-citation.xpi",
+    "sha256": "4af6d3fcc45483213aa2cfcb3b81b4d4ad738f11d5d835b9f2c1ec31a01f5b7f"
+  }
+}

@@ -3,3 +3,4 @@ Commit: 83867d199a6ef947b7f7d0cf8ef966388d6e88fe
 Local changes: use systemd proxy lifecycle exclusively; log to XDG_STATE_HOME/wps-zotero.
 Local UI fallback: Chinese.
 Validated on WPS 12.1.2.29183 and Zotero 10.0.6: citation insertion and bibliography generation succeeded with an isolated temporary library on 2026-10-26. Main library unchanged; NTFS partition was mounted read-only due to unclean/unsafe Windows state.
+2026-10-27: authenticated Easier Citation 0.5.11.1 Linux shortcut bridge added. Proxy logs warnings/errors only to avoid heartbeat log growth. Rollback backup: ~/.local/share/wps-easy-cite-backups/2026-10-27.

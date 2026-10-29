@@ -73,9 +73,10 @@ def clean_settings(value, home):
     return value
 
 
-def capture(home, root=ROOT):
+def capture(home, root=ROOT, clavis_source=None):
     home = home.expanduser().resolve()
-    source = home / '.config/quickshell/clavis'
+    source = (clavis_source.expanduser().resolve() if clavis_source
+              else home / '.config/quickshell/clavis')
     if not (source / 'Modules/Dock/DockHost.qml').is_file():
         raise RuntimeError('The selected home has no Clavis native Dock installation')
     lock = json.loads((root / 'sources.lock.json').read_text())
@@ -106,7 +107,7 @@ def capture(home, root=ROOT):
         if (relative.startswith('config/gtk-') and path.suffix == '.svg') or relative.startswith('config/fontconfig/'):
             content = '\n'.join(line.rstrip() for line in content.splitlines()) + '\n'
         if path.suffix == '.service':
-            content = re.sub(r'(?<!["\w])(@HOME@/\.local/libexec/[^\s"]+)', r'"\1"', content)
+            content = re.sub(r'(?<!["\w])(@HOME@/\.local/(?:libexec|share)/[^\s"]+)', r'"\1"', content)
         content = content.replace('/usr/libexec/kf6/polkit-kde-authentication-agent-1', '/usr/lib/polkit-kde-authentication-agent-1')
         if path.suffix == '.desktop':
             content = re.sub(r'^Exec=(@HOME@/\.local/bin/[^\s"]+)(.*)$', r'Exec="\1"\2', content, flags=re.M)
@@ -160,6 +161,24 @@ def capture(home, root=ROOT):
         content = '\n'.join(line for line in content.splitlines() if not re.match(
             r'\s*(?:render-drm-device|disable-cursor-plane|prefer-16bit-output|restrict-primary-scanout-to-matching-format|force-full-repaint|full-repaint-reuse-buffers|high-refresh-workaround-above|keep-previous-frame-buffer)\b', line)
             and not line.strip().startswith(('// Use the NVIDIA GPU', '// NVIDIA high-refresh workaround:'))) + '\n'
+        # These opt-in layout behaviors were enabled through local wrapper
+        # configs. Carry the behavior, without their GPU-specific include chain.
+        layout_flags = set()
+        for fragment in ['titlebar-column.kdl', 'floating-focus.kdl']:
+            path = home / '.config/niri' / fragment
+            if path.is_file():
+                layout_flags.update(re.findall(
+                    r'^\s*(client-maximize-to-column|floating-windows-follow-focus)\s*;?\s*$',
+                    path.read_text(), re.M))
+        missing = [flag for flag in sorted(layout_flags)
+                   if not re.search(r'^\s*' + re.escape(flag) + r'\s*;?\s*$', content, re.M)]
+        if missing:
+            flags = ''.join('    ' + flag + '\n' for flag in missing)
+            content, count = re.subn(r'(?m)^layout\s*\{',
+                                    lambda match: match.group() + '\n' + flags.rstrip('\n'),
+                                    content, count=1)
+            if not count:
+                content += '\n// Portable personal window behavior.\nlayout {\n' + flags + '}\n'
         niri_config.write_text(content)
     copy(home / '.local/share/nautilus-python/extensions/copy_path.py',
          'share/nautilus-python/extensions/copy_path.py')
@@ -260,7 +279,7 @@ def capture(home, root=ROOT):
     # never traverse Zotero libraries, WPS documents, profiles or account stores.
     addon = home / '.local/share/Kingsoft/wps/jsaddons/wps-zotero_0.2.0'
     for name in ['LOCAL-INSTALL.txt', 'LICENSE.txt', 'lang.cfg',
-                 'proxy.py', 'js/ribbon.js', 'js/i18n.js']:
+                 'proxy.py', 'js/ribbon.js', 'js/i18n.js', 'main.js']:
         copy(addon / name, 'system-reference/wps-zotero/' + name)
     if home == Path.home().resolve():
         copy(Path('/usr/local/libexec/chatgpt-startup-fix.py'),
@@ -293,12 +312,14 @@ def capture(home, root=ROOT):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-home', type=Path, default=Path.home())
+    parser.add_argument('--clavis-source', type=Path,
+                        help='Reviewed clean Clavis checkout containing merged cross-machine changes')
     parser.add_argument('--apply', action='store_true')
     args = parser.parse_args()
     if not args.apply:
         print(f'Plan: capture desktop settings from {args.source_home}; use --apply to refresh this repository.')
         return
-    capture(args.source_home)
+    capture(args.source_home, clavis_source=args.clavis_source)
     subprocess.run(['python3', str(ROOT / 'scripts/update-manifest.py')], check=True)
 
 

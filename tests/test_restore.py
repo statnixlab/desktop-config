@@ -69,6 +69,29 @@ class RestoreTests(unittest.TestCase):
         self.assertNotIn(b'gtk-xft-dpi=', files[Path('.config/gtk-4.0/settings.ini')][0])
         self.assertNotIn(b'Xft.dpi:', files[Path('.config/fcitx5/x11-dpi.Xresources')][0])
 
+    def test_update_keeps_target_display_and_device_settings(self):
+        existing = {
+            '.config/niri/clavis/outputs.kdl': 'output "Laptop" { scale 1.5; }\n',
+            '.config/niri/clavis/mouse.kdl': 'input { mouse { accel-speed 0.2; } }\n',
+            '.config/clavis/primary-display.json': '{"primary":"Laptop"}',
+            '.config/clavis/ui-preferences.json': '{"systemMonitorGpuId":"new-gpu","systemMonitorDiskDevice":"new-disk"}',
+            '.config/gtk-4.0/settings.ini': '[Settings]\ngtk-xft-dpi=147456\ngtk-font-name=Previous 10\n',
+            '.config/fcitx5/x11-dpi.Xresources': 'Xft.dpi: 144\n',
+        }
+        for name, data in existing.items():
+            path = self.target / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(data)
+        files = restore.plan(self.target, keep_target_hardware=True)
+        for name in list(existing)[:3]:
+            self.assertNotIn(Path(name), files)
+        preferences = json.loads(files[Path('.config/clavis/ui-preferences.json')][0])
+        self.assertEqual(preferences['systemMonitorGpuId'], 'new-gpu')
+        self.assertEqual(preferences['systemMonitorDiskDevice'], 'new-disk')
+        self.assertIn(b'gtk-xft-dpi=147456', files[Path('.config/gtk-4.0/settings.ini')][0])
+        self.assertNotIn(b'Previous 10', files[Path('.config/gtk-4.0/settings.ini')][0])
+        self.assertEqual(files[Path('.config/fcitx5/x11-dpi.Xresources')][0], b'Xft.dpi: 144\n')
+
     def test_restore_keeps_all_required_niri_fragments_and_gtk_customization(self):
         files = restore.plan(self.target)
         for name in ['outputs', 'mouse', 'cursor', 'layer-rules', 'effects', 'application-effects', 'minimize-animation']:

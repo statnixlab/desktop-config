@@ -1,5 +1,12 @@
 [
   {
+    "family": "HarmonyOS Sans SC",
+    "version": "1.0",
+    "download": "https://developer.huawei.com/images/download/general/HarmonyOS-Sans.zip",
+    "sha256": "fb02c86e358cd9aad8d4dfa957ee502381e7ee2e94499a9133add4324b6ce69a",
+    "installation": "scripts/install-fonts.py --apply"
+  },
+  {
     "family": "Inter",
     "version": "4.1",
     "download": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip",

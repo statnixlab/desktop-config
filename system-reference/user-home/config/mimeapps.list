@@ -43,6 +43,10 @@ x-scheme-handler/mailto=userapp-Thunderbird-4YZGX3.desktop
 x-scheme-handler/mid=userapp-Thunderbird-4YZGX3.desktop
 message/rfc822=userapp-Thunderbird-4YZGX3.desktop
 x-scheme-handler/net.thunderbird=userapp-Thunderbird-UL7HX3.desktop
+text/markdown=marktext.desktop
+text/x-python=com.microsoft.VSCode.desktop
+text/csv=wps-office-et.desktop
+application/json=com.microsoft.VSCode.desktop
 
 [Added Associations]
 video/mp4=smplayer.desktop;
@@ -59,3 +63,7 @@ x-scheme-handler/mailto=userapp-Thunderbird-4YZGX3.desktop;
 x-scheme-handler/mid=userapp-Thunderbird-4YZGX3.desktop;
 message/rfc822=userapp-Thunderbird-4YZGX3.desktop;
 x-scheme-handler/net.thunderbird=userapp-Thunderbird-UL7HX3.desktop;
+text/markdown=com.microsoft.VSCode.desktop;marktext.desktop;
+text/x-python=com.microsoft.VSCode.desktop;
+text/csv=wps-office-et.desktop;
+application/json=com.microsoft.VSCode.desktop;

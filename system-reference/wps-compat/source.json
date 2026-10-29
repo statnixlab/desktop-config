@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/Supreeeme/xwayland-satellite.git",
+  "base_commit": "8d135d3b2854b30fd01ea6cd6c27e523dd50a839",
+  "features": [
+    "systemd"
+  ],
+  "patch": "xwayland-wps.patch",
+  "patch_sha256": "410bbe7fca89a84f499fe7cf0bd3641783da93d4cbeeba8c06743d709d738a04",
+  "installed_sha256": "6f8a993804e07816bcd9549fbbcf9767d86e01f945be05b3e65b887043a4b29c",
+  "scope": "WPS Writer / Spreadsheets / Presentation / PDF",
+  "build": "cargo build --release --locked --features systemd"
+}

@@ -1,0 +1,6 @@
+[Unit]
+Description=Preserve AB Download Manager browser HiDPI launcher
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/libexec/abdownloadmanager-native-path

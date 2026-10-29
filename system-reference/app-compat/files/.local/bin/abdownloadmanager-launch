@@ -1,0 +1,27 @@
+#!/bin/bash
+set -euo pipefail
+
+# Reuse the existing, tested 200% XWayland cursor and popup compatibility.
+abdm_exe=/opt/abdownloadmanager/bin/ABDownloadManager
+if [[ "${1:-}" == --native-host ]]; then
+    abdm_exe=/opt/abdownloadmanager/bin/ABDownloadManagerNativeMessagingHost
+    shift
+fi
+abdm_scale=1
+abdm_display="${DISPLAY:-:0}"
+abdm_cursor_size=24
+if [[ -n "${NIRI_SOCKET:-}" && -S "$NIRI_SOCKET" ]] && /usr/bin/niri msg --json outputs | /usr/bin/jq -e '
+    [.[] | select(.logical != null) | .logical.scale] as $scales
+    | ($scales | length) > 0 and ($scales | all(. == 2))' >/dev/null; then
+    /usr/bin/systemctl --user start xwayland-chat.service
+    "@HOME@/.local/bin/chat-hidpi-input"
+    abdm_scale=2
+    abdm_display=:2
+    abdm_cursor_size=48
+fi
+export DISPLAY="$abdm_display"
+export XCURSOR_THEME=breeze_cursors XCURSOR_SIZE="$abdm_cursor_size"
+export GDK_SCALE="$abdm_scale"
+export GTK_IM_MODULE=fcitx QT_IM_MODULE=fcitx XMODIFIERS=@im=fcitx
+export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:+$JAVA_TOOL_OPTIONS }-Dsun.java2d.uiScale=$abdm_scale"
+exec "$abdm_exe" "$@"

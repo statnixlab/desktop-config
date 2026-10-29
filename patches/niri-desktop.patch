@@ -1,5 +1,5 @@
 diff --git a/Cargo.lock b/Cargo.lock
-index e6e96c3660ba3f60259c891ac8d584bb5ae735e0..f04678d1834591c5aaae47da9c26b31071d6c30a 100644
+index e6e96c3..f04678d 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -3396,7 +3396,6 @@ checksum = "e8e2fb0f499abb4d162f2bedad68f5ef91a1682b5a03596ddb67efd37768d100"
@@ -19,10 +19,16 @@ index e6e96c3660ba3f60259c891ac8d584bb5ae735e0..f04678d1834591c5aaae47da9c26b310
   "drm",
   "libdisplay-info",
 diff --git a/Cargo.toml b/Cargo.toml
-index 0daaa148015eca258ee599e4ffedd98a38dcd7b9..4e3005c1f5aec69a1581b149149280ace15f6af3 100644
+index 0daaa14..f835c20 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -27,14 +27,12 @@ tracy-client = { version = "0.18.5", default-features = false }
+@@ -1,4 +1,5 @@
+ [workspace]
++exclude = ["smithay-workaround"]
+ members = [
+     "niri-config",
+     "niri-ipc",
+@@ -27,14 +28,12 @@ tracy-client = { version = "0.18.5", default-features = false }
  
  [workspace.dependencies.smithay]
  # version = "0.4.1"
@@ -40,7 +46,7 @@ index 0daaa148015eca258ee599e4ffedd98a38dcd7b9..4e3005c1f5aec69a1581b149149280ac
  
  [package]
 diff --git a/docs/wiki/Configuration:-Debug-Options.md b/docs/wiki/Configuration:-Debug-Options.md
-index ae546b536dcca61064b138fe45a3561350eabf47..b6a5421c4424d55ca25432e659f1a5e33aafb941 100644
+index ae546b5..b6a5421 100644
 --- a/docs/wiki/Configuration:-Debug-Options.md
 +++ b/docs/wiki/Configuration:-Debug-Options.md
 @@ -25,6 +25,9 @@ debug {
@@ -164,11 +170,41 @@ index ae546b536dcca61064b138fe45a3561350eabf47..b6a5421c4424d55ca25432e659f1a5e3
  ### Key Bindings
  
  These are not debug options, but rather key bindings.
+diff --git a/docs/wiki/Floating-Window-Focus-Stacking.md b/docs/wiki/Floating-Window-Focus-Stacking.md
+new file mode 100644
+index 0000000..b08ae77
+--- /dev/null
++++ b/docs/wiki/Floating-Window-Focus-Stacking.md
+@@ -0,0 +1,24 @@
++# Floating-window focus stacking
++
++```kdl
++layout {
++    floating-windows-follow-focus
++}
++```
++
++This opt-in setting lowers the currently raised floating windows when a scrolling
++window is explicitly activated. Each floating window records its own position
++relative to the scrolling layer. Opening a new floating window or activating one
++specific floating window raises that window, without raising previously lowered
++unrelated windows. Its child dialogs follow it so they remain above their parent.
++
++Closing the last raised float returns focus to the scrolling layer instead of
++bringing back older lowered windows. Floating windows keep their size, position
++and workspace and are not minimized. Exposed parts remain clickable; covered
++windows can be raised through a dock, window activation, or
++`switch-focus-between-floating-and-tiling`.
++
++The setting is disabled by default and supports per-workspace layout overrides.
++Focus-following pointer motion does not raise windows by itself. Rendering,
++closing animations, pointer hit testing and resize-edge targeting consistently
++partition windows as raised floats, scrolling windows, then lowered floats.
 diff --git a/docs/wiki/Fullscreen-and-Maximize.md b/docs/wiki/Fullscreen-and-Maximize.md
-index c8b41f13b52c251d199fbd0475375edba8070187..c1cd8294b598a9828670d904e5de4c27b2f3eca2 100644
+index c8b41f1..06d3463 100644
 --- a/docs/wiki/Fullscreen-and-Maximize.md
 +++ b/docs/wiki/Fullscreen-and-Maximize.md
-@@ -79,3 +79,19 @@ See also windowed fullscreen on the [screencasting features wiki page](./Screenc
+@@ -79,3 +79,21 @@ See also windowed fullscreen on the [screencasting features wiki page](./Screenc
  
  [struts]: ./Configuration:-Layout.md#struts
  [gaps]: ./Configuration:-Layout.md#gaps
@@ -176,7 +212,7 @@ index c8b41f13b52c251d199fbd0475375edba8070187..c1cd8294b598a9828670d904e5de4c27
 +## Personal option: titlebar uses column width
 +
 +The local `layout { client-maximize-to-column; }` option routes maximize requests
-+from already mapped application windows to the same column-width toggle as
++from already mapped tiled application windows to the same column-width toggle as
 +`maximize-column`. It targets the requesting window, even if another window has
 +focus. It preserves reserved panel space, layout gaps and borders. Repeating the
 +titlebar gesture restores the previous column width.
@@ -184,12 +220,14 @@ index c8b41f13b52c251d199fbd0475375edba8070187..c1cd8294b598a9828670d904e5de4c27
 +Double-clicking the client titlebar and pressing its maximize button send the
 +same Wayland request, so both follow this option. Full-width columns do not
 +advertise the protocol Maximized state; subsequent clicks send another maximize
-+request and toggle the width back. Floating windows remain unchanged, matching
-+`maximize-column`. Initial window maximize requests, explicit
++request and toggle the width back. Floating windows use native maximization and
++return to their previous floating size and position when restored. Repeated
++maximize requests on an already maximized window leave it maximized.
++Initial window maximize requests, explicit
 +`maximize-window-to-edges`, and fullscreen behavior are unchanged. The option is
 +off by default.
 diff --git a/docs/wiki/Window-Effects.md b/docs/wiki/Window-Effects.md
-index 3893553475b5fc947c51096f545dac4c55bb2868..9739f49566ab24382c5885f4ba5c70d005f470ec 100644
+index 3893553..9739f49 100644
 --- a/docs/wiki/Window-Effects.md
 +++ b/docs/wiki/Window-Effects.md
 @@ -85,3 +85,19 @@ They can be implemented as the need arises.
@@ -213,7 +251,7 @@ index 3893553475b5fc947c51096f545dac4c55bb2868..9739f49566ab24382c5885f4ba5c70d0
 +IPC `Capabilities.per_surface_blur` indicates support in the running compositor;
 +a newly installed executable does not enable this in an already running session.
 diff --git a/niri-config/src/appearance.rs b/niri-config/src/appearance.rs
-index a1c832714986221a874e2e78ea119d62f114fca0..a8253416335b0b38b2cedf0f5dc3a9c8a6a1e584 100644
+index a1c8327..a825341 100644
 --- a/niri-config/src/appearance.rs
 +++ b/niri-config/src/appearance.rs
 @@ -1062,6 +1062,8 @@ pub struct BackgroundEffectRule {
@@ -273,7 +311,7 @@ index a1c832714986221a874e2e78ea119d62f114fca0..a8253416335b0b38b2cedf0f5dc3a9c8
      fn parse_gradient_interpolation() {
          assert_eq!(
 diff --git a/niri-config/src/debug.rs b/niri-config/src/debug.rs
-index 32de7f5310611f86b0b6eb16f02894e9335f627a..be67c23dd84c19e582f243f8c14ad28658489e0e 100644
+index 32de7f5..be67c23 100644
 --- a/niri-config/src/debug.rs
 +++ b/niri-config/src/debug.rs
 @@ -7,6 +7,10 @@ pub struct Debug {
@@ -342,44 +380,50 @@ index 32de7f5310611f86b0b6eb16f02894e9335f627a..be67c23dd84c19e582f243f8c14ad286
          self.ignored_drm_devices
              .extend(part.ignored_drm_devices.iter().cloned());
 diff --git a/niri-config/src/layout.rs b/niri-config/src/layout.rs
-index f84528bd33bfd679c4197c33d6c77168d9cadd3b..69e768f518a565cc1b5e46462fed56113ef30824 100644
+index f84528b..5aa3f80 100644
 --- a/niri-config/src/layout.rs
 +++ b/niri-config/src/layout.rs
-@@ -19,6 +19,7 @@ pub struct Layout {
+@@ -19,6 +19,9 @@ pub struct Layout {
      pub preset_window_heights: Vec<PresetSize>,
      pub center_focused_column: CenterFocusedColumn,
      pub always_center_single_column: bool,
 +    pub client_maximize_to_column: bool,
++    /// Lower floating windows behind the tiling layer when it receives focus.
++    pub floating_windows_follow_focus: bool,
      pub empty_workspace_above_first: bool,
      pub default_column_display: ColumnDisplay,
      pub gaps: f64,
-@@ -42,6 +43,7 @@ impl Default for Layout {
+@@ -42,6 +45,8 @@ impl Default for Layout {
              default_column_width: Some(PresetSize::Proportion(0.5)),
              center_focused_column: CenterFocusedColumn::Never,
              always_center_single_column: false,
 +            client_maximize_to_column: false,
++            floating_windows_follow_focus: false,
              empty_workspace_above_first: false,
              default_column_display: ColumnDisplay::Normal,
              gaps: 16.,
-@@ -66,6 +68,7 @@ impl MergeWith<LayoutPart> for Layout {
+@@ -66,6 +71,8 @@ impl MergeWith<LayoutPart> for Layout {
              tab_indicator,
              insert_hint,
              always_center_single_column,
 +            client_maximize_to_column,
++            floating_windows_follow_focus,
              empty_workspace_above_first,
              gaps,
          );
-@@ -117,6 +120,8 @@ pub struct LayoutPart {
+@@ -117,6 +124,10 @@ pub struct LayoutPart {
      #[knuffel(child)]
      pub always_center_single_column: Option<Flag>,
      #[knuffel(child)]
 +    pub client_maximize_to_column: Option<Flag>,
 +    #[knuffel(child)]
++    pub floating_windows_follow_focus: Option<Flag>,
++    #[knuffel(child)]
      pub empty_workspace_above_first: Option<Flag>,
      #[knuffel(child, unwrap(argument, str))]
      pub default_column_display: Option<ColumnDisplay>,
 diff --git a/niri-config/src/lib.rs b/niri-config/src/lib.rs
-index 80329b5a93fcb91a63e3d59b109e7687506c009b..614e6947a3a9188faad3b3be153dfe42ae2a0fc0 100644
+index 80329b5..614e694 100644
 --- a/niri-config/src/lib.rs
 +++ b/niri-config/src/lib.rs
 @@ -640,6 +640,45 @@ mod tests {
@@ -488,7 +532,7 @@ index 80329b5a93fcb91a63e3d59b109e7687506c009b..614e6947a3a9188faad3b3be153dfe42
              workspaces: [
                  Workspace {
 diff --git a/niri-ipc/src/lib.rs b/niri-ipc/src/lib.rs
-index 8085095609d9d72090f26d4134a390ab2cf02526..5b6cfa27ec1a0592deb05c8017d04b983e789e84 100644
+index 8085095..5b6cfa2 100644
 --- a/niri-ipc/src/lib.rs
 +++ b/niri-ipc/src/lib.rs
 @@ -189,6 +189,9 @@ pub struct Capabilities {
@@ -523,7 +567,7 @@ index 8085095609d9d72090f26d4134a390ab2cf02526..5b6cfa27ec1a0592deb05c8017d04b98
      }
  
 diff --git a/src/backend/tty.rs b/src/backend/tty.rs
-index c30ca6ba6b74634ad4fa91e53456f6729c5ff198..3429279bf9b7d7f361a9ab0b451fe3b5565f9466 100644
+index c30ca6b..3429279 100644
 --- a/src/backend/tty.rs
 +++ b/src/backend/tty.rs
 @@ -18,7 +18,7 @@ use niri_config::output::{MaxBpc, Modeline};
@@ -1028,27 +1072,48 @@ index c30ca6ba6b74634ad4fa91e53456f6729c5ff198..3429279bf9b7d7f361a9ab0b451fe3b5
      #[test]
      fn test_calculate_drmmode_from_modeline() {
 diff --git a/src/handlers/xdg_shell.rs b/src/handlers/xdg_shell.rs
-index 2bc0d2f1b27076347be3d079f693436ef02fecc8..0a6c0f03c7cc37dcbfad3e97bf87cc5ae2e81d5e 100644
+index 2bc0d2f..3ca6455 100644
 --- a/src/handlers/xdg_shell.rs
 +++ b/src/handlers/xdg_shell.rs
-@@ -499,7 +499,14 @@ impl XdgShellHandler for State {
+@@ -39,7 +39,7 @@ use tracing::field::Empty;
+ use crate::input::move_grab::MoveGrab;
+ use crate::input::resize_grab::ResizeGrab;
+ use crate::input::{AnyStartData, DOUBLE_CLICK_TIME};
+-use crate::layout::ActivateWindow;
++use crate::layout::{ActivateWindow, LayoutElement as _};
+ use crate::niri::{CastTarget, PopupGrabState, State};
+ use crate::utils::transaction::Transaction;
+ use crate::utils::{
+@@ -499,7 +499,26 @@ impl XdgShellHandler for State {
              mapped.set_needs_configure();
  
              let window = mapped.window.clone();
 -            self.niri.layout.set_maximized(&window, true);
-+            if self.niri.config.borrow().layout.client_maximize_to_column {
++            let is_maximized = mapped.pending_sizing_mode().is_maximized();
++            let is_floating = self
++                .niri
++                .layout
++                .workspaces()
++                .any(|(_, _, ws)| ws.is_floating(&window));
++            if self.niri.config.borrow().layout.client_maximize_to_column
++                && !is_floating
++                && !is_maximized
++            {
 +                // CSD double-click and maximize buttons send the same request. A full-width
 +                // column deliberately does not advertise Maximized, so the next click sends
 +                // set_maximized again and toggles back, just like maximize-column.
 +                self.niri.layout.toggle_full_width_for_window(&window);
 +            } else {
++                // Floating windows have no column to expand. Use native maximization,
++                // which also remembers their floating size/position for unmaximize.
++                // Keep repeated maximize requests idempotent once maximized.
 +                self.niri.layout.set_maximized(&window, true);
 +            }
          } else if let Some(unmapped) = self.niri.unmapped_windows.get_mut(toplevel.wl_surface()) {
              match &mut unmapped.state {
                  InitialConfigureState::NotConfigured {
 diff --git a/src/ipc/server.rs b/src/ipc/server.rs
-index e7ceea6c4a4650f10a08ce496741f5f065c042ac..d702c12d6b44fd216a031c8a4d4e9ac2ef7dc259 100644
+index e7ceea6..d702c12 100644
 --- a/src/ipc/server.rs
 +++ b/src/ipc/server.rs
 @@ -288,6 +288,7 @@ async fn process(ctx: &ClientCtx, request: Request) -> Reply {
@@ -1059,8 +1124,191 @@ index e7ceea6c4a4650f10a08ce496741f5f065c042ac..d702c12d6b44fd216a031c8a4d4e9ac2
          }),
          Request::SetWindowAnimationTargets { targets } => {
              if targets.len() > 1024 {
+diff --git a/src/layout/floating.rs b/src/layout/floating.rs
+index 5fe1d29..57bf4dc 100644
+--- a/src/layout/floating.rs
++++ b/src/layout/floating.rs
+@@ -52,7 +52,7 @@ pub struct FloatingSpace<W: LayoutElement> {
+     interactive_resize: Option<InteractiveResize<W>>,
+ 
+     /// Windows in the closing animation.
+-    closing_windows: Vec<ClosingWindow>,
++    closing_windows: Vec<(ClosingWindow, bool)>,
+ 
+     /// View size for this space.
+     view_size: Size<f64, Logical>,
+@@ -80,6 +80,8 @@ niri_render_elements! {
+ /// Extra per-tile data.
+ #[derive(Debug, Clone, Copy, PartialEq)]
+ struct Data {
++    /// This window is above the scrolling layer until it is explicitly lowered.
++    above_tiling: bool,
+     /// Position relative to the working area.
+     pos: Point<f64, SizeFrac>,
+ 
+@@ -102,6 +104,7 @@ impl Data {
+         logical_pos: Point<f64, Logical>,
+     ) -> Self {
+         let mut rv = Self {
++            above_tiling: true,
+             pos: Point::default(),
+             logical_pos: Point::default(),
+             size: Size::default(),
+@@ -252,7 +255,7 @@ impl<W: LayoutElement> FloatingSpace<W> {
+             tile.advance_animations();
+         }
+ 
+-        self.closing_windows.retain_mut(|closing| {
++        self.closing_windows.retain_mut(|(closing, _)| {
+             closing.advance_animations();
+             closing.are_animations_ongoing()
+         });
+@@ -418,6 +421,39 @@ impl<W: LayoutElement> FloatingSpace<W> {
+         self.tiles.is_empty()
+     }
+ 
++    pub fn lower_all(&mut self) {
++        if self.options.layout.floating_windows_follow_focus {
++            for data in &mut self.data {
++                data.above_tiling = false;
++            }
++        }
++    }
++
++    pub fn is_above_tiling(&self, id: &W::Id) -> bool {
++        self.idx_of(id).is_some_and(|idx| {
++            !self.options.layout.floating_windows_follow_focus || self.data[idx].above_tiling
++        })
++    }
++
++    pub fn raise_active(&mut self) {
++        if let Some(id) = self.active_window_id.clone() {
++            self.activate_window(&id);
++        }
++    }
++
++    pub fn tiles_with_render_positions_in_layer(
++        &self,
++        above_tiling: bool,
++    ) -> impl Iterator<Item = (&Tile<W>, Point<f64, Logical>)> {
++        self.tiles_with_render_positions()
++            .zip(&self.data)
++            .filter(move |(_, data)| {
++                (!self.options.layout.floating_windows_follow_focus || data.above_tiling)
++                    == above_tiling
++            })
++            .map(|(tile, _)| tile)
++    }
++
+     pub fn add_tile(&mut self, tile: Tile<W>, activate: bool) {
+         self.add_tile_at(0, tile, activate);
+     }
+@@ -504,9 +540,13 @@ impl<W: LayoutElement> FloatingSpace<W> {
+ 
+         // Now, descendants is in back-to-front order, and repositioning them in the front-to-back
+         // order will preserve the subsequent indices and work out right.
++        let above_tiling = self.data[idx].above_tiling;
+         let mut idx = idx;
+         #[allow(clippy::explicit_counter_loop)]
+         for descendant_idx in descendants.into_iter().rev() {
++            if above_tiling {
++                self.data[descendant_idx].above_tiling = true;
++            }
+             self.raise_window(descendant_idx, idx);
+             idx += 1;
+         }
+@@ -557,6 +597,7 @@ impl<W: LayoutElement> FloatingSpace<W> {
+         id: &W::Id,
+         blocker: TransactionBlocker,
+     ) {
++        let above_tiling = self.is_above_tiling(id);
+         let (tile, tile_pos) = self
+             .tiles_with_render_positions_mut(false)
+             .find(|(tile, _)| tile.window().id() == id)
+@@ -568,7 +609,14 @@ impl<W: LayoutElement> FloatingSpace<W> {
+ 
+         let tile_size = tile.tile_size();
+ 
+-        self.start_close_animation_for_tile(renderer, snapshot, tile_size, tile_pos, blocker);
++        self.start_close_animation_in_layer(
++            renderer,
++            snapshot,
++            tile_size,
++            tile_pos,
++            blocker,
++            above_tiling,
++        );
+     }
+ 
+     pub fn activate_window_without_raising(&mut self, id: &W::Id) -> bool {
+@@ -585,6 +633,7 @@ impl<W: LayoutElement> FloatingSpace<W> {
+             return false;
+         };
+ 
++        self.data[idx].above_tiling = true;
+         self.raise_window(idx, 0);
+         self.active_window_id = Some(id.clone());
+         self.bring_up_descendants_of(0);
+@@ -608,6 +657,18 @@ impl<W: LayoutElement> FloatingSpace<W> {
+         tile_size: Size<f64, Logical>,
+         tile_pos: Point<f64, Logical>,
+         blocker: TransactionBlocker,
++    ) {
++        self.start_close_animation_in_layer(renderer, snapshot, tile_size, tile_pos, blocker, true);
++    }
++
++    fn start_close_animation_in_layer(
++        &mut self,
++        renderer: &mut GlesRenderer,
++        snapshot: TileRenderSnapshot,
++        tile_size: Size<f64, Logical>,
++        tile_pos: Point<f64, Logical>,
++        blocker: TransactionBlocker,
++        above_tiling: bool,
+     ) {
+         let anim = Animation::new(
+             self.clock.clone(),
+@@ -629,7 +690,7 @@ impl<W: LayoutElement> FloatingSpace<W> {
+         );
+         match res {
+             Ok(closing) => {
+-                self.closing_windows.push(closing);
++                self.closing_windows.push((closing, above_tiling));
+             }
+             Err(err) => {
+                 warn!("error creating a closing window animation: {err:?}");
+@@ -1072,22 +1133,26 @@ impl<W: LayoutElement> FloatingSpace<W> {
+         view_rect: Rectangle<f64, Logical>,
+         focus_ring: bool,
+         layer: RenderLayer,
++        above_tiling: bool,
+         push: &mut dyn FnMut(FloatingSpaceRenderElement<R>),
+     ) {
+         let scale = Scale::from(self.scale);
+ 
+-        // Draw the closing windows on top of the other windows.
++        // Draw closing windows on top within their original above/below partition.
+         //
+         // FIXME: I guess this should rather preserve the stacking order when the window is closed.
+         if layer.is_normal() {
+-            for closing in self.closing_windows.iter().rev() {
++            for (closing, raised) in self.closing_windows.iter().rev() {
++                if (!self.options.layout.floating_windows_follow_focus || *raised) != above_tiling {
++                    continue;
++                }
+                 let elem = closing.render(ctx.as_gles(), view_rect, scale);
+                 push(elem.into());
+             }
+         }
+ 
+         let active = self.active_window_id.clone();
+-        for (tile, tile_pos) in self.tiles_with_render_positions() {
++        for (tile, tile_pos) in self.tiles_with_render_positions_in_layer(above_tiling) {
+             // Skip tiles belonging to a different render layer.
+             if layer.is_normal() == tile.is_moving_between_workspaces() {
+                 continue;
 diff --git a/src/layout/mod.rs b/src/layout/mod.rs
-index 0c58feaa36a5baf585953eb364fb3d6410953cd8..96eb14d900783d63e6135fb8e8ad8de0039f6eaf 100644
+index 0c58fea..96eb14d 100644
 --- a/src/layout/mod.rs
 +++ b/src/layout/mod.rs
 @@ -3164,6 +3164,20 @@ impl<W: LayoutElement> Layout<W> {
@@ -1084,8 +1332,102 @@ index 0c58feaa36a5baf585953eb364fb3d6410953cd8..96eb14d900783d63e6135fb8e8ad8de0
      pub fn set_column_width(&mut self, change: SizeChange) {
          let Some(workspace) = self.active_workspace_mut() else {
              return;
+diff --git a/src/layout/monitor.rs b/src/layout/monitor.rs
+index 4d04c10..3acc777 100644
+--- a/src/layout/monitor.rs
++++ b/src/layout/monitor.rs
+@@ -1719,15 +1719,13 @@ impl<W: LayoutElement> Monitor<W> {
+             )
+         };
+ 
+-        // Draw in passes for correct Z ordering during window movement between workspaces:
+-        // - floating windows moving between workspaces
+-        // - normal floating windows
+-        // - scrolling windows moving between workspaces
+-        // - normal scrolling windows
+-        for pass in 0..4 {
++        // Per-workspace order: raised floats, scrolling windows, lowered floats.
++        // Each partition keeps the existing moving/normal passes so moves across
++        // workspaces retain their clipping and animation behavior.
++        for pass in 0..6 {
+             // Don't cull when drawing windows moving between workspaces so that windows moving to
+             // workspaces off-screen will still render.
+-            let cull = matches!(pass, 1 | 3);
++            let cull = pass % 2 == 1;
+ 
+             // Crop the elements to prevent them overflowing, currently visible during a workspace
+             // switch.
+@@ -1774,53 +1772,25 @@ impl<W: LayoutElement> Monitor<W> {
+ 
+                 let xray_pos = XrayPos::new(geo.loc, zoom);
+ 
++                let layer = if pass % 2 == 0 {
++                    RenderLayer::MovingBetweenWorkspaces
++                } else {
++                    RenderLayer::Normal
++                };
+                 match pass {
+-                    0 => {
+-                        ws.render_floating(
+-                            ctx.r(),
+-                            xray_pos,
+-                            focus_ring,
+-                            RenderLayer::MovingBetweenWorkspaces,
+-                            push!(),
+-                        );
++                    0 | 1 => {
++                        ws.render_floating(ctx.r(), xray_pos, focus_ring, layer, true, push!())
+                     }
+-                    1 => {
+-                        ws.render_floating(
+-                            ctx.r(),
+-                            xray_pos,
+-                            focus_ring,
+-                            RenderLayer::Normal,
+-                            push!(),
+-                        );
+-
+-                        if let Some(loc) = insert_hint_render_loc {
+-                            if loc.workspace == InsertWorkspace::Existing(ws.id()) {
+-                                self.insert_hint_element.render(
+-                                    ctx.renderer,
+-                                    loc.location,
+-                                    push!(),
+-                                );
+-                            }
++                    2 | 3 => ws.render_scrolling(ctx.r(), xray_pos, focus_ring, layer, push!()),
++                    _ => ws.render_floating(ctx.r(), xray_pos, focus_ring, layer, false, push!()),
++                }
++                if pass == 1 {
++                    if let Some(loc) = insert_hint_render_loc {
++                        if loc.workspace == InsertWorkspace::Existing(ws.id()) {
++                            self.insert_hint_element
++                                .render(ctx.renderer, loc.location, push!());
+                         }
+                     }
+-                    2 => {
+-                        ws.render_scrolling(
+-                            ctx.r(),
+-                            xray_pos,
+-                            focus_ring,
+-                            RenderLayer::MovingBetweenWorkspaces,
+-                            push!(),
+-                        );
+-                    }
+-                    _ => {
+-                        ws.render_scrolling(
+-                            ctx.r(),
+-                            xray_pos,
+-                            focus_ring,
+-                            RenderLayer::Normal,
+-                            push!(),
+-                        );
+-                    }
+                 }
+             }
+         }
 diff --git a/src/layout/scrolling.rs b/src/layout/scrolling.rs
-index c7d94c548d5cfef0756992083ebc4b0eeb8c70d8..c02bf44c3c0e8bf77d53579621f522164af698ef 100644
+index c7d94c5..c02bf44 100644
 --- a/src/layout/scrolling.rs
 +++ b/src/layout/scrolling.rs
 @@ -2649,6 +2649,14 @@ impl<W: LayoutElement> ScrollingSpace<W> {
@@ -1103,11 +1445,341 @@ index c7d94c548d5cfef0756992083ebc4b0eeb8c70d8..c02bf44c3c0e8bf77d53579621f52216
      pub fn set_window_width(&mut self, window: Option<&W::Id>, change: SizeChange) {
          if self.columns.is_empty() {
              return;
+diff --git a/src/layout/tests.rs b/src/layout/tests.rs
+index fe15f19..2f674f6 100644
+--- a/src/layout/tests.rs
++++ b/src/layout/tests.rs
+@@ -16,6 +16,7 @@ use super::*;
+ mod animations;
+ mod fullscreen;
+ mod minimized;
++mod floating_stacking;
+ 
+ impl<W: LayoutElement> Default for Layout<W> {
+     fn default() -> Self {
+diff --git a/src/layout/tests/floating_stacking.rs b/src/layout/tests/floating_stacking.rs
+new file mode 100644
+index 0000000..fd89357
+--- /dev/null
++++ b/src/layout/tests/floating_stacking.rs
+@@ -0,0 +1,227 @@
++use super::*;
++
++fn setup(enabled: bool) -> Workspace<TestWindow> {
++    let mut options = Options::default();
++    options.layout.floating_windows_follow_focus = enabled;
++    options.animations.off = true;
++    let mut clock = Clock::with_time(Duration::ZERO);
++    clock.set_complete_instantly(true);
++    let mut ws = Workspace::new_no_outputs(clock, Rc::new(options));
++    ws.set_view_size(
++        smithay::output::Scale::Integer(1),
++        Transform::Normal,
++        (1280., 720.).into(),
++        Rectangle::from_size((1280., 720.).into()),
++    );
++    for (id, floating) in [(1, false), (2, true)] {
++        let tile = ws.make_tile(TestWindow::new(TestWindowParams::new(id)));
++        ws.add_tile(
++            tile,
++            WorkspaceAddWindowTarget::Auto,
++            ActivateWindow::Yes,
++            ColumnWidth::Fixed(800.),
++            false,
++            floating,
++            None,
++        );
++        settle(&mut ws);
++    }
++    ws.move_floating_window(
++        Some(&2),
++        PositionChange::SetFixed(100.),
++        PositionChange::SetFixed(100.),
++        false,
++    );
++    settle(&mut ws);
++    ws
++}
++
++fn settle(ws: &mut Workspace<TestWindow>) {
++    ws.refresh(true, true);
++    let windows: Vec<_> = ws.windows().cloned().collect();
++    for window in windows {
++        if window.communicate() {
++            ws.update_window(window.id(), None);
++        }
++    }
++    ws.advance_animations();
++    ws.verify_invariants(None);
++}
++
++fn floating_geometry(ws: &Workspace<TestWindow>) -> Rectangle<f64, Logical> {
++    let (tile, pos) = ws.floating().tiles_with_offsets().next().unwrap();
++    Rectangle::new(pos, tile.tile_size())
++}
++fn overlap(ws: &Workspace<TestWindow>) -> Point<f64, Logical> {
++    floating_geometry(ws).loc + Point::from((40., 40.))
++}
++fn hit(ws: &Workspace<TestWindow>, p: Point<f64, Logical>) -> usize {
++    *ws.window_under(p).unwrap().0.id()
++}
++fn visual_order(ws: &Workspace<TestWindow>) -> Vec<usize> {
++    ws.tiles_with_render_positions()
++        .map(|(t, _, _)| *t.window().id())
++        .collect()
++}
++
++#[test]
++fn floating_stacking_focus_lowers_and_restores_without_minimizing() {
++    let mut ws = setup(true);
++    let geometry = floating_geometry(&ws);
++    let p = overlap(&ws);
++    assert!(ws.floating_window_above_scrolling(&2));
++    assert_eq!(hit(&ws, p), 2);
++    assert_eq!(visual_order(&ws), vec![2, 1]);
++    assert!(ws.activate_window(&1));
++    settle(&mut ws);
++    assert!(!ws.floating_window_above_scrolling(&2));
++    assert_eq!(hit(&ws, p), 1);
++    assert_eq!(visual_order(&ws), vec![1, 2]);
++    assert!(ws.is_floating_visible());
++    assert_eq!(ws.windows().count(), 2);
++    assert_eq!(floating_geometry(&ws), geometry);
++    assert!(ws.activate_window(&2));
++    settle(&mut ws);
++    assert_eq!(hit(&ws, p), 2);
++    assert_eq!(visual_order(&ws), vec![2, 1]);
++    assert_eq!(floating_geometry(&ws), geometry);
++}
++
++#[test]
++fn floating_stacking_default_keeps_existing_always_above_behavior() {
++    let mut ws = setup(false);
++    let p = overlap(&ws);
++    ws.activate_window(&1);
++    settle(&mut ws);
++    assert!(ws.floating_window_above_scrolling(&2));
++    assert_eq!(hit(&ws, p), 2);
++    assert_eq!(visual_order(&ws), vec![2, 1]);
++}
++
++#[test]
++fn floating_stacking_explicit_raise_and_workspaces_are_independent() {
++    let mut first = setup(true);
++    let second = setup(true);
++    first.activate_window(&1);
++    assert!(!first.floating_window_above_scrolling(&2));
++    assert!(second.floating_window_above_scrolling(&2));
++    first.activate_window(&2);
++    first.activate_window_without_raising(&1);
++    assert!(first.floating_window_above_scrolling(&2));
++    assert_eq!(hit(&first, overlap(&first)), 2);
++}
++
++#[test]
++fn floating_stacking_config_reload_changes_order_without_changing_geometry() {
++    let mut ws = setup(false);
++    ws.activate_window(&1);
++    settle(&mut ws);
++    let geometry = floating_geometry(&ws);
++    let p = overlap(&ws);
++    let config =
++        niri_config::Config::parse_mem("layout { floating-windows-follow-focus; }").unwrap();
++    assert!(config.layout.floating_windows_follow_focus);
++    let mut options = Options::default();
++    options.animations.off = true;
++    options.layout = config.layout;
++    ws.update_config(Rc::new(options));
++    settle(&mut ws);
++    assert_eq!(hit(&ws, p), 1);
++    assert_eq!(visual_order(&ws), vec![1, 2]);
++    assert_eq!(floating_geometry(&ws), geometry);
++}
++
++fn add_float(ws: &mut Workspace<TestWindow>, id: usize, x: f64, activate: ActivateWindow) {
++    let tile = ws.make_tile(TestWindow::new(TestWindowParams::new(id)));
++    ws.add_tile(
++        tile,
++        WorkspaceAddWindowTarget::Auto,
++        activate,
++        ColumnWidth::Fixed(100.),
++        false,
++        true,
++        None,
++    );
++    ws.move_floating_window(
++        Some(&id),
++        PositionChange::SetFixed(x),
++        PositionChange::SetFixed(100.),
++        false,
++    );
++    settle(ws);
++}
++
++#[test]
++fn floating_stacking_new_float_does_not_resurrect_lowered_windows() {
++    let mut ws = setup(true);
++    let old_geometry = floating_geometry(&ws);
++    ws.activate_window(&1);
++    add_float(&mut ws, 3, 400., ActivateWindow::Yes);
++    assert_eq!(visual_order(&ws), vec![3, 1, 2]);
++    assert!(!ws.floating_window_above_scrolling(&2));
++    assert!(ws.floating_window_above_scrolling(&3));
++    assert_eq!(hit(&ws, old_geometry.loc + Point::from((40., 40.))), 1);
++    assert_eq!(hit(&ws, Point::from((440., 140.))), 3);
++    ws.activate_window(&1);
++    add_float(&mut ws, 4, 600., ActivateWindow::Yes);
++    assert_eq!(visual_order(&ws), vec![4, 1, 3, 2]);
++    ws.remove_tile(&4, crate::utils::transaction::Transaction::new());
++    settle(&mut ws);
++    assert!(!ws.floating_is_active());
++    assert_eq!(visual_order(&ws), vec![1, 3, 2]);
++    assert_eq!(hit(&ws, Point::from((440., 140.))), 1);
++}
++
++#[test]
++fn floating_stacking_reactivates_only_the_requested_lowered_window() {
++    let mut ws = setup(true);
++    add_float(&mut ws, 3, 400., ActivateWindow::Yes);
++    ws.activate_window(&1);
++    ws.activate_window(&2);
++    settle(&mut ws);
++    assert_eq!(visual_order(&ws), vec![2, 1, 3]);
++    assert_eq!(hit(&ws, Point::from((140., 140.))), 2);
++    assert_eq!(hit(&ws, Point::from((440., 140.))), 1);
++    ws.focus_tiling();
++    ws.focus_floating();
++    assert_eq!(visual_order(&ws), vec![2, 1, 3]);
++}
++
++#[test]
++fn floating_stacking_unfocused_popup_is_independent_of_older_floats() {
++    let mut ws = setup(true);
++    ws.activate_window(&1);
++    add_float(&mut ws, 3, 400., ActivateWindow::No);
++    add_float(&mut ws, 4, 600., ActivateWindow::No);
++    assert!(!ws.floating_is_active());
++    assert_eq!(visual_order(&ws), vec![4, 3, 1, 2]);
++    ws.remove_tile(&3, crate::utils::transaction::Transaction::new());
++    settle(&mut ws);
++    assert_eq!(visual_order(&ws), vec![4, 1, 2]);
++    assert_eq!(hit(&ws, Point::from((640., 140.))), 4);
++}
++
++#[test]
++fn floating_stacking_parent_activation_raises_its_dialog_but_not_unrelated_float() {
++    let mut ws = setup(true);
++    add_float(&mut ws, 3, 400., ActivateWindow::Yes);
++    let mut params = TestWindowParams::new(4);
++    params.parent_id = Some(2);
++    let tile = ws.make_tile(TestWindow::new(params));
++    ws.add_tile(
++        tile,
++        WorkspaceAddWindowTarget::NextTo(&2),
++        ActivateWindow::Yes,
++        ColumnWidth::Fixed(100.),
++        false,
++        true,
++        None,
++    );
++    ws.activate_window(&1);
++    ws.activate_window(&2);
++    settle(&mut ws);
++    assert!(ws.floating_window_above_scrolling(&2));
++    assert!(ws.floating_window_above_scrolling(&4));
++    assert!(!ws.floating_window_above_scrolling(&3));
++    assert_eq!(visual_order(&ws), vec![4, 2, 1, 3]);
++}
 diff --git a/src/layout/workspace.rs b/src/layout/workspace.rs
-index e0048a1ae001805de578a52f0a449a8b1b882116..ac83094bf2373606a38e896c6dada57ac5eeaf3f 100644
+index e0048a1..04dc82a 100644
 --- a/src/layout/workspace.rs
 +++ b/src/layout/workspace.rs
-@@ -1303,6 +1303,14 @@ impl<W: LayoutElement> Workspace<W> {
+@@ -429,6 +429,13 @@ impl<W: LayoutElement> Workspace<W> {
+         self.background_buffer
+             .set_color(options.layout.background_color);
+ 
++        if options.layout.floating_windows_follow_focus
++            && !self.options.layout.floating_windows_follow_focus
++            && matches!(self.floating_is_active, FloatingActive::No)
++        {
++            self.floating.lower_all();
++        }
++
+         self.base_options = base_options;
+         self.options = options;
+     }
+@@ -664,7 +671,7 @@ impl<W: LayoutElement> Workspace<W> {
+                         .add_tile(None, tile, activate, width, is_full_width, anim);
+ 
+                     if activate {
+-                        self.floating_is_active = FloatingActive::No;
++                        self.focus_scrolling_and_lower_floating();
+                     }
+                 }
+             }
+@@ -674,7 +681,7 @@ impl<W: LayoutElement> Workspace<W> {
+                     .add_tile(Some(col_idx), tile, activate, width, is_full_width, anim);
+ 
+                 if activate {
+-                    self.floating_is_active = FloatingActive::No;
++                    self.focus_scrolling_and_lower_floating();
+                 }
+             }
+             WorkspaceAddWindowTarget::NextTo(next_to) => {
+@@ -714,7 +721,7 @@ impl<W: LayoutElement> Workspace<W> {
+                         .add_tile(None, tile, activate, width, is_full_width, anim);
+ 
+                     if activate {
+-                        self.floating_is_active = FloatingActive::No;
++                        self.focus_scrolling_and_lower_floating();
+                     }
+                 } else {
+                     self.scrolling.add_tile_right_of(
+@@ -727,7 +734,7 @@ impl<W: LayoutElement> Workspace<W> {
+                     );
+ 
+                     if activate {
+-                        self.floating_is_active = FloatingActive::No;
++                        self.focus_scrolling_and_lower_floating();
+                     }
+                 }
+             }
+@@ -746,7 +753,7 @@ impl<W: LayoutElement> Workspace<W> {
+             .add_tile_to_column(col_idx, tile_idx, tile, activate);
+ 
+         if activate {
+-            self.floating_is_active = FloatingActive::No;
++            self.focus_scrolling_and_lower_floating();
+         }
+     }
+ 
+@@ -763,14 +770,22 @@ impl<W: LayoutElement> Workspace<W> {
+         self.scrolling.add_column(None, column, activate, anim);
+ 
+         if activate {
+-            self.floating_is_active = FloatingActive::No;
++            self.focus_scrolling_and_lower_floating();
+         }
+     }
+ 
+     fn update_focus_floating_tiling_after_removing(&mut self, removed_from_floating: bool) {
+         if removed_from_floating {
+-            if self.floating.is_empty() {
+-                self.floating_is_active = FloatingActive::No;
++            if self.floating.is_empty()
++                || (self.options.layout.floating_windows_follow_focus
++                    && self.floating_is_active.get()
++                    && !self.scrolling.is_empty()
++                    && self
++                        .floating
++                        .active_window()
++                        .is_some_and(|window| !self.floating.is_above_tiling(window.id())))
++            {
++                self.focus_scrolling_and_lower_floating();
+             }
+         } else {
+             // Scrolling should remain focused if both are empty.
+@@ -1303,6 +1318,14 @@ impl<W: LayoutElement> Workspace<W> {
          self.scrolling.toggle_full_width();
      }
  
@@ -1122,8 +1794,139 @@ index e0048a1ae001805de578a52f0a449a8b1b882116..ac83094bf2373606a38e896c6dada57a
      pub fn set_column_width(&mut self, change: SizeChange) {
          if self.floating_is_active.get() {
              self.floating.set_window_width(None, change, true);
+@@ -1521,7 +1544,7 @@ impl<W: LayoutElement> Workspace<W> {
+                 None,
+             );
+             if target_is_active {
+-                self.floating_is_active = FloatingActive::No;
++                self.focus_scrolling_and_lower_floating();
+             }
+         } else {
+             let mut removed = self.scrolling.remove_tile(&id, Transaction::new());
+@@ -1568,6 +1591,11 @@ impl<W: LayoutElement> Workspace<W> {
+         self.toggle_window_floating(id);
+     }
+ 
++    fn focus_scrolling_and_lower_floating(&mut self) {
++        self.floating_is_active = FloatingActive::No;
++        self.floating.lower_all();
++    }
++
+     pub fn focus_floating(&mut self) {
+         if !self.floating_is_active.get() {
+             self.switch_focus_floating_tiling();
+@@ -1589,11 +1617,12 @@ impl<W: LayoutElement> Workspace<W> {
+             return;
+         }
+ 
+-        self.floating_is_active = if self.floating_is_active.get() {
+-            FloatingActive::No
++        if self.floating_is_active.get() {
++            self.focus_scrolling_and_lower_floating();
+         } else {
+-            FloatingActive::Yes
+-        };
++            self.floating_is_active = FloatingActive::Yes;
++            self.floating.raise_active();
++        }
+     }
+ 
+     pub fn move_floating_window(
+@@ -1697,13 +1726,18 @@ impl<W: LayoutElement> Workspace<W> {
+     pub fn tiles_with_render_positions(
+         &self,
+     ) -> impl Iterator<Item = (&Tile<W>, Point<f64, Logical>, bool)> {
+-        let scrolling = self.scrolling.tiles_with_render_positions();
+-
+-        let floating = self.floating.tiles_with_render_positions();
+         let visible = self.is_floating_visible();
+-        let floating = floating.map(move |(tile, pos)| (tile, pos, visible));
+-
+-        floating.chain(scrolling)
++        let raised = self
++            .floating
++            .tiles_with_render_positions_in_layer(true)
++            .map(move |(tile, pos)| (tile, pos, visible));
++        let lowered = self
++            .floating
++            .tiles_with_render_positions_in_layer(false)
++            .map(move |(tile, pos)| (tile, pos, visible));
++        raised
++            .chain(self.scrolling.tiles_with_render_positions())
++            .chain(lowered)
+     }
+ 
+     pub fn tiles_with_render_positions_mut(
+@@ -1758,6 +1792,7 @@ impl<W: LayoutElement> Workspace<W> {
+         xray_pos: XrayPos,
+         focus_ring: bool,
+         layer: RenderLayer,
++        above_tiling: bool,
+         push: &mut dyn FnMut(WorkspaceRenderElement<R>),
+     ) {
+         if !self.is_floating_visible() && layer.is_normal() {
+@@ -1772,6 +1807,7 @@ impl<W: LayoutElement> Workspace<W> {
+             view_rect,
+             floating_focus_ring,
+             layer,
++            above_tiling,
+             &mut |elem| push(elem.into()),
+         );
+     }
+@@ -1797,6 +1833,10 @@ impl<W: LayoutElement> Workspace<W> {
+         self.scrolling.render_above_top_layer()
+     }
+ 
++    pub fn floating_window_above_scrolling(&self, id: &W::Id) -> bool {
++        self.floating.is_above_tiling(id)
++    }
++
+     pub fn is_floating_visible(&self) -> bool {
+         // If the focus is on a fullscreen scrolling window, hide the floating windows.
+         matches!(
+@@ -1872,18 +1912,19 @@ impl<W: LayoutElement> Workspace<W> {
+     }
+ 
+     pub fn window_under(&self, pos: Point<f64, Logical>) -> Option<(&W, HitType)> {
+-        // This logic is consistent with tiles_with_render_positions().
+-        if self.is_floating_visible() {
+-            if let Some(rv) = self
+-                .floating
+-                .tiles_with_render_positions()
+-                .find_map(|(tile, tile_pos)| HitType::hit_tile(tile, tile_pos, pos))
+-            {
+-                return Some(rv);
+-            }
+-        }
+-
+-        self.scrolling.window_under(pos)
++        // Use exactly the same per-window partitions as rendering and resize targeting.
++        let hit_floating = |above| {
++            self.is_floating_visible()
++                .then(|| {
++                    self.floating
++                        .tiles_with_render_positions_in_layer(above)
++                        .find_map(|(tile, tile_pos)| HitType::hit_tile(tile, tile_pos, pos))
++                })
++                .flatten()
++        };
++        hit_floating(true)
++            .or_else(|| self.scrolling.window_under(pos))
++            .or_else(|| hit_floating(false))
+     }
+ 
+     pub fn resize_edges_under(&self, pos: Point<f64, Logical>) -> Option<ResizeEdge> {
+@@ -1952,7 +1993,7 @@ impl<W: LayoutElement> Workspace<W> {
+             self.floating_is_active = FloatingActive::Yes;
+             true
+         } else if self.scrolling.activate_window(window) {
+-            self.floating_is_active = FloatingActive::No;
++            self.focus_scrolling_and_lower_floating();
+             true
+         } else {
+             false
 diff --git a/src/niri.rs b/src/niri.rs
-index 2215ef9977e24cda9c514bab59bda8b5ab573be8..ece15580570623292bb8163c7f04e17d55d80e73 100644
+index 2215ef9..ece1558 100644
 --- a/src/niri.rs
 +++ b/src/niri.rs
 @@ -7526,6 +7526,7 @@ niri_render_elements! {
@@ -1135,7 +1938,7 @@ index 2215ef9977e24cda9c514bab59bda8b5ab573be8..ece15580570623292bb8163c7f04e17d
          RescaledTile = RescaleRenderElement<TileRenderElement<R>>,
          LayerSurface = LayerSurfaceRenderElement<R>,
 diff --git a/src/render_helpers/background_effect.rs b/src/render_helpers/background_effect.rs
-index d148b6c150cee758a8d059c885aea6c34959894c..d43be60ccbd8cf9eb06f69ebb254c198a3bfd5d8 100644
+index d148b6c..d43be60 100644
 --- a/src/render_helpers/background_effect.rs
 +++ b/src/render_helpers/background_effect.rs
 @@ -33,6 +33,7 @@ pub struct BackgroundEffect {
@@ -1170,7 +1973,7 @@ index d148b6c150cee758a8d059c885aea6c34959894c..d43be60ccbd8cf9eb06f69ebb254c198
          let noise = self.options.noise.unwrap_or(noise) as f32;
          let saturation = if blur {
 diff --git a/src/render_helpers/damage.rs b/src/render_helpers/damage.rs
-index b1e113bbed4a1a7824eabb58118613d5b6a98a6e..06abc4cbe8bf2e050a2aef8327e986b0eecb5a04 100644
+index b1e113b..06abc4c 100644
 --- a/src/render_helpers/damage.rs
 +++ b/src/render_helpers/damage.rs
 @@ -68,3 +68,54 @@ impl<R: Renderer> RenderElement<R> for ExtraDamage {
@@ -1229,7 +2032,7 @@ index b1e113bbed4a1a7824eabb58118613d5b6a98a6e..06abc4cbe8bf2e050a2aef8327e986b0
 +    }
 +}
 diff --git a/src/render_helpers/shaders/genie.frag b/src/render_helpers/shaders/genie.frag
-index 510139c9122914928df4c5cfb71e4eb507f06ad8..6e8384866fe1ee3f3e3950f21292241b86243e04 100644
+index 510139c..6e83848 100644
 --- a/src/render_helpers/shaders/genie.frag
 +++ b/src/render_helpers/shaders/genie.frag
 @@ -57,7 +57,7 @@ float funnel_pull(float distance) {
@@ -1242,7 +2045,7 @@ index 510139c9122914928df4c5cfb71e4eb507f06ad8..6e8384866fe1ee3f3e3950f21292241b
  
      float lead = smoothstep(0.0, 0.55, morph);
 diff --git a/src/tests/minimize_animation.rs b/src/tests/minimize_animation.rs
-index 55c8ed7dae669637fe24980b58369d1e142923d9..2f3e04102a92001eba774b9d4a83af52c27b8703 100644
+index 55c8ed7..2f3e041 100644
 --- a/src/tests/minimize_animation.rs
 +++ b/src/tests/minimize_animation.rs
 @@ -1168,6 +1168,67 @@ fn egl_genie_first_frame_preserves_texture_padding_when_overlapping_dock() {
@@ -1314,7 +2117,7 @@ index 55c8ed7dae669637fe24980b58369d1e142923d9..2f3e04102a92001eba774b9d4a83af52
  fn egl_genie_scaled_output_keeps_snapshot_in_logical_coordinates() {
      for scale in [1., 1.25, 1.5, 2.] {
 diff --git a/src/tests/mod.rs b/src/tests/mod.rs
-index 0212dac1553491826dbd60d4bd4a2aee4998d1ee..4c7075ad32fd42003ced88a9f87bff2a42f30e40 100644
+index 0212dac..4c7075a 100644
 --- a/src/tests/mod.rs
 +++ b/src/tests/mod.rs
 @@ -15,6 +15,7 @@ mod minimize_animation;
@@ -1327,10 +2130,10 @@ index 0212dac1553491826dbd60d4bd4a2aee4998d1ee..4c7075ad32fd42003ced88a9f87bff2a
  mod window_opening;
 diff --git a/src/tests/titlebar_column.rs b/src/tests/titlebar_column.rs
 new file mode 100644
-index 0000000000000000000000000000000000000000..b6149927835e124f6a4ca01d830f19e3c793c894
+index 0000000..05f26e2
 --- /dev/null
 +++ b/src/tests/titlebar_column.rs
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,139 @@
 +use niri_config::Config;
 +use smithay::reexports::wayland_protocols::xdg::shell::client::xdg_toplevel;
 +use wayland_client::protocol::wl_surface::WlSurface;
@@ -1413,16 +2216,60 @@ index 0000000000000000000000000000000000000000..b6149927835e124f6a4ca01d830f19e3
 +}
 +
 +#[test]
-+fn titlebar_column_leaves_floating_like_shortcut() {
++fn titlebar_column_maximizes_floating_and_restores() {
 +    let (mut f, id, surface) = set_up();
 +    f.niri().layout.toggle_window_floating(None);
 +    f.double_roundtrip(id);
-+    let original = last_configure(&mut f, id, &surface);
++    f.client(id).window(&surface).set_size(640, 480);
++    f.client(id).window(&surface).ack_last_and_commit();
++    f.double_roundtrip(id);
++    let original_pos = f
++        .niri()
++        .layout
++        .active_workspace()
++        .unwrap()
++        .floating()
++        .tiles_with_offsets()
++        .next()
++        .unwrap()
++        .1;
 +    f.niri().layout.toggle_full_width();
 +    f.double_roundtrip(id);
-+    f.client(id).window(&surface).set_maximized();
-+    f.double_roundtrip(id);
-+    let clicked = last_configure(&mut f, id, &surface);
-+    assert_eq!(clicked.size, original.size);
-+    assert!(!clicked.states.contains(&xdg_toplevel::State::Maximized));
++    for _ in 0..2 {
++        f.client(id).window(&surface).set_maximized();
++        f.double_roundtrip(id);
++        let clicked = last_configure(&mut f, id, &surface);
++        assert_eq!(clicked.size, (1920, 1080));
++        assert!(clicked.states.contains(&xdg_toplevel::State::Maximized));
++        f.client(id).window(&surface).set_size(1920, 1080);
++        f.client(id).window(&surface).ack_last_and_commit();
++        f.double_roundtrip(id);
++
++        // A redundant protocol request must not toggle the maximized column.
++        f.client(id).window(&surface).set_maximized();
++        f.double_roundtrip(id);
++        let repeated = last_configure(&mut f, id, &surface);
++        assert_eq!(repeated.size, clicked.size);
++        assert!(repeated.states.contains(&xdg_toplevel::State::Maximized));
++
++        f.client(id).window(&surface).unset_maximized();
++        f.double_roundtrip(id);
++        let restored = last_configure(&mut f, id, &surface);
++        assert_eq!(restored.size, (640, 480));
++        assert!(!restored.states.contains(&xdg_toplevel::State::Maximized));
++        f.client(id).window(&surface).set_size(640, 480);
++        f.client(id).window(&surface).ack_last_and_commit();
++        f.double_roundtrip(id);
++        let restored_pos = f
++            .niri()
++            .layout
++            .active_workspace()
++            .unwrap()
++            .floating()
++            .tiles_with_offsets()
++            .next()
++            .unwrap()
++            .1;
++        assert_eq!(restored_pos, original_pos);
++    }
 +}

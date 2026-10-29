@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=AB Download Manager
+Exec="@HOME@/.local/bin/abdownloadmanager-launch" --background
+Icon=/opt/abdownloadmanager/lib/ABDownloadManager.png
+Terminal=false
+NoDisplay=true
+Comment=Start AB Download Manager with the local Niri HiDPI compatibility settings

@@ -38,6 +38,10 @@
     {
       "kind": "app",
       "desktopId": "org.gnome.Nautilus"
+    },
+    {
+      "kind": "app",
+      "desktopId": "orca-ide"
     }
   ]
 }

@@ -1,0 +1,18 @@
+#!/usr/bin/python3
+"""Retain AD's per-user launcher after the application regenerates its manifests."""
+import json
+from pathlib import Path
+home = Path.home()
+paths = list((home / '.config').glob('*/NativeMessagingHosts/com.abdownloadmanager.json'))
+paths += [home / '.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.abdownloadmanager.json',
+          home / '.mozilla/native-messaging-hosts/com.abdownloadmanager.json']
+target = str(home / '.local/bin/abdownloadmanager-native-host')
+for path in paths:
+    try:
+        data = json.loads(path.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        continue
+    if data.get('name') != 'com.abdownloadmanager' or data.get('path') != '/opt/abdownloadmanager/bin/ABDownloadManagerNativeMessagingHost':
+        continue
+    data['path'] = target
+    path.write_text(json.dumps(data, indent=4) + '\n')

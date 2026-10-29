@@ -1,8 +1,10 @@
-# 本机 XWayland 高 DPI 与最小化补丁
+# 聊天应用／AB 的 XWayland 兼容补丁
 
 `source.json` 固定上游仓库、基准提交、构建特性和已安装程序的校验值。
 `hidpi-minimize.patch` 包含完整的本地差异：保留 `XWS_CURSOR_SCALE=2` 的光标比例修正，
 并将 X11 的 `WM_CHANGE_STATE/IconicState` 转发为 Wayland `set_minimized`。
+2026-10-29 快照已包含当前实际安装的 QQ 剪贴板传输／不冻结修复和最大化兼容；
+基准仍为公开上游 `8d135d3`，不依赖仅存在本机的中间提交。
 它需要合成器支持最小化；本桌面的定制 Niri 已支持。
 
 在独立的上游 checkout 检出 `source.json` 中的 `base_commit`，依次执行
@@ -19,3 +21,6 @@ QQ／微信的显示连接，因此不能在通话或未保存工作时直接重
 现有服务与启动脚本在 `system-reference/user-home/`，默认恢复流程不安装这些参考文件。
 
 上游采用 MPL-2.0；完整源码、许可证及声明请从 `source.json` 指定的仓库获取。
+
+可通过 `python3 scripts/build-app-compat.py chat` 重建安装；AB 的完整可选安装见
+`../app-compat/README.md`。当前记录的库测试为 88 项通过。

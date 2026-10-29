@@ -380,11 +380,7 @@ window-rule {
     default-column-width {}
 }
 
-// WPS main windows should open as full-width columns on HiDPI displays.
-window-rule {
-    match app-id=r#"^(wpsoffice|et|wpp|wpspdf)$"#
-    default-column-width { proportion 1.0; }
-}
+// WPS main windows inherit the normal 50% layout width and Win+R presets.
 
 // WPS exposes hover popups as short-lived XWayland toplevels. Keep those
 // popups out of the scrolling layout so they do not resize the main window.

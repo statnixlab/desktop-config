@@ -20,7 +20,7 @@ if pacman -Q rustup >/dev/null 2>&1 && cargo --version >/dev/null 2>&1; then
 fi
 # Arch librime includes librime-lua.so; it is not a separate librime-lua package.
 sudo pacman -Syu --needed git python curl github-cli rclone fcitx5 fcitx5-rime fcitx5-configtool \
-    fcitx5-gtk fcitx5-qt librime xorg-xrdb xwayland-satellite \
+    fcitx5-gtk fcitx5-qt librime xorg-xrdb xorg-xwayland xwayland-satellite libxcb xcb-util-cursor jq libnotify \
     xdg-desktop-portal-gnome xdg-desktop-portal-gtk xdg-user-dirs \
     polkit polkit-kde-agent keyd flatpak breeze breeze-gtk plasma-integration nautilus nautilus-python papirus-icon-theme smplayer konsole alacritty fuzzel \
     noto-fonts noto-fonts-cjk noto-fonts-emoji fontconfig kconfig python-gobject \

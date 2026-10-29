@@ -136,11 +136,11 @@ ForegroundVisited=155,89,182
 BrowserApplication=google-chrome.desktop
 ColorSchemeHash=9980f09638f2f885144ced7c6086ae56addf7c8c
 fixed=Maple Mono CN,10,-1,5,50,0,0,0,0,0
-font=Inter,10,-1,5,50,0,0,0,0,0
-menuFont=Inter,10,-1,5,50,0,0,0,0,0
-smallestReadableFont=Inter,9,-1,5,50,0,0,0,0,0
-taskbarFont=Inter,10,-1,5,50,0,0,0,0,0
-toolBarFont=Inter,10,-1,5,50,0,0,0,0,0
+font=HarmonyOS Sans SC,10,-1,5,50,0,0,0,0,0
+menuFont=HarmonyOS Sans SC,10,-1,5,50,0,0,0,0,0
+smallestReadableFont=HarmonyOS Sans SC,9,-1,5,50,0,0,0,0,0
+taskbarFont=HarmonyOS Sans SC,10,-1,5,50,0,0,0,0,0
+toolBarFont=HarmonyOS Sans SC,10,-1,5,50,0,0,0,0,0
 
 [KDE]
 AnimationDurationFactor=0.25
@@ -150,7 +150,7 @@ frameContrast=0.2
 [WM]
 activeBackground=227,229,231
 activeBlend=227,229,231
-activeFont=Inter,10,-1,5,63,0,0,0,0,0
+activeFont=HarmonyOS Sans SC,10,-1,5,63,0,0,0,0,0
 activeForeground=35,38,41
 inactiveBackground=239,240,241
 inactiveBlend=239,240,241

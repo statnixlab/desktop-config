@@ -1,0 +1,32 @@
+{
+  "wps": [
+    ".local/bin/wps-niri-launch",
+    ".local/bin/wps-xwayland-input",
+    ".local/bin/wps",
+    ".local/bin/et",
+    ".local/bin/wpp",
+    ".local/bin/wpspdf",
+    ".config/xwayland-wps.Xresources",
+    ".config/systemd/user/xwayland-wps.service",
+    ".config/systemd/user/xwayland-wps.service.d/30-column-maximize.conf",
+    ".config/systemd/user/xwayland-wps.service.d/40-alt-keytip-shm.conf",
+    ".local/share/applications/wps-office-et.desktop",
+    ".local/share/applications/wps-office-pdf.desktop",
+    ".local/share/applications/wps-office-prometheus.desktop",
+    ".local/share/applications/wps-office-wpp.desktop",
+    ".local/share/applications/wps-office-wps.desktop"
+  ],
+  "abdownloadmanager": [
+    ".local/bin/abdownloadmanager-launch",
+    ".local/bin/abdownloadmanager-native-host",
+    ".local/libexec/abdownloadmanager-native-path",
+    ".config/autostart/abdownloadmanager-compat.desktop",
+    ".config/systemd/user/abdownloadmanager-native-path.path",
+    ".config/systemd/user/abdownloadmanager-native-path.service",
+    ".local/bin/chat-hidpi-input",
+    ".config/xwayland-chat.Xresources",
+    ".config/systemd/user/xwayland-chat.service",
+    ".local/share/applications/abdownloadmanager.desktop",
+    ".local/share/applications/com-abdownloadmanager-desktop-AppKt.desktop"
+  ]
+}

@@ -33,7 +33,8 @@ cd desktop-config
 3. 编译固定版本的 `StatIndet/niri-edge` 并应用本仓库补丁；保留 Genie 最小化、
    HiDPI 坐标修复和 PipeWire SHM 屏幕共享修复，并构建固定版本的 Smithay 防闪补丁。
 4. 安装固定提交的 MacTahoe 图标主题，编译并安装 Clavis 原生模块和 Niri Launchpad。
-5. 校验 Niri 配置，启用 Clavis、剪贴板、Fcitx5 和主题同步服务。
+5. 下载并校验鸿蒙、Inter、Maple Mono CN 和 Symbols Nerd 字体，安装固定版 WeTypeX。
+6. 校验 Niri 配置，启用 Clavis、剪贴板、Fcitx5 和主题同步服务。
    旧独立 `nyx-dock.service` 会被关闭，避免出现两个 Dock。
 
 ## 当前快照包含什么
@@ -44,11 +45,11 @@ cd desktop-config
 | 应用菜单 | 基于 cccp00-cup 的 macOS Launchpad，适配 Niri 覆盖层、Clavis 壁纸、图标预加载和统一出场动画；支持 Dock 与单击 Win 呼出，沿用 `config/clavis/launchpad.json` 分组 |
 | 顶部组件 | 最大化窗口上方出现浮窗时保持顶栏隐藏；托盘抽屉允许总览滚动与三指切换，并随导航收起 |
 | 文件管理器 | 默认使用 Nautilus，保留浅绿色界面、紫灰色 Clavis-Reference 图标，以及防止 KDE GTK 同步覆盖的设置；安装脚本不再安装 Dolphin |
-| 图标与字体 | MacTahoe-light；Inter＋苹方 UI，Maple Mono CN 等宽字体，Apple Emoji 与 Symbols Nerd Font Mono 回退 |
+| 图标与字体 | MacTahoe-light；HarmonyOS Sans SC 全局界面字体，Maple Mono CN 等宽字体，Symbols Nerd Font Mono 与系统 Emoji 回退 |
 | 终端 | Kitty、Alacritty 和 Konsole 的配色、透明度、字体、按键与主题同步 |
 | Niri | 快捷键、窗口规则、鼠标、光标、模糊和最小化动画；所有窗口关闭焦点框，设置窗口使用匹配的 23 像素圆角 |
 | 应用效果 | 设置 → 通用 → 透明与模糊：分别调整聚焦／未聚焦窗口不透明度、应用背景模糊开关，以及应用和面板各自独立的 1–5 级模糊强度；自动保存并生效 |
-| 输入法 | Fcitx5、雾凇拼音、跟随壁纸的候选框主题；保留仓库已有 Rime 快照 |
+| 输入法 | Fcitx5＋WeTypeX 主力输入法，保留 Rime／雾凇；关闭 V 工具栏和 AI 快捷入口，开启自动更新 |
 | 壁纸与组件 | 当前壁纸、头像、天气位置、桌面卡片和侧栏设置 |
 | QQ / Manggo | 截图与翻译的辅助脚本、Niri 快捷键和 portal 注册 |
 | 网盘 | 夸克网盘入口和挂载服务定义；账号在新机重新配置 |
@@ -62,6 +63,40 @@ WPS、Codex、腾讯会议等需另行安装；安装后的 desktop ID 不同时
 Rclone / OpenList 等账号需要在新电脑重新授权；网盘挂载服务不会自动启动。
 字体和图标资源的许可证随资源保留；MacTahoe 从其固定的公开源码提交安装。
 
+## 更新另一台已配置的电脑
+
+本次以远程的顶栏模糊、灵动岛和锁屏修复为基础，合并本机后续修改；本机 Clavis 已先行
+切换到相同合并版本。运行中的 Niri 不强制重启，已安装的悬浮窗口最大化修复在下一次登录生效。
+
+先保存工作并退出 Niri，停止恢复程序提示的输入法、Clavis 和主题同步服务；在能够显示
+polkit 认证窗口的会话中运行。已有源码若包含本地修改，先提交保留。下面使用新的源码目录，
+不会覆盖旧 checkout：
+
+```bash
+git pull --ff-only
+CLAVIS_SOURCE_DIR="$HOME/.local/share/clavis-source-20261029" \
+NIRI_SOURCE_DIR="$HOME/.local/share/niri-desktop-source-20261029" \
+./scripts/setup-arch.sh --keep-target-hardware
+```
+
+`--keep-target-hardware` 保留**目标电脑**已有的显示器布局、主屏、鼠标设置、设备指标绑定
+和 GTK/X11 DPI。首次安装使用默认参数；`--same-hardware` 只适合同一台源电脑重装。
+本机 NVIDIA 防闪／显示唤醒特例仍是可选参考，不自动部署到另一台电脑。
+
+WPS 和 AB Download Manager 本体需另行安装，再恢复兼容层：
+
+```bash
+# 先预览，不写配置或编译
+python3 scripts/install-app-compat.py --wps --abdownloadmanager
+# 退出 AB 下载器后，构建并恢复选定配置
+python3 scripts/install-app-compat.py --wps --abdownloadmanager --apply
+```
+
+说明和适用条件见 [`system-reference/app-compat/README.md`](system-reference/app-compat/README.md)。
+WPS Zotero／快捷引用单独见 [`system-reference/wps-zotero/README.md`](system-reference/wps-zotero/README.md)。
+AB 的下载列表和浏览器账户不迁移；安装器只合并两个显示／自启设置。新电脑的 WeTypeX
+设备配对、各应用登录和文献库位置需重新设置。
+
 ## 预览与分步安装
 
 ```bash
@@ -74,6 +109,8 @@ python3 scripts/restore.py --target-home /tmp/clavis-preview --apply
 # 与 setup-arch.sh 相同的分步流程
 ./scripts/install-arch-dependencies.sh
 ./scripts/install-key-cli.sh
+./scripts/install-wetypex.sh
+python3 scripts/install-fonts.py --apply
 python3 scripts/restore.py --apply
 ./scripts/build-niri.sh
 ./scripts/install-icon-theme.sh
@@ -136,10 +173,12 @@ Clavis 加入了 Dock 通知计数（最多显示 `99+`，打开应用后清零�
 Dock 右键菜单支持退出运行中的应用，以及应用桌面文件提供的新建窗口动作；
 退出优先调用应用自身的托盘退出菜单，否则正常请求关闭该应用全部窗口，不强制结束进程。
 
-字体文件另行获取，下载地址、版本和校验值在
-[`system-reference/fonts/sources.json`](system-reference/fonts/sources.json)。将对应的 TTF/TTC
-安装到 `~/.local/share/fonts/` 后执行 `fc-cache -f`；Inter ZIP 使用 `extras/ttf/Inter-*.ttf`，
-Maple ZIP 使用其中的 TTF。保留各字体来源的许可证。未安装这些字体时会使用现有回退字体。
+默认安装流程会从固定来源下载并校验鸿蒙、Inter、Maple Mono CN 和 Symbols Nerd 字体，
+保留许可证并刷新缓存；也可单独运行 `python3 scripts/install-fonts.py --apply`。
+来源与校验值在 [`system-reference/fonts/install.json`](system-reference/fonts/install.json)，
+其他可选字体参考在 [`sources.json`](system-reference/fonts/sources.json)。
+宋体／新宋体、Helvetica 等来自本机已有文件的字体不上传二进制；如文档需要，请在目标机
+从自有字体文件安装到 `~/.local/share/fonts/`，再运行 `fc-cache -f`。
 VS Code 的字体设置单独保存在该目录，只合并字体选项，不覆盖其他编辑器配置。
 
 Manggo 1.1.1 的 Wayland 顶部拖动兼容源码在
@@ -287,3 +326,23 @@ Niri Launchpad 的构建、交互回归测试、应用/分组模型测试和进�
 及硬件重置后的恢复结果；恢复后的 Niri 配置通过当前定制版的语法校验。
 **尚未在另一台全新电脑实际执行完整安装和图形登录**；下载源、AUR 构建与新硬件驱动
 仍会影响安装结果。验证命令均不安装软件或修改当前桌面。
+
+## 2026-10-29 合并快照
+
+- 合并另一台电脑的顶栏平滑背景、锁屏动画和灵动岛修复；Clavis 同时保留媒体曲线范围限制、
+  关闭时暂停动画、避免透明输入层阻塞桌面、托盘未读闪动、Niri 重连和有界屏幕唤醒恢复。
+- 保存浮动窗口独立升降和原生浮窗最大化／还原补丁；WPS 默认 50% 列宽，Win+R 继续轮换预设。
+- 全局字体为 HarmonyOS Sans SC，普通界面、数字、GTK、Qt 和输入法一致；等宽字体仍为 Maple Mono CN。
+- WPS 专用桥接保留最大化去重、文字／表格工具栏分类及鼠标移出后保持工具栏；已确认有效的
+  Alt 提示层共享内存方案保留。已废弃的自动重绘试验程序和服务不发布，也不启用。
+- AB 的启动器、浏览器 NativeMessaging 路径修复和自启入口可重建；专用显示仅在所有活动
+  显示器均为 200% 的 Niri 会话中使用，其他情况沿用普通 DISPLAY。
+- WeTypeX 作为默认输入法，保留联网／自动更新，关闭 V 模式和 AI 快捷入口；不包含词库学习、
+  配对信息或账号。WPS 快捷引用只发布占位符源码，每次准备时生成新的本机配对标记。
+
+验证：合并后的 Clavis 原生构建成功，27 组 CTest 中 26 组通过；原有
+`display_preview_contracts` 的保存预览测试仍超时。改动 QML lint 通过，有 307 条 advisory
+警告；新增的显示唤醒脚本 13 项测试通过。WPS 显示桥接 90 项、聊天／AB 桥接 88 项库测试通过。
+桌面迁移 27 项测试、Niri 最大化 3 项与独立浮窗层级 8 项测试通过；字体四组下载校验、
+WPS／AB 完整构建并安装至临时 Home、快捷引用配对包准备与协议测试通过。
+完整新机器安装、各硬件图形效果仍需在目标电脑确认。

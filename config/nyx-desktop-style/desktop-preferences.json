@@ -18,12 +18,12 @@
     {
       "schema": "org.gnome.desktop.interface",
       "key": "font-name",
-      "value": "'Inter 10'"
+      "value": "'HarmonyOS Sans SC 10'"
     },
     {
       "schema": "org.gnome.desktop.interface",
       "key": "document-font-name",
-      "value": "'Inter 10'"
+      "value": "'HarmonyOS Sans SC 10'"
     },
     {
       "schema": "org.gnome.desktop.interface",

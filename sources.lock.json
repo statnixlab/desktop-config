@@ -2,7 +2,7 @@
   "clavis": {
     "repository": "https://github.com/statnixlab/quickshell.git",
     "branch": "personal/cachyos-niri",
-    "commit": "2092640f2cb3fbb9f7b81e59cd62b739cc7e90a5",
+    "commit": "18954bc24f4c88184bb92fcda0cfb178b6cd3fa6",
     "upstream_repository": "https://github.com/StatIndet/quickshell.git",
     "upstream_commit": "ac388acf9a4537cf1c69232aceb326af9478b71f"
   },
@@ -30,14 +30,14 @@
     "niri_commit": "ed0fe6141a7cb82f23e947ec1e49bb6399ec9877"
   },
   "desktop_snapshot": {
-    "captured_at": "2026-10-26T16:13:14+08:00",
+    "captured_at": "2026-10-29T11:56:37+08:00",
     "dock": "clavis-native"
   },
   "niri": {
     "repository": "https://github.com/StatIndet/niri-edge.git",
     "commit": "b2aaeb3c619610827577e4fbbb3225ce88d19baa",
     "patch": "patches/niri-desktop.patch",
-    "patch_sha256": "7c8369a3f3d11f330949b024503c22b7fe1984905d691f710cfbac1a8e7d632a",
+    "patch_sha256": "faca323bc1ad14b249b73c0f7c52849f2475d26c9768693698e489d019606846",
     "features": [
       "Dock minimize and Genie animation",
       "HiDPI Genie geometry",
@@ -48,7 +48,9 @@
       "Titlebar maximize to column",
       "Refresh-aware output workaround",
       "Optional full repaint with buffer reuse",
-      "Optional retained previous-frame buffer for NVIDIA high-refresh flicker (Smithay PR 2151)"
+      "Optional retained previous-frame buffer for NVIDIA high-refresh flicker (Smithay PR 2151)",
+      "Per-window floating focus stacking with independent raise and lower",
+      "Native floating-window maximize and restore"
     ]
   },
   "icon_theme": {
