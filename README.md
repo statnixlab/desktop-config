@@ -214,6 +214,8 @@ Smithay PR #2151 的上一帧缓冲保留补丁消除了右下区域闪烁；日
 当前密码存储接口使用 KWallet，仓库不保存密钥环、密码或远程连接凭据。
 微信提示音依赖本机的 `~/.local/share/sounds/clavis/wechat-classic.wav`，该应用音频
 不随公开源码发布；需要此功能时在目标机器自行准备，并安装 `libcanberra`。
+要让声音随通知窗格一起出现，需在每台电脑的微信设置中关闭微信自身的新消息提示音，
+由 Clavis 统一播放；具体步骤见[通知窗格与提示音同步](system-reference/app-compat/README.md#通知窗格与提示音同步)。
 
 ## 灵动岛快速访问
 

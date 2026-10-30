@@ -763,7 +763,7 @@
     "share/nautilus-python/extensions/copy_path.py": "78e359572389c5c7df6b4ff83934586c76ba1712dd21e07db29f91f98b3c1200",
     "share/xdg-desktop-portal/portals/manggo-shortcuts.portal": "03b4df021e25b6495a2fd76b42c10deb1c4c54d009f863bee4562015a0b13ce7",
     "sources.lock.json": "e3947febce17ae6a31bb3b2ff8168e05385bca3d1524fc93e542eb31b6a23b0d",
-    "system-reference/app-compat/README.md": "a2b7284ea2ba0630cfc23b32b61e31d47ede8cf25a2059a071db26c972495ef9",
+    "system-reference/app-compat/README.md": "1387f930dbd04526c7a1e0af590f4cd41737f81709947ecaa01f024d3af2b1eb",
     "system-reference/app-compat/abdownloadmanager-settings.json": "bc507cee7aa3e1de78ccd80ab6f2e085a8e9dee7a0dd194bd8098fe2772dd133",
     "system-reference/app-compat/files/.config/autostart/abdownloadmanager-compat.desktop": "8670ecdd6bcda7480b60ced10d562fb4ed6a0b58bd9b85c1876d9a36598f87e0",
     "system-reference/app-compat/files/.config/systemd/user/abdownloadmanager-native-path.path": "a147de670165a71a8572e7eed347a9a5f85d3bb80843e103d4582f949e34a04c",
