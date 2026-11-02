@@ -1,5 +1,5 @@
-// Initial values from this computer’s current KDE display configuration.
-output "DP-1" {
+// Display settings migrated from config.kdl without changing values.
+output "eDP-1" {
 
 
 
@@ -16,8 +16,45 @@ output "DP-1" {
 
 
 
-mode "3840x2160@160.000";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+off;
+mode "3072x1920@120.002";
 scale 2;
 transform "normal";
-position x=0 y=0;
-}
+position x=3167 y=240;
+};
+output "DP-2" {
+
+
+
+
+mode "3840x2160@143.998";
+scale 2;
+transform "normal";
+position x=1247 y=120;
+};

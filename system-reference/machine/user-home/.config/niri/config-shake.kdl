@@ -1,0 +1,27 @@
+// Keep the regular niri configuration as the source of truth.
+include "config.kdl"
+
+cursor {
+    shake {
+        on
+        max-multiplier 3.0
+        behavior "hold"
+        sensitivity 2.2
+        shake-interval-ms 500
+        min-diagonal 120.0
+        stopped-threshold-ms 200
+        cooldown-ms 500
+    }
+}
+
+animations {
+    cursor-expand {
+        duration-ms 140
+        curve "ease-out-cubic"
+    }
+
+    cursor-shrink {
+        duration-ms 280
+        curve "ease-out-cubic"
+    }
+}

@@ -158,7 +158,6 @@ include "clavis/application-effects.kdl"
 // https://niri-wm.github.io/niri/Configuration:-Layout
 layout {
     client-maximize-to-column
-    floating-windows-follow-focus
     background-color "transparent"
     // Set gaps around windows in logical pixels.
     gaps 3

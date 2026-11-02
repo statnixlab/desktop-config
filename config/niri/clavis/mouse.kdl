@@ -1,7 +1,7 @@
 // Managed by Clavis.
 input {
     mouse {
-        accel-speed -0.8;
+        accel-speed -0.45;
         accel-profile "adaptive";
     };
 };

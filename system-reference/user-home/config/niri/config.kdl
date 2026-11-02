@@ -86,12 +86,8 @@ cursor {
     // hide-after-inactive-ms 3000
 }
 
-// Use the NVIDIA GPU connected to this desktop monitor.
 debug {
-    render-drm-device "/dev/dri/by-path/pci-0000:01:00.0-render"
-    // NVIDIA high-refresh workaround: keep the primary output in FP16.
-    prefer-16bit-output
-    restrict-primary-scanout-to-matching-format
+    disable-cursor-plane
     // Accept activation from apps that forward stale input serials.
     honor-xdg-activation-with-invalid-serial
 }
@@ -162,6 +158,7 @@ include "clavis/application-effects.kdl"
 // Find more information on the wiki:
 // https://niri-wm.github.io/niri/Configuration:-Layout
 layout {
+    client-maximize-to-column
     background-color "transparent"
     // Set gaps around windows in logical pixels.
     gaps 3

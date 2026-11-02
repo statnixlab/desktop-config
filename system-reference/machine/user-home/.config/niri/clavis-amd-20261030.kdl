@@ -1,0 +1,2 @@
+include "config.kdl"
+layout { client-maximize-to-column; floating-windows-follow-focus; }

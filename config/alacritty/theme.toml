@@ -1,33 +1,33 @@
 # Generated from the current Clavis theme.
 
 [colors.primary]
-background = "#fff8f7"
-foreground = "#22191a"
+background = "#fbf8ff"
+foreground = "#1b1b21"
 
 [colors.cursor]
-text = "#fff8f7"
-cursor = "#8f4a51"
+text = "#fbf8ff"
+cursor = "#515b92"
 
 [colors.selection]
-text = "#3b0711"
-background = "#ffdadb"
+text = "#0b154b"
+background = "#dee0ff"
 
 [colors.normal]
-black = "#524344"
+black = "#46464f"
 red = "#ba1a1a"
-green = "#775930"
-yellow = "#765658"
-blue = "#8f4a51"
-magenta = "#775930"
-cyan = "#765658"
-white = "#22191a"
+green = "#77536d"
+yellow = "#5b5d72"
+blue = "#515b92"
+magenta = "#77536d"
+cyan = "#5b5d72"
+white = "#1b1b21"
 
 [colors.bright]
-black = "#524344"
+black = "#46464f"
 red = "#ba1a1a"
-green = "#775930"
-yellow = "#765658"
-blue = "#8f4a51"
-magenta = "#775930"
-cyan = "#765658"
-white = "#22191a"
+green = "#77536d"
+yellow = "#5b5d72"
+blue = "#515b92"
+magenta = "#77536d"
+cyan = "#5b5d72"
+white = "#1b1b21"

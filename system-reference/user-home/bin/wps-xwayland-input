@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Register WPS's separate X display with the existing Fcitx process.
 [[ -S /tmp/.X11-unix/X3 ]] || exit 1
-for wps_input_attempt in {1..12}; do
+for _wps_input_attempt in {1..12}; do
     if wps_input_result=$(LC_ALL=C /usr/bin/busctl --user --auto-start=no --timeout=2 call \
         org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 \
         OpenX11Connection s :3 2>&1); then

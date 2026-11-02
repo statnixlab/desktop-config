@@ -1,0 +1,5 @@
+// This computer: preserve title-bar maximize-to-column behavior.
+include "config.kdl"
+layout { client-maximize-to-column; }
+
+include "clavis/panel-effects.kdl";

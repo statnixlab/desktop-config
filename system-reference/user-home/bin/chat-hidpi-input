@@ -5,7 +5,7 @@ set -euo pipefail
 if [[ -S /tmp/.X11-unix/X2 ]]; then
     # Autostart services may run ExecStartPost before Fcitx owns its bus name.
     # Never activate a second input-method process while waiting for that one.
-    for chat_input_attempt in {1..12}; do
+    for _chat_input_attempt in {1..12}; do
         if chat_input_result=$(LC_ALL=C /usr/bin/busctl --user --auto-start=no --timeout=2 call \
             org.fcitx.Fcitx5 /controller org.fcitx.Fcitx.Controller1 \
             OpenX11Connection s :2 2>&1); then

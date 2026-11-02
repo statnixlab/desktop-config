@@ -234,6 +234,7 @@
       "brightness",
       "volume",
       "microphone",
+      "battery",
       "settings",
       "power"
     ]

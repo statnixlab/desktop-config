@@ -3,7 +3,7 @@
     {
       "schema": "org.gnome.desktop.interface",
       "key": "icon-theme",
-      "value": "'Clavis-Default-Apps'"
+      "value": "'Clavis-Reference'"
     },
     {
       "schema": "org.gnome.desktop.interface",
@@ -48,7 +48,7 @@
     {
       "schema": "org.gnome.nautilus.preferences",
       "key": "default-folder-viewer",
-      "value": "'list-view'"
+      "value": "'icon-view'"
     },
     {
       "schema": "org.gnome.nautilus.icon-view",

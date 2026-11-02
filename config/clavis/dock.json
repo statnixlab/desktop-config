@@ -41,7 +41,7 @@
     },
     {
       "kind": "app",
-      "desktopId": "orca-ide"
+      "desktopId": "stably-orca"
     }
   ]
 }

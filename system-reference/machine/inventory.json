@@ -1,0 +1,28 @@
+{
+  "captured_at_utc": "2026-11-02T07:41:42+00:00",
+  "machine": "amd-laptop",
+  "reference_only": true,
+  "files": [
+    "system/etc/systemd/logind.conf",
+    "system/etc/systemd/sleep.conf",
+    "user-home/.config/niri/clavis-amd-20261030.kdl",
+    "user-home/.config/niri/clavis-amd.kdl",
+    "user-home/.config/niri/config-shake.kdl",
+    "user-home/.config/niri/config.kdl",
+    "user-home/.config/niri/manggo-shortcuts.kdl",
+    "user-home/.config/niri/qq-screenshot.kdl",
+    "user-home/.config/systemd/user/clavis-shell.service.d/10-local-install.conf",
+    "user-home/.config/systemd/user/clavis-shell.service.d/20-input-method.conf",
+    "user-home/.config/systemd/user/clavis-shell.service.d/30-icon-theme.conf",
+    "user-home/.config/systemd/user/clavis-shell.service.d/40-memory.conf",
+    "user-home/.config/systemd/user/niri.service.d/60-niri-edge.conf",
+    "user-home/.config/systemd/user/niri.service.d/70-titlebar-column.conf",
+    "user-home/.config/systemd/user/niri.service.d/80-portable-update.conf",
+    "user-home/.config/systemd/user/niri.service.d/kwallet.conf"
+  ],
+  "niri": {
+    "executable": "@HOME@/.local/lib/niri-edge/2026-10-30-amd/niri",
+    "sha256": "12b52f3d626726f8681f6d67b0e000defdd276ab4181ed6f2f8e8fea77453032",
+    "version": "niri 26.04 (b2aaeb3-modified)"
+  }
+}

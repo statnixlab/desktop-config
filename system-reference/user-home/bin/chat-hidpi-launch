@@ -49,6 +49,6 @@ case "$chat_app" in
             /opt/wechat/wechat "$@"
         ;;
     qq)
-        exec /usr/bin/env "${chat_environment[@]}" /usr/bin/linuxqq --ozone-platform=x11 --disable-gpu "$@"
+        exec /usr/bin/env "${chat_environment[@]}" /usr/bin/linuxqq --ozone-platform=x11 "$@"
         ;;
 esac
