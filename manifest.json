@@ -121,7 +121,7 @@
     "hardware/outputs.kdl": "a3b00e99f0ae929e8346cc71470af521d00e21716bd1a4bfb8cc1bd5d5832f81",
     "hardware/primary-display.json": "f6d69bf7172f73133cecf735f8aa88214902ce375bf45e250524afc92ac9703a",
     "lib/nyx-desktop-style/sync-theme.py": "13f05c86167c2330332f3b6c807bb60b7c870314e2c22d0c5c3e16f0ff247b2d",
-    "libexec/manggo-shortcuts.py": "b73132d924c2f149e07e11763e4194981f77ea37a3f1687ef179ee881748cf2d",
+    "libexec/manggo-shortcuts.py": "7ddb65b409660679ee79a1dbb7ef27d137ec282e619e185bc0d30ad219d31533",
     "libexec/qq-native-screenshot.py": "a05e4a330a0a9c55936380fb29b625bcda21820882572ef5997e68cfe64ff210",
     "patches/README.md": "ab96aa7f1420a38e382d2750a42deb029b5a3b3a1b3d0364cec259a2872e2304",
     "patches/Smithay-LICENSE.txt": "331891ba7afe9ea12e7f9834bdb37db7abd9131183ed85215f6b4109b0303877",

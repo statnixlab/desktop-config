@@ -165,9 +165,10 @@ class Backend:
                 for action, properties in args[2]:
                     trigger = properties.get("preferred_trigger", "")
                     if action not in KEYS or normalized(trigger) != normalized(KEYS[action]):
-                        print(f"Rejected unconfigured binding: {action!r} {trigger!r}", flush=True)
-                        invocation.return_value(GLib.Variant("(ua{sv})", (2, {})))
-                        return
+                        # New app actions must not invalidate supported bindings.
+                        # Report only shortcuts actually handled by Niri.
+                        print(f"Skipped unconfigured binding: {action!r} {trigger!r}", flush=True)
+                        continue
                     bindings[action] = properties.get("description", action)
                 self.sessions[session_path]["bindings"] = bindings
                 print("Bound: " + ", ".join(f"{KEYS[a]}={a}" for a in bindings), flush=True)
