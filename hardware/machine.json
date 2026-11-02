@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "nvidia-desktop",
+  "hostname": "cachyos",
+  "branch": "machine/nvidia-desktop",
+  "gpu": "NVIDIA",
+  "peerBranch": "machine/amd-laptop",
+  "nvidiaWorkaroundsAllowed": true
+}

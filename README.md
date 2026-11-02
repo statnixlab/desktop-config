@@ -1,5 +1,10 @@
 # 个人 CachyOS / Arch · Niri / Clavis 桌面
 
+> **本分支仅属于 NVIDIA 台式机：`machine/nvidia-desktop`。** 笔记本使用 `machine/amd-laptop`。
+> 先阅读 [两台机器维护流程](MACHINE-WORKFLOW.md)。下面的整套安装/更新流程为历史迁移文档，
+> 不用于两台现有机器之间同步；升级前须核对目标机器的独立版本与兼容补丁。
+
+
 这个公开仓库保存当前桌面的可迁移配置、主题资源和安装脚本。桌面源码位于
 [statnixlab/quickshell](https://github.com/statnixlab/quickshell/tree/personal/cachyos-niri)，
 本仓库通过 `sources.lock.json` 固定 Clavis、定制 Niri、Smithay、key-cli 和 MacTahoe 图标的版本。
