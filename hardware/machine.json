@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "amd-laptop",
+  "hostname": "nlh-cachy",
+  "branch": "machine/amd-laptop",
+  "gpu": "AMD HawkPoint",
+  "peerBranch": "machine/nvidia-desktop",
+  "nvidiaWorkaroundsAllowed": false
+}

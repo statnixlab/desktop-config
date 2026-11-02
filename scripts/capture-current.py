@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import socket
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -77,6 +78,13 @@ def capture(home, root=ROOT, clavis_source=None):
     home = home.expanduser().resolve()
     source = (clavis_source.expanduser().resolve() if clavis_source
               else home / '.config/quickshell/clavis')
+    machine_file = root / 'hardware/machine.json'
+    if machine_file.is_file():
+        machine = json.loads(machine_file.read_text())
+        branch = subprocess.check_output(['git', '-C', str(root), 'branch', '--show-current'], text=True).strip()
+        source_branch = subprocess.check_output(['git', '-C', str(source), 'branch', '--show-current'], text=True).strip()
+        if home != Path.home().resolve() or socket.gethostname() != machine['hostname'] or branch != machine['branch'] or source_branch != branch:
+            raise RuntimeError("Machine/branch mismatch; capture only this branch's own computer")
     if not (source / 'Modules/Dock/DockHost.qml').is_file():
         raise RuntimeError('The selected home has no Clavis native Dock installation')
     lock = json.loads((root / 'sources.lock.json').read_text())
@@ -313,7 +321,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-home', type=Path, default=Path.home())
     parser.add_argument('--clavis-source', type=Path,
-                        help='Reviewed clean Clavis checkout containing merged cross-machine changes')
+                        help='Reviewed clean Clavis checkout for this machine branch')
     parser.add_argument('--apply', action='store_true')
     args = parser.parse_args()
     if not args.apply:
