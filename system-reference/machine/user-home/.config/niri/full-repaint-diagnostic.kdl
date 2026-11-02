@@ -1,0 +1,6 @@
+// Temporary entrypoint for the full-output repaint comparison.
+// All existing desktop settings continue to come from the personal config.
+include "@HOME@/.config/niri/config.kdl"
+debug {
+    force-full-repaint
+}

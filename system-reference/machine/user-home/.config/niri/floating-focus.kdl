@@ -1,0 +1,5 @@
+// Preserve the complete active personal desktop configuration.
+include "@HOME@/.config/niri/smithay-2151-test.kdl"
+layout {
+    floating-windows-follow-focus
+}

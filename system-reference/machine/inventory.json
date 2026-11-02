@@ -1,0 +1,36 @@
+{
+  "captured_at_utc": "2026-11-02T07:41:41+00:00",
+  "machine": "nvidia-desktop",
+  "reference_only": true,
+  "files": [
+    "system/etc/modprobe.d/nvidia-595-suspend-compat.conf",
+    "system/etc/systemd/logind.conf",
+    "system/etc/systemd/sleep.conf",
+    "user-home/.config/niri/config.kdl",
+    "user-home/.config/niri/floating-focus.kdl",
+    "user-home/.config/niri/full-repaint-diagnostic.kdl",
+    "user-home/.config/niri/manggo-shortcuts.kdl",
+    "user-home/.config/niri/qq-screenshot.kdl",
+    "user-home/.config/niri/refresh-aware-flicker.kdl",
+    "user-home/.config/niri/smithay-2151-test.kdl",
+    "user-home/.config/niri/titlebar-column.kdl",
+    "user-home/.config/systemd/user/clavis-shell.service.d/10-local-install.conf",
+    "user-home/.config/systemd/user/clavis-shell.service.d/20-input-method.conf",
+    "user-home/.config/systemd/user/clavis-shell.service.d/30-icon-theme.conf",
+    "user-home/.config/systemd/user/clavis-shell.service.d/40-memory.conf",
+    "user-home/.config/systemd/user/niri.service.d/60-niri-edge.conf",
+    "user-home/.config/systemd/user/niri.service.d/90-full-repaint-diagnostic.conf",
+    "user-home/.config/systemd/user/niri.service.d/95-titlebar-column.conf",
+    "user-home/.config/systemd/user/niri.service.d/96-refresh-aware-flicker.conf",
+    "user-home/.config/systemd/user/niri.service.d/99-smithay-2151-test.conf",
+    "user-home/.config/systemd/user/niri.service.d/99-updated-custom.conf",
+    "user-home/.config/systemd/user/niri.service.d/99-zz-floating-focus.conf",
+    "user-home/.config/systemd/user/niri.service.d/99-zzz-floating-maximize.conf",
+    "user-home/.config/systemd/user/niri.service.d/kwallet.conf"
+  ],
+  "niri": {
+    "executable": "@HOME@/.local/lib/niri-desktop/niri-floating-maximize-b2aaeb3",
+    "sha256": "68fc0a0d0c5af6105cd1475e1491eb701341f1070ba85392b28e1595f27befa3",
+    "version": "niri 26.04 (b2aaeb3-modified)"
+  }
+}

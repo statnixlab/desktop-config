@@ -1,5 +1,6 @@
 {
   "dndEnabled": false,
+  "wechatExtraSoundEnabled": false,
   "language": "zh_CN",
   "weatherTemperatureUnit": "celsius",
   "systemTemperatureUnit": "celsius",
