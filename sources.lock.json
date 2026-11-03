@@ -2,7 +2,7 @@
   "clavis": {
     "repository": "https://github.com/statnixlab/quickshell.git",
     "branch": "machine/amd-laptop",
-    "commit": "064b18d1796ef2dec9bcb4b39fd99ae741407c9e",
+    "commit": "3326feafb9f95320cb7ed7e40a6e224b8c4ebab2",
     "upstream_repository": "https://github.com/StatIndet/quickshell.git",
     "upstream_commit": "ac388acf9a4537cf1c69232aceb326af9478b71f"
   },

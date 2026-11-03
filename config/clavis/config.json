@@ -104,12 +104,14 @@
   "keystone": {
     "enabled": true,
     "dimensions": {
-      "edgeSpacing": 0,
+      "edgeSpacing": 3,
       "exclusiveZoneOffset": 0,
-      "thickness": 37,
+      "thickness": 27,
+      "moduleRadius": 8,
+      "iconSize": 22,
       "compactLength": 180,
-      "insetPadding": 10,
-      "itemSpacing": 6,
+      "insetPadding": 13,
+      "itemSpacing": 12,
       "popupGap": 20
     },
     "overlay": true,
@@ -209,16 +211,16 @@
     "showNames": false,
     "showValues": false,
     "dimensions": {
-      "exclusiveZoneOffset": 0,
-      "innerPadding": 3,
-      "insetPadding": 0,
+      "exclusiveZoneOffset": -3,
+      "innerPadding": 5,
+      "insetPadding": 3,
       "lengthPadding": 0,
-      "moduleRadius": 12
+      "moduleRadius": 8
     },
     "position": "top",
-    "edgeMargin": 0,
-    "thickness": 39,
-    "pillThickness": 37,
+    "edgeMargin": 3,
+    "thickness": 33,
+    "pillThickness": 27,
     "barLeadingComponents": [
       "workspaces",
       "information",

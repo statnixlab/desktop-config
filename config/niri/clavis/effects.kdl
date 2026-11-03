@@ -1,7 +1,7 @@
 // Managed by Clavis.
 layer-rule {
     match namespace="^clavis-keystone-backdrop-pill$";
-    geometry-corner-radius 10000;
+    geometry-corner-radius 8;
     background-effect {
         blur true;
         xray false;
@@ -9,7 +9,7 @@ layer-rule {
 };
 layer-rule {
     match namespace="^clavis-keystone-backdrop-top$";
-    geometry-corner-radius 0 0 10000 10000;
+    geometry-corner-radius 0 0 8 8;
     background-effect {
         blur true;
         xray false;
@@ -17,7 +17,7 @@ layer-rule {
 };
 layer-rule {
     match namespace="^clavis-keystone-backdrop-bottom$";
-    geometry-corner-radius 10000 10000 0 0;
+    geometry-corner-radius 8 8 0 0;
     background-effect {
         blur true;
         xray false;
@@ -25,7 +25,7 @@ layer-rule {
 };
 layer-rule {
     match namespace="^clavis-keystone-backdrop-left$";
-    geometry-corner-radius 0 10000 10000 0;
+    geometry-corner-radius 0 8 8 0;
     background-effect {
         blur true;
         xray false;
@@ -33,7 +33,7 @@ layer-rule {
 };
 layer-rule {
     match namespace="^clavis-keystone-backdrop-right$";
-    geometry-corner-radius 10000 0 0 10000;
+    geometry-corner-radius 8 0 0 8;
     background-effect {
         blur true;
         xray false;
@@ -41,7 +41,7 @@ layer-rule {
 };
 layer-rule {
     match namespace="^clavis-bar-backdrop$";
-    geometry-corner-radius 12;
+    geometry-corner-radius 8;
     background-effect {
         blur true;
         xray false;
