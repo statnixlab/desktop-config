@@ -53,3 +53,27 @@ FP16/full-repaint/刷新阈值策略、NVIDIA 休眠参数和频率服务。NVID
 仍是共享历史，不代表两台现在运行的是同一个二进制；实际运行信息看机器清单。
 尤其 AMD 不得运行历史 `setup-arch.sh` / `build-niri.sh` 整套流程：它含 NVIDIA 补丁。
 需要重装或升级时，先针对目标机器准备独立构建/恢复计划，再执行。
+
+## Niri 与 Smithay 源码维护（2026-11-03 起）
+
+NVIDIA 台式机的完整 Niri 源码位于 `/home/nlh/.local/share/niri-source`，对应
+`statnixlab/niri-edge` 的 `machine/nvidia-desktop` 分支。它从本机原有源码整理，
+保留 NVIDIA 防闪烁、浮动层级、原生浮动最大化、独立模糊和高分屏动画修复。
+本次没有合并 AMD 分支，也没有迁移 AMD 新增的标题栏双击行为。
+
+`upstream` 追踪 `StatIndet/niri-edge`，`official` 追踪 `niri-wm/niri`。先 fetch，
+再在独立审查分支合并上游并验证；完整流程见源码仓库的
+`docs/PERSONAL-MAINTENANCE.md`。两个机器分支不得整体互相合并。
+
+本机需要的 Smithay PR #2151 补丁已在 `statnixlab/smithay` 的
+`machine/nvidia-desktop` 分支中保存，本地位于 `/home/nlh/.local/share/smithay-source`。
+Niri 的 Cargo.toml 与 Cargo.lock 直接固定该提交，保留本机需要的防闪烁逻辑。
+
+`sources.lock.json.niri.source_mode` 为 `git`。准备脚本直接检出固定的完整源码，
+不再应用外部补丁，并拒绝覆盖错误分支、不同提交或未完成修改。
+`scripts/build-niri.sh --prepare-only` 只做源码核验。
+旧配方保留于 `legacy_niri_patch_recipe`，不用于当前构建。
+
+保存更新时，按 Smithay（如有修改）、Niri、desktop-config 的顺序推送对应机器分支。
+仅更新源码版本引用时不运行完整桌面 capture，不收集其他聊天或 Clavis 的未完成修改。
+源码整理和发布不自动更新正在运行的合成器；构建、选择新版本和会话重启另行处理。

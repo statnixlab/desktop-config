@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-source_dir=${NIRI_SOURCE_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/niri-desktop-source}
+source_dir=${NIRI_SOURCE_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/niri-source}
 prefix_dir="$HOME/.local/lib/niri-desktop"
 [[ $# -eq 0 || ( $# -eq 1 && $1 == --prepare-only ) ]] || {
     echo 'Usage: build-niri.sh [--prepare-only]' >&2; exit 2;
@@ -17,4 +17,4 @@ trap 'rm -f -- "$temporary"' EXIT
 install -m 755 "$source_dir/target/release/niri" "$temporary"
 mv -f -- "$temporary" "$prefix_dir/niri"
 echo "Pinned Niri is ready: $prefix_dir/niri"
-echo 'The running compositor was not restarted. The new version takes effect at the next Niri login.'
+echo 'Select this binary in the Niri session startup configuration to activate it at the next login.'

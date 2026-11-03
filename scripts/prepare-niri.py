@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Prepare the pinned Niri and patched Smithay sources without replacing local edits."""
+"""Prepare pinned Niri sources without replacing local edits."""
 import argparse
 import hashlib
 import json
 import os
 from pathlib import Path
+import socket
 import subprocess
 import tempfile
 
@@ -13,6 +14,29 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def git(path, *args, env=None):
     return subprocess.check_output(['git', '-C', str(path), *args], env=env)
+
+
+def prepare_git_branch(path, source):
+    """Use the complete maintained branch; no additional patches are applied."""
+    branch = source['branch']
+    commit = source['commit']
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(['git', 'clone', '--no-checkout', '--branch', branch,
+                        source['repository'], str(path)], check=True)
+        # This is a new checkout, so pinning its branch cannot discard local work.
+        git(path, 'checkout', '-B', branch, commit)
+        git(path, 'branch', '--set-upstream-to=origin/' + branch, branch)
+    if git(path, 'remote', 'get-url', 'origin').decode().strip() != source['repository']:
+        raise RuntimeError(f'Existing source has a different origin: {path}')
+    if git(path, 'branch', '--show-current').decode().strip() != branch:
+        raise RuntimeError(f'Existing source uses another branch: {path}; preserve it before rebuilding')
+    if git(path, 'rev-parse', 'HEAD').decode().strip() != commit:
+        raise RuntimeError(f'Existing source has a different commit: {path}; update the source pin or choose another NIRI_SOURCE_DIR')
+    if git(path, 'status', '--porcelain', '--untracked-files=all').strip():
+        raise RuntimeError(f'Existing source has local changes: {path}; preserve them before rebuilding')
+    if git(path, 'rev-parse', '--is-shallow-repository').decode().strip() != 'false':
+        raise RuntimeError(f'Full Git history is required for future upstream merges: {path}')
 
 
 def prepare(path, source, exclude=None):
@@ -50,6 +74,16 @@ def main():
     args = parser.parse_args()
     lock = json.loads((ROOT / 'sources.lock.json').read_text())
     source_dir = args.source_dir.expanduser().absolute()
+    if lock['niri'].get('source_mode') == 'git':
+        machine = json.loads((ROOT / 'hardware/machine.json').read_text())
+        branch = git(ROOT, 'branch', '--show-current').decode().strip()
+        if socket.gethostname() != machine['hostname'] or branch != machine['branch']:
+            raise RuntimeError('Machine/branch mismatch; prepare only this machine\'s Niri source')
+        if lock['niri']['branch'] != machine['branch']:
+            raise RuntimeError('Niri source branch does not match the machine branch')
+        prepare_git_branch(source_dir, lock['niri'])
+        print(f'Integrated Niri source verified (no patch application): {source_dir}')
+        return
     subdir = lock['smithay']['source_subdirectory']
     if subdir != 'smithay-workaround':
         raise RuntimeError('Unexpected Smithay source directory')

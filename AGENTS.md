@@ -11,4 +11,12 @@ this desktop's required GPU, suspend or application compatibility workarounds.
 Use `scripts/capture-machine.py` for snapshots; inspect diffs before committing.
 `system-reference/machine` is opt-in reference material, never automatic deployment.
 The old Niri/Smithay build recipe is historical; inventory.json records the runtime.
+Niri source is maintained in `/home/nlh/.local/share/niri-source`, with personal
+origin `statnixlab/niri-edge`, on `machine/nvidia-desktop`. Smithay is maintained
+at `/home/nlh/.local/share/smithay-source` in `statnixlab/smithay` on the same
+machine branch. Keep its required retained-frame patch; do not use the AMD
+laptop's unpatched dependency. sources.lock.json and Cargo.lock pin integrated
+Git commits. Do not reapply additional Niri or Smithay patches. Publish changed
+Smithay source first, then Niri, then the configuration lock. Preserve unrelated
+Clavis work and avoid full capture when only updating source references.
 Do not reset local work, install packages or restart services merely to save config.
