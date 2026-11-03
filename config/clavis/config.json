@@ -97,7 +97,7 @@
     }
   },
   "effects": {
-    "shellBackgroundOpacity": 0.26,
+    "shellBackgroundOpacity": 0.55,
     "shellBlurEnabled": true,
     "shellBlurXray": false
   },
@@ -111,7 +111,7 @@
       "iconSize": 22,
       "compactLength": 180,
       "insetPadding": 13,
-      "itemSpacing": 12,
+      "itemSpacing": 4,
       "popupGap": 20
     },
     "overlay": true,
