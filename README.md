@@ -4,6 +4,9 @@
 > 先阅读 [两台机器维护流程](MACHINE-WORKFLOW.md)。下面的整套安装/更新流程为历史迁移文档，
 > 不用于两台现有机器之间同步；AMD 不能直接运行其中的 NVIDIA Niri 构建流程。
 
+AMD 的 Niri 现维护于 [statnixlab/niri-edge 的机器分支](https://github.com/statnixlab/niri-edge/tree/machine/amd-laptop)。
+源码已包含全部本机修改，直接由 Git 提交固定版本；当前准备脚本不再应用额外补丁。
+日常上游更新请使用 [Niri 源码维护流程](MACHINE-WORKFLOW.md#niri-源码维护2026-11-03-起)。
 
 这个公开仓库保存当前桌面的可迁移配置、主题资源和安装脚本。桌面源码位于
 [statnixlab/quickshell](https://github.com/statnixlab/quickshell/tree/personal/cachyos-niri)，
@@ -132,7 +135,7 @@ python3 scripts/restore.py --apply
 `~/.local/state/desktop-config-backups/`，不会清空整个配置目录。
 
 Clavis 源码默认放在 `~/.local/share/clavis-source`；用 `CLAVIS_SOURCE_DIR` 可以另选目录。
-Niri 源码默认放在 `~/.local/share/niri-desktop-source`；用 `NIRI_SOURCE_DIR` 可以另选目录。
+Niri 源码默认放在 `~/.local/share/niri-source`；用 `NIRI_SOURCE_DIR` 可以另选目录。
 脚本拒绝覆盖已有的不同版本或本地修改。Niri 安装在用户目录，系统软件包保留，
 运行中的 compositor 不会被脚本强制重启。
 
@@ -320,8 +323,10 @@ git push
 ```
 
 采集程序只收集明确的桌面配置，将 Home 路径替换成安装时展开的占位符，并清空凭据字段。
-它不停止输入法，也不新增当前 Rime 学习记录、账号库或应用数据。定制 Niri 的源码补丁
-在 `patches/niri-desktop.patch`；`sources.lock.json` 同时记录补丁的 SHA-256。
+它不停止输入法，也不新增当前 Rime 学习记录、账号库或应用数据。AMD 分支的定制 Niri
+现由 `statnixlab/niri-edge` 的 `machine/amd-laptop` 完整源码分支维护，
+`sources.lock.json.niri` 直接固定源码提交，详见 [机器工作流](MACHINE-WORKFLOW.md)。
+`patches/niri-desktop.patch` 与旧 Smithay 补丁配方仅保留作历史参考。
 
 ## 验证范围
 

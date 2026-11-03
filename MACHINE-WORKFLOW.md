@@ -53,3 +53,22 @@ FP16/full-repaint/刷新阈值策略、NVIDIA 休眠参数和频率服务。NVID
 仍是共享历史，不代表两台现在运行的是同一个二进制；实际运行信息看机器清单。
 尤其 AMD 不得运行历史 `setup-arch.sh` / `build-niri.sh` 整套流程：它含 NVIDIA 补丁。
 需要重装或升级时，先针对目标机器准备独立构建/恢复计划，再执行。
+
+## Niri 源码维护（2026-11-03 起）
+
+AMD 本机的完整 Niri 源码已放到 `/home/nlh/.local/share/niri-source`，对应
+`statnixlab/niri-edge` 的 `machine/amd-laptop` 分支。niri-edge 与本机补丁已成为
+同一条保留完整历史的 Git 分支，构建时不再额外应用补丁。
+
+源码仓库的 `upstream` 指向 `StatIndet/niri-edge`，`official` 指向 `niri-wm/niri`。
+更新时先 fetch，在临时审查分支合并需要的上游，再验证本机行为。维护说明和构建命令
+见源码仓库的 `docs/PERSONAL-MAINTENANCE.md`。另一台机器的专用改动仍独立维护。
+
+`sources.lock.json.niri` 直接锁定该源码仓库的完整提交，`source_mode` 为 `git`。
+`scripts/build-niri.sh --prepare-only` 只核对和准备此提交，保留已有工作区；存在本地
+改动、错误分支或版本不匹配时会停止，不重置代码。Smithay 使用 Cargo.lock 固定的
+未打补丁版本。旧补丁配方保存在 `legacy_niri_patch_recipe` 中，仅供历史追溯。
+
+保存更新时先推送 Niri 的 `machine/amd-laptop`，再更新和推送本配置仓库中的 Niri
+提交引用。只有采集完整桌面快照时才运行 capture；仅更新 Niri 版本引用时不要把
+Clavis 或其他聊天尚未完成的改动一并收集。源码合并和推送不会自动替换运行中的合成器。

@@ -34,23 +34,22 @@
     "dock": "clavis-native"
   },
   "niri": {
-    "repository": "https://github.com/StatIndet/niri-edge.git",
-    "commit": "b2aaeb3c619610827577e4fbbb3225ce88d19baa",
-    "patch": "patches/niri-desktop.patch",
-    "patch_sha256": "faca323bc1ad14b249b73c0f7c52849f2475d26c9768693698e489d019606846",
+    "repository": "https://github.com/statnixlab/niri-edge.git",
+    "branch": "machine/amd-laptop",
+    "commit": "fcac73d6532a5ef242a758450b516656a47ed841",
+    "source_mode": "git",
+    "upstream_repository": "https://github.com/StatIndet/niri-edge.git",
+    "upstream_commit": "b2aaeb3c619610827577e4fbbb3225ce88d19baa",
+    "official_repository": "https://github.com/niri-wm/niri.git",
+    "local_source": "@HOME@/.local/share/niri-source",
+    "machine": "amd-laptop",
+    "nvidia_workarounds": false,
     "features": [
-      "Dock minimize and Genie animation",
-      "HiDPI Genie geometry",
-      "PipeWire SHM sharing compatibility",
-      "Optional FP16 composition buffers for high-refresh NVIDIA artifact workaround",
-      "Optional full-output repaint diagnostic",
+      "niri-edge native minimization and Genie animation",
+      "HiDPI Genie geometry correction",
       "Independent application and panel blur",
-      "Titlebar maximize to column",
-      "Refresh-aware output workaround",
-      "Optional full repaint with buffer reuse",
-      "Optional retained previous-frame buffer for NVIDIA high-refresh flicker (Smithay PR 2151)",
-      "Per-window floating focus stacking with independent raise and lower",
-      "Native floating-window maximize and restore"
+      "Per-window floating focus stacking",
+      "Titlebar double-click column sizing with native maximize buttons"
     ]
   },
   "icon_theme": {
@@ -68,10 +67,39 @@
   "smithay": {
     "repository": "https://github.com/Smithay/smithay.git",
     "commit": "79bbed5e1199090d787115614847a79c76607181",
-    "patch": "patches/smithay-retain-frame.patch",
-    "patch_sha256": "036360da3d12826ae51b94d4d4b9473f664b03301c1dca9fa8c705ef1d5bfbbc",
-    "upstream_pr": "https://github.com/Smithay/smithay/pull/2151",
-    "upstream_patch_commit": "0c649d2d6824b60b7bfe27f1fdb5f2fbf4311ac4",
-    "source_subdirectory": "smithay-workaround"
+    "source_mode": "cargo-lock",
+    "patched": false
+  },
+  "legacy_niri_patch_recipe": {
+    "status": "Historical recipe only; not used by this AMD machine branch.",
+    "niri": {
+      "repository": "https://github.com/StatIndet/niri-edge.git",
+      "commit": "b2aaeb3c619610827577e4fbbb3225ce88d19baa",
+      "patch": "patches/niri-desktop.patch",
+      "patch_sha256": "faca323bc1ad14b249b73c0f7c52849f2475d26c9768693698e489d019606846",
+      "features": [
+        "Dock minimize and Genie animation",
+        "HiDPI Genie geometry",
+        "PipeWire SHM sharing compatibility",
+        "Optional FP16 composition buffers for high-refresh NVIDIA artifact workaround",
+        "Optional full-output repaint diagnostic",
+        "Independent application and panel blur",
+        "Titlebar maximize to column",
+        "Refresh-aware output workaround",
+        "Optional full repaint with buffer reuse",
+        "Optional retained previous-frame buffer for NVIDIA high-refresh flicker (Smithay PR 2151)",
+        "Per-window floating focus stacking with independent raise and lower",
+        "Native floating-window maximize and restore"
+      ]
+    },
+    "smithay": {
+      "repository": "https://github.com/Smithay/smithay.git",
+      "commit": "79bbed5e1199090d787115614847a79c76607181",
+      "patch": "patches/smithay-retain-frame.patch",
+      "patch_sha256": "036360da3d12826ae51b94d4d4b9473f664b03301c1dca9fa8c705ef1d5bfbbc",
+      "upstream_pr": "https://github.com/Smithay/smithay/pull/2151",
+      "upstream_patch_commit": "0c649d2d6824b60b7bfe27f1fdb5f2fbf4311ac4",
+      "source_subdirectory": "smithay-workaround"
+    }
   }
 }
