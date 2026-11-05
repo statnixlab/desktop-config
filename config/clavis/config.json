@@ -97,20 +97,22 @@
     }
   },
   "effects": {
-    "shellBackgroundOpacity": 0.26,
+    "shellBackgroundOpacity": 0.55,
     "shellBlurEnabled": true,
     "shellBlurXray": false
   },
   "keystone": {
     "enabled": true,
     "dimensions": {
-      "edgeSpacing": 0,
+      "edgeSpacing": 2,
       "exclusiveZoneOffset": 0,
-      "thickness": 37,
+      "thickness": 25,
+      "moduleRadius": 5,
+      "iconSize": 20,
       "compactLength": 180,
-      "insetPadding": 10,
-      "itemSpacing": 6,
-      "popupGap": 20
+      "insetPadding": 0,
+      "itemSpacing": 0,
+      "popupGap": 8
     },
     "overlay": true,
     "fullDisplay": true,
@@ -162,7 +164,7 @@
           "x": 0,
           "y": -2,
           "rotation": -3,
-          "colorRole": "inversePrimary",
+          "colorRole": "primary",
           "customColor": ""
         },
         "h1": {
@@ -176,7 +178,7 @@
           "x": 0,
           "y": -1,
           "rotation": -2,
-          "colorRole": "inversePrimary",
+          "colorRole": "primary",
           "customColor": ""
         },
         "m1": {
@@ -190,7 +192,7 @@
           "x": 1,
           "y": -2,
           "rotation": -2,
-          "colorRole": "inversePrimary",
+          "colorRole": "primary",
           "customColor": ""
         },
         "periodM": {
@@ -212,13 +214,13 @@
       "exclusiveZoneOffset": 0,
       "innerPadding": 3,
       "insetPadding": 0,
-      "lengthPadding": 0,
-      "moduleRadius": 12
+      "lengthPadding": 3,
+      "moduleRadius": 5
     },
     "position": "top",
-    "edgeMargin": 0,
-    "thickness": 39,
-    "pillThickness": 37,
+    "edgeMargin": 2,
+    "thickness": 28,
+    "pillThickness": 25,
     "barLeadingComponents": [
       "workspaces",
       "information",

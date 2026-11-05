@@ -14,6 +14,7 @@
     "user-home/.config/niri/refresh-aware-flicker.kdl",
     "user-home/.config/niri/smithay-2151-test.kdl",
     "user-home/.config/niri/titlebar-column.kdl",
+    "user-home/.config/niri/titlebar-native-buttons.kdl",
     "user-home/.config/systemd/user/clavis-shell.service.d/10-local-install.conf",
     "user-home/.config/systemd/user/clavis-shell.service.d/20-input-method.conf",
     "user-home/.config/systemd/user/clavis-shell.service.d/30-icon-theme.conf",
@@ -26,11 +27,14 @@
     "user-home/.config/systemd/user/niri.service.d/99-updated-custom.conf",
     "user-home/.config/systemd/user/niri.service.d/99-zz-floating-focus.conf",
     "user-home/.config/systemd/user/niri.service.d/99-zzz-floating-maximize.conf",
-    "user-home/.config/systemd/user/niri.service.d/kwallet.conf"
+    "user-home/.config/systemd/user/niri.service.d/99-zzzz-titlebar-native.conf",
+    "user-home/.config/systemd/user/niri.service.d/kwallet.conf",
+    "user-home/.local/bin/niri"
   ],
   "niri": {
-    "executable": "@HOME@/.local/lib/niri-desktop/niri-floating-maximize-b2aaeb3",
-    "sha256": "68fc0a0d0c5af6105cd1475e1491eb701341f1070ba85392b28e1595f27befa3",
-    "version": "niri 26.04 (b2aaeb3-modified)"
-  }
+    "executable": "@HOME@/.local/lib/niri-desktop/niri-titlebar-native-20261104",
+    "sha256": "66a0fba967c928021b207864d0a3f001ccce55c56e0ae47a2a7fd25a87b5dbd5",
+    "version": "niri 26.04 (v26.04-189-gfc7fcad9-modified)"
+  },
+  "runtime_updated_at_utc": "2026-11-05T09:07:18+00:00"
 }

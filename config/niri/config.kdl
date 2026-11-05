@@ -157,6 +157,7 @@ include "clavis/application-effects.kdl"
 // Find more information on the wiki:
 // https://niri-wm.github.io/niri/Configuration:-Layout
 layout {
+    titlebar-double-click-to-column
     client-maximize-to-column
     floating-windows-follow-focus
     background-color "transparent"

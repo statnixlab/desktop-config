@@ -2,7 +2,7 @@
   "clavis": {
     "repository": "https://github.com/statnixlab/quickshell.git",
     "branch": "machine/nvidia-desktop",
-    "commit": "5d94e70bd628f2a63c33a3dd5dea457ea751622e",
+    "commit": "0396726d3d3002c55db1b20c2bbb58f9c9395cbd",
     "upstream_repository": "https://github.com/StatIndet/quickshell.git",
     "upstream_commit": "ac388acf9a4537cf1c69232aceb326af9478b71f"
   },
@@ -36,7 +36,7 @@
   "niri": {
     "repository": "https://github.com/statnixlab/niri-edge.git",
     "branch": "machine/nvidia-desktop",
-    "commit": "fc7fcad91999096f13bea395f94d60c6850dbdb9",
+    "commit": "a9eb4fbc982c0515f75d422d3b468d2041016c68",
     "source_mode": "git",
     "upstream_repository": "https://github.com/StatIndet/niri-edge.git",
     "upstream_commit": "b2aaeb3c619610827577e4fbbb3225ce88d19baa",
@@ -56,7 +56,8 @@
       "Optional full repaint with buffer reuse",
       "Optional retained previous-frame buffer for NVIDIA high-refresh flicker (Smithay PR 2151)",
       "Per-window floating focus stacking with independent raise and lower",
-      "Native floating-window maximize and restore"
+      "Native floating-window maximize and restore",
+      "Titlebar double-click column sizing with native maximize buttons"
     ]
   },
   "icon_theme": {

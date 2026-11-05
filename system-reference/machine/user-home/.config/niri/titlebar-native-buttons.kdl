@@ -1,0 +1,5 @@
+// Retain this desktop's complete configuration and NVIDIA workarounds.
+include "@HOME@/.config/niri/floating-focus.kdl"
+layout {
+    titlebar-double-click-to-column
+}

@@ -172,11 +172,11 @@ def capture(home, root=ROOT, clavis_source=None):
         # These opt-in layout behaviors were enabled through local wrapper
         # configs. Carry the behavior, without their GPU-specific include chain.
         layout_flags = set()
-        for fragment in ['titlebar-column.kdl', 'floating-focus.kdl']:
+        for fragment in ['titlebar-column.kdl', 'floating-focus.kdl', 'titlebar-native-buttons.kdl']:
             path = home / '.config/niri' / fragment
             if path.is_file():
                 layout_flags.update(re.findall(
-                    r'^\s*(client-maximize-to-column|floating-windows-follow-focus)\s*;?\s*$',
+                    r'^\s*(client-maximize-to-column|floating-windows-follow-focus|titlebar-double-click-to-column)\s*;?\s*$',
                     path.read_text(), re.M))
         missing = [flag for flag in sorted(layout_flags)
                    if not re.search(r'^\s*' + re.escape(flag) + r'\s*;?\s*$', content, re.M)]
@@ -188,8 +188,9 @@ def capture(home, root=ROOT, clavis_source=None):
             if not count:
                 content += '\n// Portable personal window behavior.\nlayout {\n' + flags + '}\n'
         niri_config.write_text(content)
-    copy(home / '.local/share/nautilus-python/extensions/copy_path.py',
-         'share/nautilus-python/extensions/copy_path.py')
+    for name in ['copy_path.py', 'open_terminal.py']:
+        copy(home / '.local/share/nautilus-python/extensions' / name,
+             'share/nautilus-python/extensions/' + name)
     for name in ['manggo-shortcuts.py', 'qq-native-screenshot.py']:
         copy(home / '.local/libexec' / name, 'libexec/' + name)
     for relative in ['.config/systemd/user/manggo-shortcuts.service',

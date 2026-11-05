@@ -59,7 +59,9 @@ FP16/full-repaint/刷新阈值策略、NVIDIA 休眠参数和频率服务。NVID
 NVIDIA 台式机的完整 Niri 源码位于 `/home/nlh/.local/share/niri-source`，对应
 `statnixlab/niri-edge` 的 `machine/nvidia-desktop` 分支。它从本机原有源码整理，
 保留 NVIDIA 防闪烁、浮动层级、原生浮动最大化、独立模糊和高分屏动画修复。
-本次没有合并 AMD 分支，也没有迁移 AMD 新增的标题栏双击行为。
+源码整理时未迁移 AMD 标题栏双击行为。2026-11-04 单独迁入了
+`599ad91`，启用 `titlebar-double-click-to-column` 后，标题栏双击切换列宽，
+最大化按钮保持原生行为。NVIDIA 专用依赖和防闪设置继续保留。
 
 `upstream` 追踪 `StatIndet/niri-edge`，`official` 追踪 `niri-wm/niri`。先 fetch，
 再在独立审查分支合并上游并验证；完整流程见源码仓库的
