@@ -180,7 +180,7 @@ index 3725178..5537f5e 100644
                          if let Some(decorations) = toplevel.decoration.satellite.as_mut() {
                              decorations.handle_fullscreen(toplevel.fullscreen);
 diff --git a/src/server/mod.rs b/src/server/mod.rs
-index ccdc249..2121f05 100644
+index ccdc249..376e745 100644
 --- a/src/server/mod.rs
 +++ b/src/server/mod.rs
 @@ -239,6 +239,7 @@ struct ToplevelData {
@@ -230,27 +230,30 @@ index ccdc249..2121f05 100644
  
          let inner = InnerServerState {
              windows: HashMap::new(),
-@@ -1185,6 +1209,60 @@ impl<S: X11Selection + 'static> InnerServerState<S> {
+@@ -1185,6 +1209,63 @@ impl<S: X11Selection + 'static> InnerServerState<S> {
          self.last_focused_toplevel.unwrap_or(x::WINDOW_NONE)
      }
  
-+    pub fn minimize_window(&mut self, window: x::Window) {
++    pub fn minimize_window(&mut self, window: x::Window) -> bool {
 +        let Some(data) = self
 +            .windows
 +            .get(&window)
 +            .copied()
 +            .and_then(|id| self.world.entity(id).ok())
 +        else {
-+            return;
++            return false;
 +        };
 +        let Some(role) = data.get::<&SurfaceRole>() else {
-+            return;
++            return false;
 +        };
 +        if let SurfaceRole::Toplevel(Some(toplevel)) = &*role {
-+            // Let the compositor own visibility and restoration. Do not unmap
-+            // the X window or claim an iconic state before it accepts the request.
++            // Keep visibility and restoration owned by the compositor. The
++            // caller acknowledges this request through ICCCM WM_STATE so Qt
++            // can observe the later NormalState transition on restoration.
 +            toplevel.toplevel.set_minimized();
++            return true;
 +        }
++        false
 +    }
 +
 +    pub fn set_maximized(&mut self, window: x::Window, state: super::xstate::SetState) {
@@ -291,7 +294,7 @@ index ccdc249..2121f05 100644
      pub fn set_fullscreen(&mut self, window: x::Window, state: super::xstate::SetState) {
          let Some(data) = self
              .windows
-@@ -1581,6 +1659,7 @@ impl<S: X11Selection + 'static> InnerServerState<S> {
+@@ -1581,6 +1662,7 @@ impl<S: X11Selection + 'static> InnerServerState<S> {
              },
              toplevel,
              fullscreen: false,
@@ -642,7 +645,7 @@ index 0000000..0609662
 +    }
 +}
 diff --git a/src/xstate/mod.rs b/src/xstate/mod.rs
-index efcb13d..5708a95 100644
+index efcb13d..3c6b6a8 100644
 --- a/src/xstate/mod.rs
 +++ b/src/xstate/mod.rs
 @@ -110,9 +110,15 @@ pub struct XState {
@@ -706,7 +709,7 @@ index efcb13d..5708a95 100644
              trace!("x11 event: {event:?}");
  
              if self.handle_selection_event(&event, server_state) {
-@@ -537,6 +558,15 @@ impl XState {
+@@ -537,6 +558,31 @@ impl XState {
                  };
                  server_state.set_window_serial(e.window(), [data[0], data[1]]);
              }
@@ -714,15 +717,31 @@ index efcb13d..5708a95 100644
 +                // ICCCM clients (including Electron and Qt on X11) request
 +                // minimization with a 32-bit WM_CHANGE_STATE/IconicState.
 +                if let x::ClientMessageData::Data32(data) = e.data() {
-+                    if data[0] == WmState::Iconic as u32 {
-+                        server_state.minimize_window(e.window());
++                    if data[0] == WmState::Iconic as u32 && server_state.minimize_window(e.window())
++                    {
++                        // Qt caches its requested state separately from the
++                        // last state notification. Without IconicState here,
++                        // focus_window's later NormalState looks unchanged and
++                        // a second minimize button click is discarded by Qt.
++                        // Do not unmap: Niri retains the same managed surface.
++                        if let Err(error) =
++                            self.connection.send_and_check_request(&x::ChangeProperty {
++                                mode: x::PropMode::Replace,
++                                window: e.window(),
++                                property: self.atoms.wm_state,
++                                r#type: self.atoms.wm_state,
++                                data: &[WmState::Iconic as u32, 0],
++                            })
++                        {
++                            debug!("Setting iconic state failed ({:?}: {error:?})", e.window());
++                        }
 +                    }
 +                }
 +            }
              x if x == self.atoms.net_wm_state => {
                  let x::ClientMessageData::Data32(data) = e.data() else {
                      unreachable!();
-@@ -550,6 +580,13 @@ impl XState {
+@@ -550,6 +596,13 @@ impl XState {
  
                  trace!("_NET_WM_STATE ({action:?}) props: {prop1:?} {prop2:?}");
  
@@ -736,7 +755,7 @@ index efcb13d..5708a95 100644
                  for prop in [prop1, prop2] {
                      match prop {
                          x if x == self.atoms.wm_fullscreen => {
-@@ -573,9 +610,12 @@ impl XState {
+@@ -573,9 +626,12 @@ impl XState {
                      return;
                  };
                  let button = data[3];
@@ -752,7 +771,7 @@ index efcb13d..5708a95 100644
                      warn!(
                          "Attempted move/resize of {:?} with non left click button ({button})",
                          e.window()
-@@ -896,12 +936,15 @@ xcb::atoms_struct! {
+@@ -896,12 +952,15 @@ xcb::atoms_struct! {
          wm_delete_window => b"WM_DELETE_WINDOW" only_if_exists = false,
          wm_transient_for => b"WM_TRANSIENT_FOR" only_if_exists = false,
          wm_state => b"WM_STATE" only_if_exists = false,
@@ -768,7 +787,7 @@ index efcb13d..5708a95 100644
          wm_fullscreen => b"_NET_WM_STATE_FULLSCREEN" only_if_exists = false,
          active_win => b"_NET_ACTIVE_WINDOW" only_if_exists = false,
          client_list => b"_NET_CLIENT_LIST" only_if_exists = false,
-@@ -1350,11 +1393,18 @@ impl XConnection for RealConnection {
+@@ -1350,11 +1409,18 @@ impl XConnection for RealConnection {
      }
  
      fn set_fullscreen(&mut self, window: x::Window, fullscreen: bool) {
@@ -1688,7 +1707,7 @@ index 8500a79..413e4cd 100644
      }
  }
 diff --git a/tests/integration.rs b/tests/integration.rs
-index 26b5e38..f85ab2f 100644
+index 26b5e38..2e1e4cb 100644
 --- a/tests/integration.rs
 +++ b/tests/integration.rs
 @@ -1,7 +1,7 @@
@@ -1757,7 +1776,15 @@ index 26b5e38..f85ab2f 100644
          let data = our_data.clone();
          let thread = std::thread::spawn(move || xwls::main(data));
  
-@@ -1250,7 +1266,9 @@ fn copy_from_wayland() {
+@@ -335,6 +351,7 @@ xcb::atoms_struct! {
+         targets => b"TARGETS",
+         multiple => b"MULTIPLE",
+         wm_state => b"WM_STATE",
++        wm_change_state => b"WM_CHANGE_STATE",
+         wm_check => b"_NET_SUPPORTING_WM_CHECK",
+         win_type => b"_NET_WM_WINDOW_TYPE",
+         win_type_normal => b"_NET_WM_WINDOW_TYPE_NORMAL",
+@@ -1250,7 +1267,9 @@ fn copy_from_wayland() {
  
  #[test]
  fn incr_copy_from_wayland() {
@@ -1768,17 +1795,71 @@ index 26b5e38..f85ab2f 100644
      let mut f = Fixture::new();
      let mut connection = Connection::new(&f.display);
  
-@@ -2272,8 +2290,7 @@ fn rotated_output() {
- 
+@@ -2273,7 +2292,62 @@ fn rotated_output() {
  const BTN_LEFT: u32 = 0x110;
  
--#[test]
+ #[test]
 -fn client_init_move() {
++fn minimize_restore_repeats_with_icccm_state_notifications() {
++    let mut f = Fixture::new();
++    let mut connection = Connection::new(&f.display);
++    let window = connection.new_window(connection.root, 0, 0, 20, 20, false);
++    let surface = f.map_as_toplevel(&mut connection, window);
++    let wm_state = || {
++        connection
++            .get_reply(&x::GetProperty {
++                delete: false,
++                window,
++                property: connection.atoms.wm_state,
++                r#type: connection.atoms.wm_state,
++                long_offset: 0,
++                long_length: 2,
++            })
++            .value::<u32>()
++            .first()
++            .copied()
++    };
++    for cycle in 1..=3 {
++        assert_eq!(wm_state(), Some(WmState::Normal as u32));
++        connection.send_client_message(&x::ClientMessageEvent::new(
++            window,
++            connection.atoms.wm_change_state,
++            x::ClientMessageData::Data32([WmState::Iconic as u32, 0, 0, 0, 0]),
++        ));
++        f.wait_and_dispatch();
++        assert_eq!(
++            f.testwl
++                .get_surface_data(surface)
++                .unwrap()
++                .toplevel()
++                .minimize_requests,
++            cycle
++        );
++        assert_eq!(wm_state(), Some(WmState::Iconic as u32));
++        // The compositor keeps the same mapped X window while hiding it.
++        assert_eq!(
++            connection
++                .get_reply(&x::GetWindowAttributes { window })
++                .map_state(),
++            x::MapState::Viewable
++        );
++        f.testwl.unfocus_toplevel();
++        f.testwl.dispatch();
++        f.testwl.focus_toplevel(surface);
++        f.testwl.dispatch();
++        let deadline = Instant::now() + Duration::from_secs(1);
++        while wm_state() != Some(WmState::Normal as u32) && Instant::now() < deadline {
++            std::thread::sleep(Duration::from_millis(2));
++        }
++        assert_eq!(wm_state(), Some(WmState::Normal as u32));
++    }
++}
++
 +fn client_init_move_with_button(button: u32) {
      let mut f = Fixture::new();
      let mut connection = Connection::new(&f.display);
  
-@@ -2290,16 +2307,26 @@ fn client_init_move() {
+@@ -2290,16 +2364,26 @@ fn client_init_move() {
      connection.send_client_message(&x::ClientMessageEvent::new(
          win_toplevel,
          connection.atoms.moveresize,
@@ -1807,7 +1888,7 @@ index 26b5e38..f85ab2f 100644
      let mut f = Fixture::new();
      let mut connection = Connection::new(&f.display);
  
-@@ -2316,7 +2343,13 @@ fn client_init_resize() {
+@@ -2316,7 +2400,13 @@ fn client_init_resize() {
      connection.send_client_message(&x::ClientMessageEvent::new(
          win_toplevel,
          connection.atoms.moveresize,
@@ -1822,7 +1903,7 @@ index 26b5e38..f85ab2f 100644
      ));
  
      f.wait_and_dispatch();
-@@ -2326,4 +2359,477 @@ fn client_init_resize() {
+@@ -2326,4 +2416,477 @@ fn client_init_resize() {
          "Got wrong resizing edge: {:?}",
          data.resizing
      );
@@ -2301,7 +2382,7 @@ index 26b5e38..f85ab2f 100644
 +    }
  }
 diff --git a/testwl/src/lib.rs b/testwl/src/lib.rs
-index b9b5503..f53ea4f 100644
+index b9b5503..6c2348d 100644
 --- a/testwl/src/lib.rs
 +++ b/testwl/src/lib.rs
 @@ -108,6 +108,8 @@ pub struct Viewport {
@@ -2321,7 +2402,15 @@ index b9b5503..f53ea4f 100644
      pub resizing: Option<xdg_toplevel::ResizeEdge>,
  }
  
-@@ -286,6 +289,8 @@ struct State {
+@@ -159,6 +162,7 @@ pub struct Toplevel {
+     pub max_size: Option<Vec2>,
+     pub states: Vec<xdg_toplevel::State>,
+     pub closed: bool,
++    pub minimize_requests: usize,
+     pub title: Option<String>,
+     pub app_id: Option<String>,
+     pub decoration: Option<(
+@@ -286,6 +290,8 @@ struct State {
      xdg_activation: Option<XdgActivationV1>,
      valid_tokens: HashSet<String>,
      token_counter: u32,
@@ -2330,7 +2419,7 @@ index b9b5503..f53ea4f 100644
  }
  
  impl Default for State {
-@@ -318,6 +323,8 @@ impl Default for State {
+@@ -318,6 +324,8 @@ impl Default for State {
              xdg_activation: None,
              valid_tokens: HashSet::new(),
              token_counter: 0,
@@ -2339,7 +2428,7 @@ index b9b5503..f53ea4f 100644
          }
      }
  }
-@@ -336,7 +343,7 @@ impl State {
+@@ -336,7 +344,7 @@ impl State {
          toplevel.states = states.clone();
          let states: Vec<u8> = states
              .into_iter()
@@ -2348,7 +2437,7 @@ index b9b5503..f53ea4f 100644
              .collect();
          toplevel.toplevel.configure(width, height, states);
          toplevel.xdg.configure(last_serial);
-@@ -786,11 +793,40 @@ impl Server {
+@@ -786,11 +794,40 @@ impl Server {
          ret
      }
  
@@ -2389,7 +2478,7 @@ index b9b5503..f53ea4f 100644
      pub fn create_data_offer(&mut self, data: Vec<PasteData>) {
          let Some(dev) = &self.state.data_device else {
              panic!("No data device created");
-@@ -1214,7 +1250,7 @@ impl Dispatch<ZwpPrimarySelectionDeviceManagerV1, ()> for State {
+@@ -1214,7 +1251,7 @@ impl Dispatch<ZwpPrimarySelectionDeviceManagerV1, ()> for State {
  
  impl Dispatch<ZwpPrimarySelectionOfferV1, Vec<PasteData>> for State {
      fn request(
@@ -2398,7 +2487,7 @@ index b9b5503..f53ea4f 100644
          _: &Client,
          _: &ZwpPrimarySelectionOfferV1,
          request: <ZwpPrimarySelectionOfferV1 as Resource>::Request,
-@@ -1225,6 +1261,10 @@ impl Dispatch<ZwpPrimarySelectionOfferV1, Vec<PasteData>> for State {
+@@ -1225,6 +1262,10 @@ impl Dispatch<ZwpPrimarySelectionOfferV1, Vec<PasteData>> for State {
          use wayland_protocols::wp::primary_selection::zv1::server::zwp_primary_selection_offer_v1::Request;
          match request {
              Request::Receive { mime_type, fd } => {
@@ -2409,7 +2498,7 @@ index b9b5503..f53ea4f 100644
                  let pos = data
                      .iter()
                      .position(|data| data.mime_type == mime_type)
-@@ -1299,7 +1339,7 @@ impl GlobalDispatch<WlDataDeviceManager, ()> for State {
+@@ -1299,7 +1340,7 @@ impl GlobalDispatch<WlDataDeviceManager, ()> for State {
  
  impl Dispatch<WlDataOffer, Vec<PasteData>> for State {
      fn request(
@@ -2418,7 +2507,7 @@ index b9b5503..f53ea4f 100644
          _: &Client,
          _: &WlDataOffer,
          request: <WlDataOffer as Resource>::Request,
-@@ -1309,6 +1349,10 @@ impl Dispatch<WlDataOffer, Vec<PasteData>> for State {
+@@ -1309,6 +1350,10 @@ impl Dispatch<WlDataOffer, Vec<PasteData>> for State {
      ) {
          match request {
              wl_data_offer::Request::Receive { mime_type, fd } => {
@@ -2429,7 +2518,7 @@ index b9b5503..f53ea4f 100644
                  let pos = data
                      .iter()
                      .position(|data| data.mime_type == mime_type)
-@@ -1447,9 +1491,15 @@ impl Dispatch<WlPointer, ()> for State {
+@@ -1447,9 +1492,15 @@ impl Dispatch<WlPointer, ()> for State {
          _: &mut wayland_server::DataInit<'_, Self>,
      ) {
          match request {
@@ -2446,10 +2535,13 @@ index b9b5503..f53ea4f 100644
  
                      assert!(
                          matches!(
-@@ -1569,6 +1619,32 @@ impl Dispatch<XdgToplevel, SurfaceId> for State {
+@@ -1569,6 +1620,35 @@ impl Dispatch<XdgToplevel, SurfaceId> for State {
                      None
                  };
              }
++            xdg_toplevel::Request::SetMinimized => {
++                state.get_toplevel(*surface_id).minimize_requests += 1;
++            }
 +            xdg_toplevel::Request::SetMaximized => {
 +                let data = state.surfaces.get_mut(surface_id).unwrap();
 +                let Some(SurfaceRole::Toplevel(toplevel)) = &mut data.role else {
@@ -2479,7 +2571,7 @@ index b9b5503..f53ea4f 100644
              xdg_toplevel::Request::SetFullscreen { .. } => {
                  let data = state.surfaces.get_mut(surface_id).unwrap();
                  let Some(SurfaceRole::Toplevel(toplevel)) = &mut data.role else {
-@@ -1617,20 +1693,24 @@ impl Dispatch<XdgToplevel, SurfaceId> for State {
+@@ -1617,20 +1697,24 @@ impl Dispatch<XdgToplevel, SurfaceId> for State {
                  };
                  toplevel.parent = parent;
              }
@@ -2507,7 +2599,15 @@ index b9b5503..f53ea4f 100644
              }
              other => todo!("unhandled request {other:?}"),
          }
-@@ -1957,6 +2037,8 @@ impl Dispatch<WlCompositor, ()> for State {
+@@ -1660,6 +1744,7 @@ impl Dispatch<XdgSurface, SurfaceId> for State {
+                     max_size: None,
+                     states: Vec::new(),
+                     closed: false,
++                    minimize_requests: 0,
+                     title: None,
+                     app_id: None,
+                     decoration: None,
+@@ -1957,6 +2042,8 @@ impl Dispatch<WlCompositor, ()> for State {
                      SurfaceId(id),
                      SurfaceData {
                          surface,
@@ -2516,7 +2616,7 @@ index b9b5503..f53ea4f 100644
                          buffer: None,
                          last_damage: None,
                          role: None,
-@@ -1964,6 +2046,7 @@ impl Dispatch<WlCompositor, ()> for State {
+@@ -1964,6 +2051,7 @@ impl Dispatch<WlCompositor, ()> for State {
                          fractional: None,
                          viewport: None,
                          moving: false,
@@ -2524,7 +2624,7 @@ index b9b5503..f53ea4f 100644
                          resizing: None,
                      },
                  );
-@@ -2059,7 +2142,7 @@ impl Dispatch<WlSurface, ()> for State {
+@@ -2059,7 +2147,7 @@ impl Dispatch<WlSurface, ()> for State {
                  state.surfaces.remove(&id);
              }
              SetInputRegion { .. } => {}
