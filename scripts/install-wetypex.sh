@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-version=2.2.3.657-13
+# Release 17 fixes swallowed digits in GTK4 Chinese input (verified in Nautilus).
+version=2.2.3.657-17
 if installed=$(pacman -Q fcitx5-wetypex 2>/dev/null); then
     installed=${installed#* }
     if [[ $(vercmp "$installed" "$version") -ge 0 ]]; then
@@ -13,7 +14,7 @@ command -v pkexec >/dev/null || { echo 'Install a graphical polkit authenticatio
 cache_dir=${XDG_CACHE_HOME:-$HOME/.cache}/desktop-config/packages
 mkdir -p -- "$cache_dir"
 package="$cache_dir/fcitx5-wetypex-$version-x86_64.pkg.tar.zst"
-expected=e83faa72aeb0f93d48325640fa723dea65a7a637aca8991c6e0c3be1c0b632f8
+expected=69489a90d29fea48bf3cdd0aa19e43e73b570df2caeb842ac4199efe2c7e63da
 if [[ ! -f "$package" ]] || [[ $(sha256sum "$package" | cut -d ' ' -f 1) != "$expected" ]]; then
     temporary=$(mktemp "$cache_dir/.wetypex.XXXXXX")
     trap 'rm -f -- "$temporary"' EXIT
