@@ -36,29 +36,29 @@
   "niri": {
     "repository": "https://github.com/statnixlab/niri-edge.git",
     "branch": "machine/nvidia-desktop",
-    "commit": "a9eb4fbc982c0515f75d422d3b468d2041016c68",
+    "commit": "68ffd039f647423ebe7066b8d0af4e2214595899",
     "source_mode": "git",
-    "upstream_repository": "https://github.com/StatIndet/niri-edge.git",
-    "upstream_commit": "b2aaeb3c619610827577e4fbbb3225ce88d19baa",
+    "official_commit": "0c0faa570473165628743c6bb59b178e1281306a",
     "official_repository": "https://github.com/niri-wm/niri.git",
     "local_source": "@HOME@/.local/share/niri-source",
     "machine": "nvidia-desktop",
     "nvidia_workarounds": true,
     "features": [
+      "Official niri base plus a personal patch stack (rebased onto official/main)",
       "Dock minimize and Genie animation",
       "HiDPI Genie geometry",
-      "PipeWire SHM sharing compatibility",
       "Optional FP16 composition buffers for high-refresh NVIDIA artifact workaround",
       "Optional full-output repaint diagnostic",
       "Independent application and panel blur",
-      "Titlebar maximize to column",
       "Refresh-aware output workaround",
       "Optional full repaint with buffer reuse",
       "Optional retained previous-frame buffer for NVIDIA high-refresh flicker (Smithay PR 2151)",
       "Per-window floating focus stacking with independent raise and lower",
       "Native floating-window maximize and restore",
       "Titlebar double-click column sizing with native maximize buttons"
-    ]
+    ],
+    "minimization_source": "StatIndet/niri-edge, squashed into one maintained patch",
+    "archive_tag": "archive/nvidia-desktop-20261112"
   },
   "icon_theme": {
     "repository": "https://github.com/vinceliuice/MacTahoe-icon-theme.git",
@@ -75,13 +75,14 @@
   "smithay": {
     "repository": "https://github.com/statnixlab/smithay.git",
     "branch": "machine/nvidia-desktop",
-    "commit": "0a23259a4bfac010207d0ef7122dd8ee7032433c",
+    "commit": "a9b00a2fbb97545613e9ea3c5159dde9b26e9130",
     "source_mode": "cargo-lock",
     "patched": true,
     "upstream_repository": "https://github.com/Smithay/smithay.git",
-    "upstream_commit": "79bbed5e1199090d787115614847a79c76607181",
+    "upstream_commit": "65aa86fa5236e41775c313408102a5d5c2d1e2ca",
     "upstream_pr": "https://github.com/Smithay/smithay/pull/2151",
-    "upstream_patch_commit": "0c649d2d6824b60b7bfe27f1fdb5f2fbf4311ac4"
+    "upstream_patch_commit": "0c649d2d6824b60b7bfe27f1fdb5f2fbf4311ac4",
+    "archive_tag": "archive/nvidia-desktop-20261112"
   },
   "legacy_niri_patch_recipe": {
     "status": "Historical recipe; the NVIDIA source and Smithay workaround are now integrated Git commits.",

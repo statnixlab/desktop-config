@@ -12,7 +12,9 @@ Use `scripts/capture-machine.py` for snapshots; inspect diffs before committing.
 `system-reference/machine` is opt-in reference material, never automatic deployment.
 The old Niri/Smithay build recipe is historical; inventory.json records the runtime.
 Niri source is maintained in `/home/nlh/.local/share/niri-source`, with personal
-origin `statnixlab/niri-edge`, on `machine/nvidia-desktop`. Smithay is maintained
+origin `statnixlab/niri-edge`, on `machine/nvidia-desktop`. It is official niri
+plus a personal patch stack; updates rebase it onto `official/main` (see
+MACHINE-WORKFLOW.md). StatIndet/niri-edge is no longer followed. Smithay is maintained
 at `/home/nlh/.local/share/smithay-source` in `statnixlab/smithay` on the same
 machine branch. Keep its required retained-frame patch; do not use the AMD
 laptop's unpatched dependency. sources.lock.json and Cargo.lock pin integrated

@@ -54,28 +54,39 @@ FP16/full-repaint/刷新阈值策略、NVIDIA 休眠参数和频率服务。NVID
 尤其 AMD 不得运行历史 `setup-arch.sh` / `build-niri.sh` 整套流程：它含 NVIDIA 补丁。
 需要重装或升级时，先针对目标机器准备独立构建/恢复计划，再执行。
 
-## Niri 与 Smithay 源码维护（2026-11-03 起）
+## Niri 与 Smithay 源码维护（2026-11-12 起：官方 niri + 补丁栈）
 
-NVIDIA 台式机的完整 Niri 源码位于 `/home/nlh/.local/share/niri-source`，对应
-`statnixlab/niri-edge` 的 `machine/nvidia-desktop` 分支。它从本机原有源码整理，
-保留 NVIDIA 防闪烁、浮动层级、原生浮动最大化、独立模糊和高分屏动画修复。
-源码整理时未迁移 AMD 标题栏双击行为。2026-11-04 单独迁入了
-`599ad91`，启用 `titlebar-double-click-to-column` 后，标题栏双击切换列宽，
-最大化按钮保持原生行为。NVIDIA 专用依赖和防闪设置继续保留。
+NVIDIA 台式机的 Niri 源码位于 `/home/nlh/.local/share/niri-source`，对应
+`statnixlab/niri-edge` 的 `machine/nvidia-desktop` 分支。分支内容是**官方 niri
+（`niri-wm/niri`）加一小串个人补丁**，每个补丁一个提交：
 
-`upstream` 追踪 `StatIndet/niri-edge`，`official` 追踪 `niri-wm/niri`。先 fetch，
-再在独立审查分支合并上游并验证；完整流程见源码仓库的
-`docs/PERSONAL-MAINTENANCE.md`。两个机器分支不得整体互相合并。
+1. 原生最小化与 Genie/缩放动画（取自 StatIndet/niri-edge，合并为一个补丁，Clavis 依赖）；
+2. NVIDIA 显示兼容与窗口行为（刷新率相关防闪、全屏重绘、FP16、浮动层级、
+   原生浮动最大化、独立模糊、HiDPI Genie 修正）；
+3. 标题栏双击切换列宽、最大化按钮保持原生；
+4. Smithay 依赖指向 `statnixlab/smithay`；
+5. 维护文档。
 
-本机需要的 Smithay PR #2151 补丁已在 `statnixlab/smithay` 的
-`machine/nvidia-desktop` 分支中保存，本地位于 `/home/nlh/.local/share/smithay-source`。
-Niri 的 Cargo.toml 与 Cargo.lock 直接固定该提交，保留本机需要的防闪烁逻辑。
+不再跟随 StatIndet/niri-edge。2026-11-12 之前基于 niri-edge 的历史保存在标签
+`archive/nvidia-desktop-20261112`。
+
+更新官方版本：在源码仓库打归档标签后，于审查分支执行 `git rebase official/main`，
+冲突按补丁逐个解决；完整流程见源码仓库的 `docs/PERSONAL-MAINTENANCE.md`。
+补丁栈分支经 rebase 后以 `--force-with-lease` 推送，推送前先推送归档标签。
+两个机器分支不得整体互相合并。
+
+Smithay 位于 `/home/nlh/.local/share/smithay-source`（`statnixlab/smithay` 的
+`machine/nvidia-desktop`），同样是官方 niri 固定的 Smithay 版本加 PR #2151 保留帧补丁。
+Niri 的 Cargo.toml 与 Cargo.lock 直接固定该提交。
 
 `sources.lock.json.niri.source_mode` 为 `git`。准备脚本直接检出固定的完整源码，
 不再应用外部补丁，并拒绝覆盖错误分支、不同提交或未完成修改。
 `scripts/build-niri.sh --prepare-only` 只做源码核验。
 旧配方保留于 `legacy_niri_patch_recipe`，不用于当前构建。
 
-保存更新时，按 Smithay（如有修改）、Niri、desktop-config 的顺序推送对应机器分支。
+单击 Win 打开应用菜单使用 Niri 原生松开触发绑定（`config/niri/clavis/launchpad.kdl`），
+不再使用 keyd；该语法需要上述新版 Niri。
+
+保存更新时，按 Smithay、Niri、desktop-config 的顺序推送对应机器分支。
 仅更新源码版本引用时不运行完整桌面 capture，不收集其他聊天或 Clavis 的未完成修改。
 源码整理和发布不自动更新正在运行的合成器；构建、选择新版本和会话重启另行处理。
