@@ -24,4 +24,9 @@ export XCURSOR_THEME=breeze_cursors XCURSOR_SIZE="$abdm_cursor_size"
 export GDK_SCALE="$abdm_scale"
 export GTK_IM_MODULE=fcitx QT_IM_MODULE=fcitx XMODIFIERS=@im=fcitx
 export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:+$JAVA_TOOL_OPTIONS }-Dsun.java2d.uiScale=$abdm_scale"
+# Use Arch's maintained CA trust store, including CFCA for nmpa.gov.cn.
+# Keep certificate verification enabled and leave the bundled runtime untouched.
+if [[ -r /etc/ssl/certs/java/cacerts ]]; then
+    export JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Djavax.net.ssl.trustStoreType=JKS"
+fi
 exec "$abdm_exe" "$@"

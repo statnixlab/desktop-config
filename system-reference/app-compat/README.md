@@ -29,6 +29,11 @@ jq、xorg-xrdb、libnotify。请通过图形 polkit 认证安装缺失依赖；�
 应用默认位置为 `/opt/abdownloadmanager`。启动器复用聊天用的 `:2` 显示桥接，为 Java 设置
 适当的缩放，修复齿轮弹窗消失、小字体和过大光标。只有统一 200% Niri 会话走该显示。
 
+启动器在系统 Java 证书库 `/etc/ssl/certs/java/cacerts` 可读时，通过仅作用于 AB 的
+`JAVA_TOOL_OPTIONS` 使用该 JKS 证书库，继续校验 HTTPS 证书。NVIDIA 台式机上，
+AB 1.11.4 自带证书库缺少药监局站点所需的 CFCA 根证书，而系统证书库包含该证书。
+该设置不修改 `/opt/abdownloadmanager`，应用升级后仍可沿用；调整后需完全退出并重启 AB。
+
 安装前退出 AB，避免应用关闭时覆盖设置。安装器只合并 `uiScale=null`、`autoStartOnBoot=false`，
 其他下载设置、API 认证、目录和下载任务保持目标电脑原值。自启由独立的
 `abdownloadmanager-compat.desktop` 管理，请勿再打开应用内自启。
