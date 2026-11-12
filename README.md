@@ -131,7 +131,6 @@ python3 scripts/restore.py --apply
 ./scripts/install-icon-theme.sh
 ./scripts/build-clavis.sh
 ./scripts/build-launchpad.sh
-./scripts/install-launchpad-keybinding.sh
 ./scripts/enable-services.sh
 ```
 
@@ -150,13 +149,11 @@ Niri 源码默认放在 `~/.local/share/niri-source`；用 `NIRI_SOURCE_DIR` 可
 若需切回内置菜单，把 `~/.config/clavis/launchpad-backend.json` 的 `external` 改为 `false`，
 再执行 `systemctl --user disable --now clavis-launchpad.service`。
 
-Win 快捷键由 keyd 将左右 Win 的单击映射到 F13 的硬件键码；标准 XKB 映射将它解释为
-`XF86Tools`，因此 Niri 同时兼容 `XF86Tools` 和 `F13`，打开应用菜单。
-Win 与其他按键组合时保持原来的修饰键功能。单击需在 300ms 内松开，长按不打开菜单。
-`install-launchpad-keybinding.sh` 安装 `/etc/keyd/clavis-launchpad.conf` 并启用 keyd；
-如已有其他 keyd 配置，脚本会停止，避免覆盖已有映射。停用映射可运行
-`pkexec systemctl disable --now keyd.service`。其他桌面若要使用同一单击动作，需绑定
-键盘映射实际产生的 `XF86Tools`（部分映射为 `F13`）。
+单击 Win 打开应用菜单由 Niri 原生的松开触发绑定实现（`config/niri/clavis/launchpad.kdl`，
+`Super { release { … } }`），不再需要 keyd。单独按下并松开 Win 即触发；按住 Win 期间
+按了其他键或鼠标键则不触发，因此 Win 组合键保持原有功能。该语法需要 2026-11 之后的
+Niri（官方 next release 起支持），必须使用本仓库固定的 Niri 构建。
+从旧版本迁移的机器可运行 `sudo systemctl disable --now keyd.service` 停用旧映射。
 
 ## 新机器上的差异
 
@@ -164,7 +161,7 @@ Win 与其他按键组合时保持原来的修饰键功能。单击需在 300ms 
   必须完成 `build-niri.sh` 后才使用完整配置。
   普通发行版 Niri 可能尚不支持这个选项，不能只复制配置而跳过构建。
 - 启用中文 UTF-8 locale（通常是 `zh_CN.UTF-8`）。网络、蓝牙、声卡驱动和休眠能力
-  由新系统设置；除上述 keyd 规则外，仓库不自动覆盖 `/etc`、bootloader、resume 或硬件授权。
+  由新系统设置；仓库不自动覆盖 `/etc`、bootloader、resume 或硬件授权。
 - 新电脑需要重新确认显示器缩放、布局、鼠标、功耗模式和合盖设置。
   `system-reference/` 保存原机器的电源、设备和应用兼容配置参考。
 - QQ、微信、腾讯会议和 WPS 的专用二进制兼容环境不随配置上传。

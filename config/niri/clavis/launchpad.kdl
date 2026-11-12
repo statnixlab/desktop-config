@@ -1,10 +1,8 @@
 binds {
-    // keyd sends KEY_F13; the standard evdev XKB map names it XF86Tools.
-    XF86Tools repeat=false hotkey-overlay-title="应用菜单：单击 Win" {
-        spawn "qs" "-c" "clavis" "ipc" "call" "launchpad" "toggle";
-    }
-    // Also support keymaps which keep the literal F13 keysym.
-    F13 repeat=false hotkey-overlay-title=null {
-        spawn "qs" "-c" "clavis" "ipc" "call" "launchpad" "toggle";
+    // Native niri release bind: press and release Win by itself to toggle Launchpad.
+    // Pressing any other key or mouse button while holding Win cancels it,
+    // so Win+Tab, Win+Space and other shortcuts are unaffected.
+    Super hotkey-overlay-title="应用菜单：单击 Win" {
+        release { spawn "qs" "-c" "clavis" "ipc" "call" "launchpad" "toggle"; }
     }
 }
