@@ -63,7 +63,7 @@ cd desktop-config
 | 输入法 | Fcitx5＋WeTypeX 主力输入法，保留 Rime／雾凇；关闭 V 工具栏和 AI 快捷入口，开启自动更新 |
 | 壁纸与组件 | 当前壁纸、头像、天气位置、桌面卡片和侧栏设置 |
 | QQ / Manggo | 截图与翻译的辅助脚本、Niri 快捷键和 portal 注册 |
-| 网盘 | 夸克网盘入口和挂载服务定义；账号在新机重新配置 |
+| 网盘 | 夸克网盘侧栏书签和启动入口使用 Nautilus 原生 WebDAV 按需连接；账号在新机重新配置 |
 | 本机兼容参考 | 微信/QQ 与 WPS 的 XWayland/输入法启动脚本、微信通知桥接、音量恢复、服务片段及 ChatGPT 启动修复 |
 
 Dock 与应用菜单只保存应用入口，不会安装所有固定的软件。Chrome、QQ、微信、
@@ -71,7 +71,9 @@ WPS、Codex、腾讯会议等需另行安装；安装后的 desktop ID 不同时
 未安装的应用在菜单中隐藏，安装后会按保存的布局恢复。
 
 没有上传登录密码、Cookie、API 密钥、SSH 密钥、GitHub/Codex 凭据、通知或剪贴板历史。
-Rclone / OpenList 等账号需要在新电脑重新授权；网盘挂载服务不会自动启动。
+OpenList 等账号需要在新电脑重新授权。夸克入口使用 `dav://127.0.0.1:5244/dav/quark/`，
+依赖 `gvfs-dnssd` 提供 WebDAV 支持；侧栏书签长期保留，点击后按需连接，不再部署旧的
+`rclone-quark.service` 常驻挂载。OpenList 核心需先启动，认证由 Nautilus 的图形窗口处理。
 字体和图标资源的许可证随资源保留；MacTahoe 从其固定的公开源码提交安装。
 
 ## 更新另一台已配置的电脑

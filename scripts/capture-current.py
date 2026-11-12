@@ -13,7 +13,8 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 METRICS = ['systemMonitorGpuId', 'systemMonitorDiskDevice', 'systemMonitorNetworkInterface', 'storageCapacityDiskDevice']
 RETIRED_FILES = ['bin/dolphin', 'share/applications/org.kde.dolphin.desktop',
-                 'config/dolphinrc', 'config/nyx-desktop-style/dolphin.qss']
+                 'config/dolphinrc', 'config/nyx-desktop-style/dolphin.qss',
+                 'config/systemd/user/rclone-quark.service']
 REFERENCE_CONFIG_FILES = [
     'environment.d/50-desktop-input.conf',
     'xwayland-chat.Xresources', 'xwayland-wps.Xresources',
@@ -106,8 +107,6 @@ def capture(home, root=ROOT, clavis_source=None):
         if relative in RETIRED_FILES or not path.is_file():
             return
         content = path.read_text()
-        if relative == 'bin/open-quark-drive':
-            content = content.replace(str(home) + '/.local/share/cloud-mounts/quark', '"$HOME/.local/share/cloud-mounts/quark"')
         content = content.replace(str(home) + '/.local/bin/qs', '/usr/bin/qs')
         content = content.replace(str(home), '@HOME@')
         if path.suffix == '.kdl' or path.name == 'user-dirs.dirs':
@@ -205,7 +204,7 @@ def capture(home, root=ROOT, clavis_source=None):
         if (root / relative).is_dir():
             shutil.rmtree(root / relative)
     (root / 'config/systemd/user/nyx-dock.service').unlink(missing_ok=True)
-    # Nautilus is the default; do not recapture retired Dolphin customizations.
+    # Do not recapture retired Dolphin customizations or the old rclone mount.
     for relative in RETIRED_FILES:
         (root / relative).unlink(missing_ok=True)
     # Preserve Arch-specific adaptations of the theme bridge and user services.
@@ -213,7 +212,6 @@ def capture(home, root=ROOT, clavis_source=None):
         copy(home / '.local/bin' / name, 'bin/' + name)
     copy(home / '.local/share/applications/org.kde.konsole.desktop', 'share/applications/org.kde.konsole.desktop')
     copy(home / '.local/share/applications/quark-drive.desktop', 'share/applications/quark-drive.desktop')
-    copy(home / '.config/systemd/user/rclone-quark.service', 'config/systemd/user/rclone-quark.service')
     copy(home / '.config/systemd/user/clavis-launchpad.service', 'config/systemd/user/clavis-launchpad.service')
     copy(home / '.local/share/applications/org.clavis.NiriLaunchpad.desktop', 'share/applications/org.clavis.NiriLaunchpad.desktop')
     copy(home / '.local/lib/nyx-desktop-style/sync-theme.py', 'lib/nyx-desktop-style/sync-theme.py')

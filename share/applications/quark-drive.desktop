@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=夸克网盘
-Comment=通过 OpenList 挂载夸克网盘并打开默认文件管理器
+Comment=通过 Nautilus WebDAV 按需连接 OpenList 夸克网盘
 Exec="@HOME@/.local/bin/open-quark-drive"
 Icon=folder-cloud
 Terminal=false
