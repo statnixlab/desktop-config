@@ -1,0 +1,6 @@
+// NVIDIA desktop: share the normal tiling layout's dynamic top edge.
+// Follows layer-shell reserved space, layout top strut, outer gap and output scale.
+include "@HOME@/.config/niri/floating-family.kdl"
+layout {
+    floating-windows-match-tiling-top
+}

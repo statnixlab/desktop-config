@@ -36,7 +36,7 @@
   "niri": {
     "repository": "https://github.com/statnixlab/niri-edge.git",
     "branch": "machine/nvidia-desktop",
-    "commit": "68ffd039f647423ebe7066b8d0af4e2214595899",
+    "commit": "4ac37fb7f142a692a453a7b1962290376a92f1f4",
     "source_mode": "git",
     "official_commit": "0c0faa570473165628743c6bb59b178e1281306a",
     "official_repository": "https://github.com/niri-wm/niri.git",
@@ -55,7 +55,11 @@
       "Optional retained previous-frame buffer for NVIDIA high-refresh flicker (Smithay PR 2151)",
       "Per-window floating focus stacking with independent raise and lower",
       "Native floating-window maximize and restore",
-      "Titlebar double-click column sizing with native maximize buttons"
+      "Titlebar double-click column sizing with native maximize buttons",
+      "Owner-scoped floating window families",
+      "Dynamic floating top boundary shared with tiling",
+      "Titlebar expansion and restore without leaving floating",
+      "Drag-to-edge half-width tiling with cancellable preview"
     ],
     "minimization_source": "StatIndet/niri-edge, squashed into one maintained patch",
     "archive_tag": "archive/nvidia-desktop-20261112"

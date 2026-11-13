@@ -1,0 +1,7 @@
+// Floating window families, NVIDIA desktop, 2026-11-13.
+// Inherit all current display, input, titlebar and application compatibility settings.
+include "@HOME@/.config/niri/titlebar-native-buttons.kdl"
+layout {
+    floating-windows-follow-focus
+    floating-windows-follow-parent
+}

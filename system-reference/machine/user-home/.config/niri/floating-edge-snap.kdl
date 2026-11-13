@@ -1,0 +1,6 @@
+// NVIDIA desktop: release a floating window at either side to tile it at half width.
+include "@HOME@/.config/niri/floating-family.kdl"
+layout {
+    floating-windows-match-tiling-top
+    floating-windows-edge-snap
+}

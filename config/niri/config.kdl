@@ -160,6 +160,9 @@ layout {
     titlebar-double-click-to-column
     client-maximize-to-column
     floating-windows-follow-focus
+    floating-windows-follow-parent
+    floating-windows-match-tiling-top
+    floating-windows-edge-snap
     background-color "transparent"
     // Set gaps around windows in logical pixels.
     gaps 3

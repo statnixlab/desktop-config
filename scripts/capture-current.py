@@ -171,11 +171,12 @@ def capture(home, root=ROOT, clavis_source=None):
         # These opt-in layout behaviors were enabled through local wrapper
         # configs. Carry the behavior, without their GPU-specific include chain.
         layout_flags = set()
-        for fragment in ['titlebar-column.kdl', 'floating-focus.kdl', 'titlebar-native-buttons.kdl']:
+        for fragment in ['titlebar-column.kdl', 'floating-focus.kdl', 'titlebar-native-buttons.kdl',
+                         'floating-family.kdl', 'floating-top-dynamic.kdl', 'floating-edge-snap.kdl']:
             path = home / '.config/niri' / fragment
             if path.is_file():
                 layout_flags.update(re.findall(
-                    r'^\s*(client-maximize-to-column|floating-windows-follow-focus|titlebar-double-click-to-column)\s*;?\s*$',
+                    r'^\s*(client-maximize-to-column|floating-windows-follow-focus|floating-windows-follow-parent|floating-windows-match-tiling-top|floating-windows-edge-snap|titlebar-double-click-to-column)\s*;?\s*$',
                     path.read_text(), re.M))
         missing = [flag for flag in sorted(layout_flags)
                    if not re.search(r'^\s*' + re.escape(flag) + r'\s*;?\s*$', content, re.M)]

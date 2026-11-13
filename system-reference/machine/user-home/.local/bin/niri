@@ -1,2 +1,2 @@
 #!/bin/sh
-exec "$HOME/.local/lib/niri-desktop/niri-official-20261112" "$@"
+exec "@HOME@/.local/lib/niri-desktop/niri-floating-edge-snap-20261114-9a3db3a6" "$@"

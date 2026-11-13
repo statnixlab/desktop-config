@@ -7,7 +7,10 @@
     "system/etc/systemd/logind.conf",
     "system/etc/systemd/sleep.conf",
     "user-home/.config/niri/config.kdl",
+    "user-home/.config/niri/floating-edge-snap.kdl",
+    "user-home/.config/niri/floating-family.kdl",
     "user-home/.config/niri/floating-focus.kdl",
+    "user-home/.config/niri/floating-top-dynamic.kdl",
     "user-home/.config/niri/full-repaint-diagnostic.kdl",
     "user-home/.config/niri/manggo-shortcuts.kdl",
     "user-home/.config/niri/qq-screenshot.kdl",
@@ -20,13 +23,24 @@
     "user-home/.config/systemd/user/clavis-shell.service.d/30-icon-theme.conf",
     "user-home/.config/systemd/user/clavis-shell.service.d/40-memory.conf",
     "user-home/.config/systemd/user/niri.service.d/60-niri.conf",
+    "user-home/.config/systemd/user/niri.service.d/70-floating-family.conf",
+    "user-home/.config/systemd/user/niri.service.d/90-floating-top-dynamic.conf",
+    "user-home/.config/systemd/user/niri.service.d/95-floating-titlebar-expand.conf",
+    "user-home/.config/systemd/user/niri.service.d/96-floating-edge-snap.conf",
     "user-home/.config/systemd/user/niri.service.d/kwallet.conf",
     "user-home/.local/bin/niri"
   ],
   "niri": {
-    "executable": "@HOME@/.local/lib/niri-desktop/niri-official-20261112",
-    "sha256": "1de67066fb77ac7dcb595caf0bb5465c7e1a0b72a0409c72a3bc86a621881a18",
-    "version": "niri 26.04 (v26.04-286-g68ffd039)"
+    "executable": "@HOME@/.local/lib/niri-desktop/niri-floating-expand-20261114-254fd55d",
+    "sha256": "3d34b4860bbc47c69dc1f37413bd31527ec9544de3915c2184c8987e5b25eddd",
+    "version": "niri 26.04 (v26.04-286-g68ffd039-modified)",
+    "source_commit": "f822beff8fd0216f34335b2e67f3f70f281e1b38"
   },
-  "runtime_updated_at_utc": "2026-11-12T09:49:44+00:00"
+  "runtime_updated_at_utc": "2026-11-13T16:30:00+00:00",
+  "niri_next_login": {
+    "executable": "@HOME@/.local/lib/niri-desktop/niri-floating-edge-snap-20261114-9a3db3a6",
+    "sha256": "6e09523e97237391478c4c4c7809805b52eeef040a7658e2f56e2a3c9bac78c4",
+    "config": "@HOME@/.config/niri/floating-edge-snap.kdl",
+    "source_commit": "4ac37fb7f142a692a453a7b1962290376a92f1f4"
+  }
 }
