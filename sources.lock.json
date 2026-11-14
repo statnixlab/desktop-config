@@ -2,7 +2,7 @@
   "clavis": {
     "repository": "https://github.com/statnixlab/quickshell.git",
     "branch": "machine/nvidia-desktop",
-    "commit": "f735818f385510a5d45c0b066480c6b23d0cd7d7",
+    "commit": "febf4a5fb771b9551d4bc8713aa486edbc2af5e6",
     "upstream_repository": "https://github.com/StatIndet/quickshell.git",
     "upstream_commit": "ac388acf9a4537cf1c69232aceb326af9478b71f"
   },
