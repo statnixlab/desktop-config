@@ -76,7 +76,22 @@ def render_fcitx(palette, base):
     p = palette
     theme_dir = base / '.local/share/fcitx5/themes/ClavisWallpaper'
     margin = {'Left': '5', 'Right': '5', 'Top': '5', 'Bottom': '5'}
-    border = {'Color': p['surface_container_high'], 'BorderColor': p['primary'], 'BorderWidth': '1'}
+    border = {'Image': 'panel.svg', 'Color': p['surface_container_high'],
+              'BorderColor': p['primary'], 'BorderWidth': '1'}
+    panel_margin = {'Left': '8', 'Right': '8', 'Top': '8', 'Bottom': '8'}
+    content_margin = {'Left': '4', 'Right': '4', 'Top': '4', 'Bottom': '4'}
+    highlight = {'Image': 'selection.svg', 'Color': p['primary_container']}
+    # Nine-slice SVG backgrounds retain their rounded corners as candidates grow,
+    # and ScaleWithDPI keeps the existing HiDPI policy for both shapes and text.
+    atomic(theme_dir / 'panel.svg',
+           '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">'
+           '<rect x="0.5" y="0.5" width="23" height="23" rx="7.5" '
+           f'fill="{p["surface_container_high"]}" stroke="{p["primary"]}" stroke-width="1"/>'
+           '</svg>\n')
+    atomic(theme_dir / 'selection.svg',
+           '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">'
+           f'<rect width="24" height="24" rx="5" fill="{p["primary_container"]}"/>'
+           '</svg>\n')
     sections = {
         'Metadata': {'Name': 'Clavis Wallpaper', 'Name[zh_CN]': '跟随 Clavis 壁纸',
                      'Name[zh_TW]': '跟隨 Clavis 桌布', 'Version': '1',
@@ -86,19 +101,19 @@ def render_fcitx(palette, base):
                        'HighlightBackgroundColor': p['primary_container'],
                        'PageButtonAlignment': 'Last Candidate'},
         'InputPanel/TextMargin': margin,
-        'InputPanel/ContentMargin': {'Left': '2', 'Right': '2', 'Top': '2', 'Bottom': '2'},
+        'InputPanel/ContentMargin': content_margin,
         'InputPanel/Background': border,
-        'InputPanel/Background/Margin': {'Left': '1', 'Right': '1', 'Top': '1', 'Bottom': '1'},
-        'InputPanel/Highlight': {'Color': p['primary_container']},
+        'InputPanel/Background/Margin': panel_margin,
+        'InputPanel/Highlight': highlight,
         'InputPanel/Highlight/Margin': margin,
         'InputPanel/PrevPage': {'Image': 'prev.svg'},
         'InputPanel/NextPage': {'Image': 'next.svg'},
         'Menu': {'NormalColor': p['on_surface'], 'HighlightCandidateColor': p['on_primary_container']},
         'Menu/Background': border,
-        'Menu/Background/Margin': {'Left': '1', 'Right': '1', 'Top': '1', 'Bottom': '1'},
-        'Menu/ContentMargin': {'Left': '2', 'Right': '2', 'Top': '2', 'Bottom': '2'},
+        'Menu/Background/Margin': panel_margin,
+        'Menu/ContentMargin': content_margin,
         'Menu/TextMargin': margin,
-        'Menu/Highlight': {'Color': p['primary_container']},
+        'Menu/Highlight': highlight,
         'Menu/Highlight/Margin': margin,
         'Menu/Separator': {'Color': p['outline_variant']},
         'Menu/CheckBox': {'Image': 'radio.svg'},

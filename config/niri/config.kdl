@@ -434,9 +434,17 @@ window-rule {
     // block-out-from "screencast"
 }
 
-// Rounded corners for application windows.
+// Independent corner radii for tiled and floating application windows.
+// Keep later application-specific rules (settings, screenshot overlays) in effect.
 window-rule {
+    match is-floating=false
     geometry-corner-radius 8
+    clip-to-geometry true
+}
+
+window-rule {
+    match is-floating=true
+    geometry-corner-radius 16
     clip-to-geometry true
 }
 
